@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.general.embeds import DonateEmbed
+from cogs.general.embeds import DonateEmbed, HelpEmbed
 from cogs.general.views import ButtonsView
 
 
@@ -23,7 +23,10 @@ class GeneralCCog(commands.Cog):
     # Aliases to /support
     @discord.slash_command(description="Get help using Robotnic or support the creator.")
     async def help(self, ctx):
-        await self.support.callback(self, ctx)
+        embeds = [
+            HelpEmbed()
+        ]
+        await ctx.respond(f"{ctx.user.mention}", embeds=embeds, view=ButtonsView())
 
     @discord.slash_command(description="Support the creator of Robotnic.")
     async def donate(self, ctx):
