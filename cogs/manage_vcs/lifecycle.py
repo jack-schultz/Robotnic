@@ -53,7 +53,7 @@ async def create_on_join(member, before, after, bot):
     else:
         overwrites = {}
 
-    overwrites[bot.user] = discord.PermissionOverwrite(
+    overwrites[member.guild.me] = discord.PermissionOverwrite(
         view_channel=True,
         manage_channels=True,
         send_messages=True,
@@ -115,24 +115,18 @@ async def create_on_join(member, before, after, bot):
 
     channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_creator_channel_info)
 
-    # Disable sync and reapply overwrites. this is because creating a channel in a
-    # category with no overwrites will auto get overwrites of the category even if
-    # {} is passed in overwrites
     try:
         # Could use bot.renamer to avoid rate-limit problems
         await new_temp_channel.edit(
             name=channel_name,
             user_limit=db_creator_channel_info.user_limit,
-            sync_permissions=False,
-            overwrites=overwrites
         )
 
         # Send control message in channel chat
         view = ControlView(bot, new_temp_channel)
         await view.send_initial_message(member, channel_name=channel_name)
     except Exception as e:
-        bot.logger.debug(f"Error finalizing creation of voice channel, handled. {e}")
-        bot.repos.temp_channels.remove(new_temp_channel.id)
+        bot.logger.debug(f"Error finalizing creation of voice channel. {e}")
 
     # Sends messages in the guild log channel and the bot's notification channel - uses get_guild_logs_channel_id instead of get_guild_settings for read efficiency
     embed = discord.Embed(
