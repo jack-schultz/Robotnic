@@ -88,8 +88,11 @@ async def create_on_join(member, before, after, bot):
         embed = discord.Embed()
         embed.add_field(name="Required",
                         value="`view_channel`, `manage_channels`, `send_messages`, `manage_messages`, `read_message_history`, `connect`, `move_members`")
+        response_text = f"Sorry {member.mention}, I require the following permissions."
+        if category:
+            response_text = response_text + "Make sure they are not overwritten by the category (In this case `{category.name}`)."
         await creator_channel.send(
-            f"Sorry {member.mention}, I require the following permissions. Make sure they are not overwritten by the category (In this case `{category.name}`).",
+            response_text,
             embed=embed, delete_after=300)
         return
 
