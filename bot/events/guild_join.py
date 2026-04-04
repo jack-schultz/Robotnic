@@ -16,8 +16,8 @@ async def on_guild_join(self, guild):
                 inline=False
             )
             embed.add_field(
-                name="/setup_advanced",
-                value="Same as /setup except it allows more customisation. Change name, user limits, category of created channels and the permissions",
+                name="/help",
+                value="Lists all the commands available to you and what they do.",
                 inline=False
             )
             embed.set_footer(text="Need more help? Reach out to support below!")

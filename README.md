@@ -75,15 +75,17 @@ Controlled entirely within Discord using dropdowns, buttons, and modals built wi
 - `/settings profanity_filter` -> Select your preferred way to handle profanity in channel names
 
 ## Self-Hosting Setup
-If you’d like to run your own instance of Robotnic:
+**Install python version: 3.13.9**
 1. Clone the Repository
 ```bash
 git clone https://github.com/MeltedButter77/Robotnic.git
 cd Robotnic
 ```
-2. Install Dependencies
+2. Install Dependencies - Topggpy installs discord.py as a dependency which isn't needed. When uninstalling it breaks py-cord, so install py-cord after its uninstalled.
 ```bash
 pip install -r requirements.txt
+pip uninstall discord.py -y
+pip install py-cord
 ```
 3. Run the main.py file to create the settings.json, database.db and .env files.
 ```bash

@@ -53,6 +53,34 @@ async def create_on_join(member, before, after, bot):
     else:
         overwrites = {}
 
+    permissions_to_check = [
+        "manage_channels",
+        "manage_roles",
+        "view_channel",
+        "send_messages",
+        "connect",
+        "move_members",
+        "manage_messages",
+        "read_message_history"
+    ]
+    has_all_perms = True
+    for perm in permissions_to_check:
+        has_perm = getattr(member.guild.me.guild_permissions, perm, False)
+        if not has_perm:
+            has_all_perms = False
+
+    if not has_all_perms:
+        embed = discord.Embed()
+        embed.add_field(name="Required",
+                        value="`view_channel`, `manage_channels`, `manage_roles`, `send_messages`, `manage_messages`, `read_message_history`, `connect`, `move_members`")
+        response_text = f"Sorry {member.mention}, I require the following permissions."
+        if category:
+            response_text = response_text + f"Make sure they are not overwritten by the category (In this case `{category.name}`)."
+        await creator_channel.send(
+            response_text,
+            embed=embed, delete_after=300)
+        return
+
     overwrites[bot.user] = discord.PermissionOverwrite(
         view_channel=True,
         manage_channels=True,
@@ -69,29 +97,12 @@ async def create_on_join(member, before, after, bot):
         connect=True,
     )
 
-    try:
-        new_temp_channel = await creator_channel.guild.create_voice_channel(
-            name="⌛",
-            category=category,
-            overwrites=overwrites,
-            position=creator_channel.position,
-        )
-    except discord.Forbidden as e:
-        bot.logger.warning(
-            "Missing permissions while creating temp channel",
-            extra={
-                "guild_id": creator_channel.guild.id,
-                "channel_id": creator_channel.id,
-            },
-        )
-
-        embed = discord.Embed()
-        embed.add_field(name="Required",
-                        value="`view_channel`, `manage_channels`, `send_messages`, `manage_messages`, `read_message_history`, `connect`, `move_members`")
-        await creator_channel.send(
-            f"Sorry {member.mention}, I require the following permissions. Make sure they are not overwritten by the category (In this case `{category.name}`).",
-            embed=embed, delete_after=300)
-        return
+    new_temp_channel = await creator_channel.guild.create_voice_channel(
+        name="⌛",
+        category=category,
+        overwrites=overwrites,
+        position=creator_channel.position,
+    )
 
     counts = bot.repos.temp_channels.get_counts(creator_channel.id)
     if len(counts) < 1:
@@ -99,39 +110,31 @@ async def create_on_join(member, before, after, bot):
     else:
         count = max(counts) + 1
 
-    bot.repos.temp_channels.add(new_temp_channel.guild.id, new_temp_channel.id, creator_channel.id, member.id, 0, count, False)
-
     try:
         await member.move_to(new_temp_channel)
         bot.logger.debug(f"Moved {member} to {new_temp_channel}")
     except Exception as e:
         bot.logger.debug(f"Error creating voice channel, most likely a quick join and leave. Handled. {e}")
-        bot.repos.temp_channels.remove(new_temp_channel.id)
         await new_temp_channel.delete()
         return
 
+    bot.repos.temp_channels.add(new_temp_channel.guild.id, new_temp_channel.id, creator_channel.id, member.id, 0, count, False)
     channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_creator_channel_info)
 
-    # Disable sync and reapply overwrites. this is because creating a channel in a
-    # category with no overwrites will auto get overwrites of the category even if
-    # {} is passed in overwrites
     try:
         # Could use bot.renamer to avoid rate-limit problems
         await new_temp_channel.edit(
             name=channel_name,
             user_limit=db_creator_channel_info.user_limit,
-            sync_permissions=False,
-            overwrites=overwrites
         )
 
         # Send control message in channel chat
         view = ControlView(bot, new_temp_channel)
         await view.send_initial_message(member, channel_name=channel_name)
     except Exception as e:
-        bot.logger.debug(f"Error finalizing creation of voice channel, handled. {e}")
-        bot.repos.temp_channels.remove(new_temp_channel.id)
+        bot.logger.debug(f"Error finalizing creation of voice channel. {e}")
 
-    # Sends messages in the guild log channel and the bot's notification channel - uses get_guild_logs_channel_id instead of get_guild_settings for read efficiency
+    # Sends messages in the guild log channel and the bot's notification channel
     embed = discord.Embed(
         title="TempChannel Create",
         description="",
@@ -141,11 +144,10 @@ async def create_on_join(member, before, after, bot):
                     value=f"`{new_temp_channel.name}` (`{new_temp_channel.id}`)",
                     inline=False)
     embed.add_field(name="User",
-                    value=f"`{member.display_name}` (`{member.display_name}`, `{member.id}`)",
+                    value=f"`{member}` (`{member.id}`)",
                     inline=False)
     embed.timestamp = datetime.datetime.now()
-    if after.channel:
-        await bot.GuildLogService.send(event="channel_create", guild=after.channel.guild, message=f"", embed=embed)
+    await bot.GuildLogService.send(event="channel_create", guild=new_temp_channel.guild, message=f"", embed=embed)
     await bot.BotLogService.send(event="channel_create", message=f"Temp Channel (`{new_temp_channel.name}`) was made in server (`{member.guild.name}`) by user (`{member}`)")
 
 
@@ -184,7 +186,7 @@ async def delete_on_leave(member, before, after, bot):
                         value=f"`{old_temp_channel.name}` (`{old_temp_channel.id}`)",
                         inline=False)
         embed.add_field(name="Last Connected User",
-                        value=f"`{member.display_name}` (`{member.display_name}`, `{member.id}`)",
+                        value=f"`{member}` (`{member.id}`)",
                         inline=False)
         embed.timestamp = datetime.datetime.now()
         await bot.GuildLogService.send(event="channel_remove", guild=member.guild, message=f"", embed=embed)
