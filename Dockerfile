@@ -1,4 +1,4 @@
-FROM python:latest AS base
+FROM python:3.13.9-alpine AS base
 WORKDIR /app
 
 # install deps

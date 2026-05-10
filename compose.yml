@@ -2,5 +2,9 @@ services:
   robotnic:
     build: .
     volumes:
-      - ./.env:/app/.env
-      - ./settings.json:/app/settings.json
+      - type: bind
+        source: ./.env
+        target: /app/.env
+      - type: bind
+        source: ./settings.json
+        target: /app/settings.json
