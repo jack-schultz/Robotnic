@@ -18,5 +18,5 @@ fi
 # build and run the container
 
 docker compose build
-docker compose up
 docker compose down
+docker compose up -d
