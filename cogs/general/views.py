@@ -10,7 +10,7 @@ class ButtonsView(discord.ui.View):
         self.add_item(
             discord.ui.Button(
                 label="Support the Developer",
-                url="https://github.com/sponsors/jack-schultz",
+                url="https://github.com/sponsors/MeltedButter77",
                 emoji="💖",
                 style=discord.ButtonStyle.link
             )

@@ -8,21 +8,21 @@ class DonateEmbed(discord.Embed):
         self.title = "💚 A Message from the Developer"
         self.description = (
             "Thank you for using Robotnic!\n"
-            "I created this bot as a **[FOSS](<https://wikipedia.org/wiki/Free_and_open-source_software>)** project with a **free** public instance as I was fed up with lack-luster bots which cost ridiculous amounts of money. I provide this service for free, you can check out my other projects on my [GitHub account](https://github.com/jack-schultz)."
+            "This is a **[FOSS](<https://wikipedia.org/wiki/Free_and_open-source_software>)** project with a **free** public instance developed and hosted by [MeltedButter77](https://github.com/MeltedButter77)."
         )
         self.add_field(
             name="💸 Donations",
             value=(
-                "Robotnic took a long time to develop and also **costs money to host**, which I currently pay for out of my own pocket."
+                "Robotnic took a long time to develop and also **costs money to host**, which MeltedButter currently pays out of his own pocket."
             ),
             inline=False
         )
         self.add_field(
-            name="🙏 Please Consider Supporting Me",
+            name="🙏 Please Consider Supporting the Developer",
             value="Every bit of support helps keep Robotnic running smoothly. ❤️",
             inline=False
         )
-        self.set_footer(text="📩 Need more help? Reach out for support below!")
+        self.set_footer(text="📩 Need more help? Reach out to support below!")
 
 
 class HelpEmbed(discord.Embed):
