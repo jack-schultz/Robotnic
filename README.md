@@ -78,7 +78,7 @@ Controlled entirely within Discord using dropdowns, buttons, and modals built wi
 **Install python version: 3.13.9**
 1. Clone the Repository
 ```bash
-git clone https://github.com/MeltedButter77/Robotnic.git
+git clone https://github.com/jack-schultz/Robotnic.git
 cd Robotnic
 ```
 2. Install Dependencies - Topggpy installs discord.py as a dependency which isn't needed. When uninstalling it breaks py-cord, so install py-cord after its uninstalled.
