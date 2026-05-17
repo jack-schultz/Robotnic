@@ -9,7 +9,7 @@ class CreatorMenuCog(commands.Cog):
         self.bot = bot
 
     @discord.slash_command(description="Opens a menu to make and edit Creator Channels")
-    @discord.default_permissions(administrator=True)
+    @discord.default_permissions(manage_channels=True)
     async def setup(self, ctx):
         if not ctx.author.guild_permissions.administrator:
             return await ctx.send_response(f"Sorry {ctx.author.mention}, you require the `administrator` permission to run this command.")
