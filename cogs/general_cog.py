@@ -9,7 +9,7 @@ class GeneralCCog(commands.Cog):
         self.bot = bot
 
     @discord.slash_command(description="Responds with bot latency.")
-    @discord.default_permissions(administrator=True)
+    @discord.default_permissions(manage_channels=True)
     async def ping(self, ctx):
         await ctx.respond(f"Pong! Latency is {self.bot.latency}")
 

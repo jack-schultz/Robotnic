@@ -10,7 +10,7 @@ class SettingsMenuCog(commands.Cog):
     settings = discord.SlashCommandGroup(
         "settings",
         "Change Guild Settings",
-        default_member_permissions=discord.Permissions(administrator=True),
+        default_member_permissions=discord.Permissions(manage_channels=True),
     )
 
     @settings.command(description="Select which controls users should have access to by default")
