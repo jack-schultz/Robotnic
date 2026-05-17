@@ -85,7 +85,7 @@ cd Robotnic
 ```bash
 pip install -r requirements.txt
 pip uninstall discord.py -y
-pip install py-cord
+pip install "py-cord>=2.7.0"
 ```
 3. Run the main.py file to create the settings.json, database.db and .env files.
 ```bash
