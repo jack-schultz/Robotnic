@@ -10,3 +10,6 @@ topggpy>=1.4.0
 
 # API Checks (profanity filter)
 requests>=2.31
+
+fastapi
+uvicorn

@@ -1,11 +1,11 @@
 import discord
 import asyncio
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
+from api.stats import stats
 
 
 async def create_tasks(bot):
     tasks = []
-    current_module = __import__(__name__)
 
     # These are the functions in this file that will run periodically in bot.loop
     functions = [update_temp_channel_names, update_presence, clear_empty_temp_channels]
@@ -38,12 +38,19 @@ async def update_presence(bot):
 
             # Create variables if needed
             server_count = len(bot.guilds)  # Always needed as used in top.gg post
+
+            # Calculate user count
+            member_count = 0
             if "{member_count}" in status_text:
-                member_count = 0
                 for guild in bot.guilds:
                     member_count += guild.member_count
 
-            # Formate from settings
+            # Update Stats object for API
+            with stats.lock:
+                stats.guilds = server_count
+                stats.users = member_count
+
+            # Format from settings
             status = status_text.format(**locals())
             await bot.change_presence(activity=discord.Game(status))
             bot.logger.debug(f"Updated presence to \'{status}\'")
@@ -66,17 +73,8 @@ async def clear_empty_temp_channels(bot):
         try:
             bot.logger.debug("Clearing empty temp channels...")
 
-            temp_channel_ids = bot.repos.temp_channels.get_ids()
-            # creator_channel_ids = bot.db.get_creator_channel_ids()
-
-            # Cleanup deleted creator channels
-            # for channel_id in creator_channel_ids:
-            #     channel = bot.get_channel(channel_id)
-            #     if channel is None:
-            #         bot.logger.debug(f"Removing unfound/deleted creator channel from database")
-            #         bot.db.remove_creator_channel(channel_id)
-
             # Clean up empty temp channels
+            temp_channel_ids = bot.repos.temp_channels.get_ids()
             for channel_id in temp_channel_ids:
                 channel = bot.get_channel(channel_id)
                 if channel is None:

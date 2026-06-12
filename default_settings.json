@@ -12,6 +12,9 @@
         "channel_create": false,
         "channel_remove": false
     },
+    "api": {
+        "port": 8000
+    },
     "status": {
         "text": "Online in {server_count} servers | {member_count} users."
     }
