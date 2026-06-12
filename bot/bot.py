@@ -49,8 +49,8 @@ class Bot(discord.AutoShardedBot):
             super().run(self.token)
         except Exception as e:
             self.logger.error(
-                "Could not log in. Invalid TOKEN. "
-                "Please replace 'TOKEN_HERE' with your actual bot token."
+                "Could not log in. Likely invalid TOKEN. "
+                f"Please replace 'TOKEN_HERE' with your actual bot token. Error {e}"
             )
             sys.exit(1)
 
