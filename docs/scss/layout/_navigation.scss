@@ -1,29 +1,70 @@
-/* Navigation Bar */
-nav {
+.site-nav {
   background-color: $nav-bg-color;
-  padding: 30px 0;
+  border-bottom: 1px solid $border-subtle;
+  padding: 0 20px;
 
-  ul {
-    list-style-type: none;
+  &__inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 64px;
+  }
+
+  &__brand {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+
+    &:hover {
+      color: $primary-hover;
+    }
+  }
+
+  &__links {
+    list-style: none;
     margin: 0;
     padding: 0;
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    justify-content: flex-end;
 
-    li {
-      display: inline;
-      margin-right: 20px;
+    a {
+      color: $nav-link-color;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
 
-      a {
-        color: $nav-link-color;
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 22px;
+      &:hover {
+        color: $nav-link-hover-color;
+      }
 
-        &:hover {
-          text-decoration: underline;
-          color: $nav-link-hover-color;
-        }
+      &.active {
+        color: $nav-link-active-color;
+        border-bottom-color: $primary-color;
       }
     }
+  }
+}
+
+@media (max-width: 600px) {
+  .site-nav__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 0;
+    min-height: auto;
+  }
+
+  .site-nav__links {
+    justify-content: flex-start;
   }
 }

@@ -2,65 +2,69 @@
 @import '../base/mixins';
 
 .button {
-  background-color: $primary-color;
+  background-color: $primary-dark;
   color: #fff;
   padding: 10px 20px;
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 0.95rem;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   display: inline-block;
   text-decoration: none;
-  @include border-radius(5px);
-  @include box-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+  @include border-radius($radius-sm);
+  @include box-shadow($shadow-sm);
+  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    background-color: lighten($primary-color, 10%);
+    background-color: $primary-color;
+    transform: translateY(-1px);
+    @include box-shadow($shadow-md);
   }
 
   &:active {
-    background-color: darken($primary-color, 10%);
-    @include box-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
-    transform: translateY(2px);
+    background-color: $primary-dark;
+    transform: translateY(0);
+    @include box-shadow($shadow-sm);
   }
 }
 
-/* Secondary Button Style */
 .button--secondary {
-  background-color: $secondary-color;
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
 
   &:hover {
-    background-color: lighten($secondary-color, 10%);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #ffffff;
   }
 
   &:active {
-    background-color: darken($secondary-color, 10%);
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }
 
-/* Disabled Button Style */
 .button--disabled {
-  background-color: grey;
+  background-color: #4e5058;
   cursor: not-allowed;
   opacity: 0.6;
 
   &:hover,
   &:active {
-    background-color: grey;
+    background-color: #4e5058;
     box-shadow: none;
     transform: none;
   }
 }
 
-/* Large Button Modifier */
 .button--large {
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 13px 24px;
+  font-size: 1rem;
 }
 
-/* Small Button Modifier */
 .button--small {
-  padding: 5px 10px;
-  font-size: 14px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
 }

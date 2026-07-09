@@ -14,19 +14,29 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Robotnic – Terms of Service">
     <meta name="twitter:description" content="Understand your responsibilities and our limitations when using Robotnic.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="scss/main.css">
 </head>
 <body>
-<nav>
-    <ul>
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="contact.html">Contact Dev</a></li>
-    </ul>
+<nav class="site-nav">
+    <div class="site-nav__inner">
+        <a href="index.html" class="site-nav__brand">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="tos.html" class="active">Terms</a></li>
+            <li><a href="https://jackschultz.dev/contact.html">Contact</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic">GitHub</a></li>
+        </ul>
+    </div>
 </nav>
 
 <main>
+    <article class="legal">
     <h1>Terms of Service</h1>
-    <p><em>Last Updated: 25 September 2024</em></p>
+    <p class="legal__meta">Last updated: 25 September 2024</p>
 
     <p>Welcome to <strong>Dr Robotnic</strong>! By using this bot, you agree to comply with and be bound by the following terms and conditions. Please review the terms carefully. If you do not agree with these terms, you should not use the bot.</p>
 
@@ -74,15 +84,21 @@
     <p>These terms are governed by and construed in accordance with the laws of Australia. Any disputes arising from these terms or the use of the bot will be subject to the jurisdiction of the courts located in Australia.</p>
 
     <h2>9. Contact Information</h2>
-    <p>If you have any questions or concerns about these Terms of Service, please <a href="contact.html">contact us</a>.</p>
-
+    <p>If you have any questions or concerns about these Terms of Service, please <a href="https://jackschultz.dev/contact.html">contact us</a>.</p>
+    </article>
 </main>
 
-<footer>
-    <p>
-        <a href="privacy.html">Privacy Policy</a> |
-        <a href="tos.html">Terms of Service</a>
-    </p>
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <p class="site-footer__brand">Robotnic</p>
+        <div class="site-footer__links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+            <a href="https://jackschultz.dev/contact.html">Contact Developer</a>
+            <a href="https://github.com/jack-schultz/Robotnic">GitHub</a>
+        </div>
+        <p class="site-footer__note">Open-source Discord bot · Dynamic voice channels</p>
+    </div>
 </footer>
 </body>
 </html>

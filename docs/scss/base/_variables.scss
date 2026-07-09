@@ -1,12 +1,32 @@
-$primary-color: #585aba;
-$secondary-color: #6366f1;
+$primary-color: #7983f5;
+$primary-hover: #949cf0;
+$primary-dark: #5865f2;
+$secondary-color: #7289da;
 
-$nav-bg-color: #6366f1;
-$nav-link-color: #e5e7eb;
-$nav-link-hover-color: #6366f1;
+$nav-bg-color: #111214;
+$nav-link-color: #b5bac1;
+$nav-link-hover-color: #f2f3f5;
+$nav-link-active-color: #ffffff;
 
-$main-bg-color: #f3f4f6;
+$main-bg-color: #1e1f22;
+$surface-color: #2b2d31;
+$surface-raised: #313338;
+$text-color: #dbdee1;
+$text-muted: #b5bac1;
+$text-heading: #f2f3f5;
+$border-color: rgba(255, 255, 255, 0.1);
+$border-subtle: rgba(255, 255, 255, 0.06);
 
-$footer-bg-color: #6366f1;
-$footer-link-color: #e5e7eb;
-$footer-link-hover-color: #6366f1;
+$footer-bg-color: #111214;
+$footer-link-color: #b5bac1;
+$footer-link-hover-color: #f2f3f5;
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+$shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+
+$font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

@@ -1,24 +1,44 @@
-/* Footer */
-footer {
+.site-footer {
   background-color: $footer-bg-color;
-  padding: 15px;
-  text-align: center;
-  position: relative;
-  bottom: 0;
-  width: 100%;
+  border-top: 1px solid $border-subtle;
+  padding: 28px 20px;
+  margin-top: auto;
 
-  p {
-    margin: 0;
+  &__inner {
+    max-width: 960px;
+    margin: 0 auto;
+    text-align: center;
   }
 
-  a {
-    color: $footer-link-color;
-    text-decoration: none;
-    margin: 0 10px;
+  &__brand {
+    margin: 0 0 12px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1rem;
+  }
 
-    &:hover {
-      text-decoration: underline;
-      color: $footer-link-hover-color;
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 20px;
+    margin-bottom: 12px;
+
+    a {
+      color: $footer-link-color;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+
+      &:hover {
+        color: $footer-link-hover-color;
+      }
     }
+  }
+
+  &__note {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #949ba4;
   }
 }

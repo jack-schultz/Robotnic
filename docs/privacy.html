@@ -14,19 +14,29 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Robotnic – Privacy Policy">
     <meta name="twitter:description" content="How Robotnic handles your data when you use the Discord bot.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="scss/main.css">
 </head>
 <body>
-<nav>
-    <ul>
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="contact.html">Contact Dev</a></li>
-    </ul>
+<nav class="site-nav">
+    <div class="site-nav__inner">
+        <a href="index.html" class="site-nav__brand">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="privacy.html" class="active">Privacy</a></li>
+            <li><a href="tos.html">Terms</a></li>
+            <li><a href="https://jackschultz.dev/contact.html">Contact</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic">GitHub</a></li>
+        </ul>
+    </div>
 </nav>
 
 <main>
+    <article class="legal">
     <h1>Privacy Policy</h1>
-    <p><em>Last Updated: 12 June 2026</em></p>
+    <p class="legal__meta">Last updated: 12 June 2026</p>
 
     <p>Thank you for using <strong>Dr Robotnic</strong>. This privacy policy explains how we collect, use, and protect your data when using this bot. Your privacy is important to us, and we are committed to ensuring that your information is secure.</p>
 
@@ -76,14 +86,21 @@
     <p>We may update this privacy policy from time to time. The most current version will be available on our website. We encourage you to review the policy periodically.</p>
 
     <h2>9. Contact Us</h2>
-    <p>If you have any questions or concerns about this privacy policy, please <a href="contact.html">contact us</a></p>
+    <p>If you have any questions or concerns about this privacy policy, please <a href="https://jackschultz.dev/contact.html">contact us</a>.</p>
+    </article>
 </main>
 
-<footer>
-    <p>
-        <a href="privacy.html">Privacy Policy</a> |
-        <a href="tos.html">Terms of Service</a>
-    </p>
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <p class="site-footer__brand">Robotnic</p>
+        <div class="site-footer__links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+            <a href="https://jackschultz.dev/contact.html">Contact Developer</a>
+            <a href="https://github.com/jack-schultz/Robotnic">GitHub</a>
+        </div>
+        <p class="site-footer__note">Open-source Discord bot · Dynamic voice channels</p>
+    </div>
 </footer>
 </body>
 </html>
