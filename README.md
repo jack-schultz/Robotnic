@@ -111,6 +111,8 @@ TOKEN=TOKEN_HERE
 ```bash
 python main.py
 ```
+6. (Optional) Host the docs site from the `docs/` folder. Copy `docs/stats.config.example.json` to `docs/stats.config.json` and set `statsUrl` to your bot's `/stats` endpoint. A GitHub Actions workflow (`.github/workflows/update-stats.yml`) fetches stats hourly and updates `docs/index.html`. Enable Actions on your fork and ensure the API is reachable from GitHub's runners.
+
 Optionally: Edit the settings.json. 
 
 Below is the default settings.json with explanations of their options. Please note json does not support comments, do not include comments in your settings.json file.

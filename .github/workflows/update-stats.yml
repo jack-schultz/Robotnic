@@ -1,0 +1,35 @@
+name: Update bot stats
+
+on:
+  schedule:
+    # Hourly, aligned with the bot's stats refresh interval
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch stats and update docs
+        env:
+          # Optional repo variable override: Settings → Secrets and variables → Actions → Variables
+          STATS_API_URL: ${{ vars.STATS_API_URL }}
+        run: python scripts/update_docs_stats.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update bot stats"
+            git push
+          fi
