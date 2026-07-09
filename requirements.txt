@@ -1,12 +1,11 @@
-# Discord library
-# py-cord==2.7.0 # This is installed manually after discord.py is uninstalled
+# Discord library (do NOT install discord.py — it conflicts with py-cord)
+py-cord>=2.7.0
 PyNaCl==1.5.0
 
 # Environment variable loader
 python-dotenv>=1.0.0
 
-# Topgg
-topggpy>=1.4.0
+# topggpy is in requirements-topgg.txt (install with --no-deps via scripts/install to prevent issues with discord.py)
 
 # API Checks (profanity filter)
 requests>=2.31

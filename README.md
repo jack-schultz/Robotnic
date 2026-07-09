@@ -81,11 +81,23 @@ Controlled entirely within Discord using dropdowns, buttons, and modals built wi
 git clone https://github.com/jack-schultz/Robotnic.git
 cd Robotnic
 ```
-2. Install Dependencies - Topggpy installs discord.py as a dependency which isn't needed. When uninstalling it breaks py-cord, so install py-cord after its uninstalled.
+2. Install Dependencies
+
+   `topggpy` declares `discord.py` as a dependency, but this project uses **py-cord** instead. Installing `discord.py` alongside (or uninstalling it after) py-cord can leave a broken `discord` package. Use the install script so topggpy is installed with `--no-deps`:
+
+```bash
+# Linux / macOS / Git Bash
+./scripts/install.sh
+
+# Windows PowerShell
+.\scripts\install.ps1
+```
+
+   Or manually:
+
 ```bash
 pip install -r requirements.txt
-pip uninstall discord.py -y
-pip install "py-cord>=2.7.0"
+pip install -r requirements-topgg.txt --no-deps
 ```
 3. Run the main.py file to create the settings.json, database.db and .env files.
 ```bash
@@ -121,6 +133,10 @@ Below is the default settings.json with explanations of their options. Please no
         "guild_join": true,
         "channel_create": false,
         "channel_remove": false
+    },
+   // API allows certain information to be retrieved by the webserver running on the same machine
+   "api": {
+        "port": 8000
     },
     // Edit the status of the bot. Accepts variables {server_count} and {member_count}
     "status": {

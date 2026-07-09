@@ -1,0 +1,3 @@
+# topggpy declares discord.py as a dependency, but py-cord is a drop-in replacement.
+# Always install this file with: pip install -r requirements-topgg.txt --no-deps
+topggpy>=1.4.0

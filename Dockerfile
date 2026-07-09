@@ -3,7 +3,8 @@ WORKDIR /app
 
 # install deps
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && pip uninstall discord.py -y && pip install py-cord
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-topgg.txt --no-deps
 
 # copy source
 COPY . .
