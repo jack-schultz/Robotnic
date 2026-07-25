@@ -140,7 +140,7 @@ Below is the default settings.json with explanations of their options. Please no
    "api": {
         "port": 8000
     },
-    // Edit the status of the bot. Accepts variables {server_count} and {member_count}
+    // Edit the status of the bot. Accepts variables {server_count}, {member_count}, {creator_count} and {temp_channel_count}.
     "status": {
         "text": "Online in {server_count} servers | {member_count} users."
     }

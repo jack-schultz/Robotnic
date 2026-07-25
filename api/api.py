@@ -11,6 +11,8 @@ def get_stats():
         return {
             "guilds": stats.guilds,
             "users": stats.users,
+            "creators": stats.creators,
+            "channels": stats.channels,
         }
 
 @app.get("/")

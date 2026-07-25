@@ -37,18 +37,18 @@ async def update_presence(bot):
             status_text = bot.settings["status"].get("text", "")
 
             # Create variables if needed
-            server_count = len(bot.guilds)  # Always needed as used in top.gg post
+            server_count = len(bot.guilds)
 
-            # Calculate user count
+            # Calculate user count, could need ratelimiting in future? idk
             member_count = 0
-            if "{member_count}" in status_text:
-                for guild in bot.guilds:
-                    member_count += guild.member_count
+            for guild in bot.guilds:
+                member_count += guild.member_count
 
-            # Update Stats object for API
-            with stats.lock:
-                stats.guilds = server_count
-                stats.users = member_count
+            # Get count of creator channels
+            creator_count = len(bot.repos.creator_channels.get_ids())
+
+            # Get count of temp channels
+            temp_channel_count = len(bot.repos.temp_channels.get_ids())
 
             # Format from settings
             status = status_text.format(**locals())
@@ -59,6 +59,13 @@ async def update_presence(bot):
             if bot.topgg_client:
                 await bot.topgg_client.post_guild_count()
                 bot.logger.debug(f"Posted Guild Count to TOPGG; {server_count}")
+
+            # Update Stats object for API
+            with stats.lock:
+                stats.guilds = server_count
+                stats.users = member_count
+                stats.creators = creator_count
+                stats.channels = temp_channel_count
 
         except Exception as e:
             bot.logger.error(f"Error in {__name__} task: {e}")
