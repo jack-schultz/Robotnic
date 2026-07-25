@@ -39,7 +39,7 @@ def fetch_stats(stats_url: str) -> dict:
         return json.loads(response.read())
 
 
-def update_index(html: str, guilds: int, users: int) -> str:
+def update_index(html: str, guilds: int, users: int, creators: int, channels: int) -> str:
     html = re.sub(
         r'(<span class="stat-card__value" id="stat-servers">)[^<]*',
         rf"\g<1>{guilds:,}",
@@ -49,6 +49,18 @@ def update_index(html: str, guilds: int, users: int) -> str:
     html = re.sub(
         r'(<span class="stat-card__value" id="stat-users">)[^<]*',
         rf"\g<1>{users:,}",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'(<span class="stat-card__value" id="stat-creators">)[^<]*',
+        rf"\g<1>{creators:,}",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'(<span class="stat-card__value" id="stat-channels">)[^<]*',
+        rf"\g<1>{channels:,}",
         html,
         count=1,
     )
@@ -76,13 +88,21 @@ def main() -> None:
     try:
         guilds = int(stats["guilds"])
         users = int(stats["users"])
+        creators = int(stats["creators"])
+        channels = int(stats["channels"])
     except (KeyError, TypeError, ValueError) as exc:
         print(f"Unexpected stats response: {stats!r} ({exc})", file=sys.stderr)
         sys.exit(1)
 
     html = INDEX_PATH.read_text(encoding="utf-8")
-    INDEX_PATH.write_text(update_index(html, guilds, users), encoding="utf-8")
-    print(f"Updated docs: {guilds:,} servers, {users:,} users")
+    INDEX_PATH.write_text(
+        update_index(html, guilds, users, creators, channels),
+        encoding="utf-8",
+    )
+    print(
+        f"Updated docs: {guilds:,} servers, {users:,} users, "
+        f"{creators:,} creator channels, {channels:,} temp channels"
+    )
 
 
 if __name__ == "__main__":

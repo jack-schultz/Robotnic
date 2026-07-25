@@ -353,7 +353,7 @@ code {
 
 .stats__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -537,6 +537,9 @@ code {
   }
   .stats {
     padding: 22px 18px 20px;
+  }
+  .stats__grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .stat-card__value {
     font-size: 1.75rem;
