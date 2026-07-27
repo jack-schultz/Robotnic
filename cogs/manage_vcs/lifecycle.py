@@ -76,9 +76,7 @@ async def create_on_join(member, before, after, bot):
         response_text = f"Sorry {member.mention}, I require the following permissions."
         if category:
             response_text = response_text + f"Make sure they are not overwritten by the category (In this case `{category.name}`)."
-        await creator_channel.send(
-            response_text,
-            embed=embed, delete_after=300)
+        await creator_channel.send(response_text, embed=embed, delete_after=300)
         return
 
     overwrites[bot.user] = discord.PermissionOverwrite(
@@ -97,12 +95,21 @@ async def create_on_join(member, before, after, bot):
         connect=True,
     )
 
-    new_temp_channel = await creator_channel.guild.create_voice_channel(
-        name="⌛",
-        category=category,
-        overwrites=overwrites,
-        position=creator_channel.position,
-    )
+    try:
+        new_temp_channel = await creator_channel.guild.create_voice_channel(
+            name="⌛",
+            category=category,
+            overwrites=overwrites,
+            position=creator_channel.position,
+        )
+    except discord.Forbidden as e:
+        response_text = f"Sorry {member.mention}, I do not have permission to create a channel in the desired category"
+        if category:
+            response_text = response_text + f" (`{category.name}`)."
+        else:
+            response_text = response_text + "."
+        await creator_channel.send(response_text, delete_after=300)
+        return
 
     counts = bot.repos.temp_channels.get_counts(creator_channel.id)
     if len(counts) < 1:
