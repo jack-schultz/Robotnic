@@ -195,5 +195,9 @@ Below is the default `settings.json` with a table to explain.
 
 Please make sure you have **message**, **member**, and **presence (activity)** intents enabled in the Discord Developer Portal for your bot.
 
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branch workflow, and pull request guidelines.
+
 ## Future Features
 Join the 👉[Discord Server](https://discord.gg/rcAREJyMV5) to keep up to date with any developments.
