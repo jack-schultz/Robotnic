@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import discord
 from discord.ui import View
@@ -8,6 +9,8 @@ from cogs.control_vc.modals.user_limit_modal import UserLimitModal
 from cogs.control_vc.modals.change_name_modal import ChangeNameModal
 from cogs.control_vc.views.give_ownership import GiveOwnershipView
 from cogs.control_vc.views.ban_user import BanUserView
+
+logger = logging.getLogger(__name__)
 
 
 async def update_overwrites(bot, channel, new_overwrite):
@@ -260,7 +263,7 @@ class ControlView(View):
         await self.update_view()
 
     async def on_timeout(self):
-        self.bot.logger.warning(f"Control message timed out for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
+        logger.warning(f"Control message timed out for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
         self.clear_items()
         self.add_item(
             discord.ui.Button(
@@ -273,13 +276,13 @@ class ControlView(View):
         try:
             await self.control_message.edit(view=self)
         except Exception as e:
-            self.bot.logger.warning(
+            logger.warning(
                 f"Failed to update control message after timeout for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}': {e}"
             )
 
     # --- Callbacks ---
     async def public_button_callback(self, interaction: discord.Interaction):
-        self.bot.logger.debug(
+        logger.debug(
             f"Setting temp channel {interaction.channel.id} to public in guild '{interaction.guild.name}'"
         )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.PUBLIC.value)
@@ -291,7 +294,7 @@ class ControlView(View):
         await interaction.response.defer()
 
     async def lock_button_callback(self, interaction: discord.Interaction):
-        self.bot.logger.debug(
+        logger.debug(
             f"Setting temp channel {interaction.channel.id} to locked in guild '{interaction.guild.name}'"
         )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.LOCKED.value)
@@ -302,7 +305,7 @@ class ControlView(View):
         await interaction.response.defer()
 
     async def hide_button_callback(self, interaction: discord.Interaction):
-        self.bot.logger.debug(
+        logger.debug(
             f"Setting temp channel {interaction.channel.id} to hidden in guild '{interaction.guild.name}'"
         )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.HIDDEN.value)
@@ -344,7 +347,7 @@ class ControlView(View):
             try:
                 await interaction.channel.delete_messages(messages_to_delete)
             except Exception as e:
-                self.bot.logger.warning(
+                logger.warning(
                     f"Failed to bulk delete messages in temp channel {interaction.channel.id} in guild '{interaction.guild.name}': {e}"
                 )
                 await interaction.followup.send(f"Failed, {e}", ephemeral=True, delete_after=15)
@@ -383,26 +386,26 @@ class ControlView(View):
             try:
                 await interaction.channel.delete()
             except discord.NotFound as e:
-                self.bot.logger.debug(
+                logger.debug(
                     f"Channel not found removing temp channel in guild '{interaction.guild.name}', handled. {e}"
                 )
             except discord.Forbidden as e:
-                self.bot.logger.warning(
+                logger.warning(
                     f"Permission error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}', notifying user of missing permissions. {e}"
                 )
                 await interaction.channel.send(f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.", delete_after=300)
                 return
             except Exception as e:
-                self.bot.logger.error(
+                logger.error(
                     f"Unknown error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}': {e}"
                 )
 
             self.bot.repos.temp_channels.remove(interaction.channel.id)
-            self.bot.logger.debug(
+            logger.debug(
                 f"Deleted temp channel {interaction.channel.id} via control message confirmation in guild '{interaction.guild.name}'"
             )
         except asyncio.TimeoutError:
-            self.bot.logger.debug(
+            logger.debug(
                 f"Channel deletion confirmation timed out for temp channel {interaction.channel.id} in guild '{interaction.guild.name}', handled."
             )
             try:

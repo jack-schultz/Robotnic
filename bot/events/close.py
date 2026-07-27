@@ -1,8 +1,11 @@
+import logging
 import discord
+
+logger = logging.getLogger(__name__)
 
 
 async def close(bot):
-    bot.logger.info(f'Logging out {bot.user}')
+    logger.info(f'Logging out {bot.user}')
 
     # Update all control messages with a disabled button saying its expired
     for temp_channel_id in bot.repos.temp_channels.get_ids():

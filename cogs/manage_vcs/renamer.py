@@ -1,6 +1,9 @@
+import logging
 import asyncio
 import time
 import discord
+
+logger = logging.getLogger(__name__)
 
 
 # - This class fixes rate-limit renaming problems
@@ -33,14 +36,14 @@ class TempChannelRenamer:
         # Create a queue for this channel if needed
         guild_name = channel.guild.name
         self.pending_name[channel.id] = new_name
-        self.bot.logger.debug(
+        logger.debug(
             f"[RENAMER] Queued rename request for channel {channel.name} ({channel.id}) in guild '{guild_name}': '{new_name}'."
         )
 
         # Start a worker for this channel if none exists
         if (channel.id not in self.rename_workers or self.rename_workers[channel.id].done()):
             self.rename_workers[channel.id] = asyncio.create_task(self._worker(channel))
-            self.bot.logger.debug(
+            logger.debug(
                 f"[RENAMER] Started worker task for channel {channel.name} ({channel.id}) in guild '{guild_name}'"
             )
 
@@ -54,7 +57,7 @@ class TempChannelRenamer:
         guild_name = channel.guild.name
 
         while True:
-            self.bot.logger.debug(
+            logger.debug(
                 f"[RENAMER] Worker for channel {channel.name} ({channel.id}) in guild '{guild_name}' "
                 f"received rename request '{new_name}'."
             )
@@ -67,7 +70,7 @@ class TempChannelRenamer:
             time_since_last = time.time() - last_time
             time_remaining = self.minimum_interval - time_since_last
             if time_remaining > 0:
-                self.bot.logger.debug(
+                logger.debug(
                     f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
                     f"must wait {time_remaining:.2f} seconds before renaming again."
                 )
@@ -76,7 +79,7 @@ class TempChannelRenamer:
             # Get new name which may have changed while waiting
             new_name = self.pending_name[channel.id]
 
-            self.bot.logger.debug(
+            logger.debug(
                 f"[RENAMER] Renaming channel {channel.name} ({channel.id}) in guild '{guild_name}' to '{new_name}'."
             )
 
@@ -84,12 +87,12 @@ class TempChannelRenamer:
             try:
                 if channel.name != new_name:
                     await channel.edit(name=new_name)
-                    self.bot.logger.debug(
+                    logger.debug(
                         f"[RENAMER] Successfully renamed channel {channel.name} ({channel.id}) in guild '{guild_name}' to '{new_name}'."
                     )
                     self.last_rename_time[channel.id] = time.time()
                 else:
-                    self.bot.logger.debug(
+                    logger.debug(
                         f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
                         f"is already named '{new_name}'."
                     )
@@ -99,21 +102,21 @@ class TempChannelRenamer:
                 if error.status == 429:
                     # The library almost never throws this.
                     retry_seconds = getattr(error, "retry_after", 10)
-                    self.bot.logger.warning(
+                    logger.warning(
                         f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
                         f"hit a rate limit. Retrying in {retry_seconds + 1} seconds."
                     )
                     await asyncio.sleep(retry_seconds + 1)
                     continue
                 else:
-                    self.bot.logger.warning(
+                    logger.warning(
                         f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}': {error}"
                     )
                     raise
 
             # If there are no pending rename requests, exit the worker
             if new_name is None:
-                self.bot.logger.debug(
+                logger.debug(
                     f"[RENAMER] Worker has renamed {channel.name} ({channel.id}) in guild '{guild_name}'. Exiting."
                 )
                 break

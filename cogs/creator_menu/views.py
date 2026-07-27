@@ -1,7 +1,10 @@
+import logging
 import discord
 from discord.ui import View, Select, Button, Modal, InputText
 from cogs.creator_menu.embeds import ListCreatorsEmbed, OptionsEmbed
 from cogs.creator_menu.modals import EditModal
+
+logger = logging.getLogger(__name__)
 
 
 class CreateView(View):
@@ -21,7 +24,7 @@ class CreateView(View):
             guild = self.message.guild
 
         if guild is None:
-            self.bot.logger.error("No guild obj to create items for CreateView")
+            logger.error("No guild obj to create items for CreateView")
             return
 
         # Dropdown (own row)
@@ -102,4 +105,4 @@ class CreateView(View):
         try:
             await self.message.delete_original_response()
         except Exception as e:
-            self.bot.logger.error(f"Unable to update CreateView message after timeout, message likely deleted before timeout.")
+            logger.error(f"Unable to update CreateView message after timeout, message likely deleted before timeout.")

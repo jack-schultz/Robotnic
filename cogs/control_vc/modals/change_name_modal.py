@@ -1,11 +1,14 @@
+import logging
 import datetime
 import discord
 import requests
 from cogs.control_vc.embed_updates import update_info_embed
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 
+logger = logging.getLogger(__name__)
 
-async def check_profanity(logger, session, text: str) -> dict | None:
+
+async def check_profanity(session, text: str) -> dict | None:
     try:
         response = session.post(
             "https://vector.profanity.dev",
@@ -42,7 +45,7 @@ class ChangeNameModal(discord.ui.Modal):
 
         profanity_check_setting = self.bot.repos.guild_settings.get_profanity_filter(interaction.guild.id)["profanity_filter"]
         if profanity_check_setting is not None:
-            profanity_check = await check_profanity(self.bot.logger, requests, channel_name)
+            profanity_check = await check_profanity(requests, channel_name)
 
             if profanity_check["isProfanity"]:
                 embed = discord.Embed(

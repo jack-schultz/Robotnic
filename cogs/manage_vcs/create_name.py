@@ -1,9 +1,12 @@
+import logging
 import discord
+
+logger = logging.getLogger(__name__)
 
 
 def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_creator_channel_info=None):
     if not temp_channel:
-        bot.logger.debug("Skipping temp channel name generation: temp_channel is None.")
+        logger.debug("Skipping temp channel name generation: temp_channel is None.")
         return None
 
     # Allows db info to be passed in if it was already retrieved for something else. Choice reduces db reads
@@ -22,7 +25,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
             member_name = owner.nick if owner.nick else owner.display_name
         else:
             member_name = "Public"
-            bot.logger.debug(
+            logger.debug(
                 f"Owner not found for temp channel {temp_channel.id} in guild '{guild_name}', using 'Public' for {{user}} placeholder."
             )
         new_channel_name = new_channel_name.replace("{user}", member_name)
@@ -39,7 +42,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
             activities.append("General")
         activities.sort(key=len)
         activity_text = ", ".join(activities)
-        bot.logger.debug(
+        logger.debug(
             f"Resolved {{activity}} placeholder for temp channel {temp_channel.id} in guild '{guild_name}': '{activity_text}'"
         )
 
@@ -47,14 +50,14 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
 
     if "{count}" in str(new_channel_name):
         count = db_temp_channel_info.number
-        bot.logger.debug(
+        logger.debug(
             f"Resolved {{count}} placeholder for temp channel {temp_channel.id} in guild '{guild_name}': {count}"
         )
         new_channel_name = new_channel_name.replace("{count}", str(count))
 
     # Max char is 100, using 98 just in case
     if len(str(new_channel_name)) > 95:
-        bot.logger.debug(
+        logger.debug(
             f"Truncating temp channel name for {temp_channel.id} in guild '{guild_name}' from {len(str(new_channel_name))} characters."
         )
         new_channel_name = new_channel_name[:95] + "..."

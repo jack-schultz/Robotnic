@@ -1,9 +1,12 @@
+import logging
 from cogs.control_vc.embed_updates import update_info_embed
+
+logger = logging.getLogger(__name__)
 
 
 async def is_owner(view, interaction):
     if not interaction.user in interaction.channel.members:
-        view.bot.logger.debug(f"User '{interaction.user}' interacted with control message that they are not connected to in guild '{interaction.guild.name}'.")
+        logger.debug(f"User '{interaction.user}' interacted with control message that they are not connected to in guild '{interaction.guild.name}'.")
         await interaction.response.send_message(f"You are not connected to this voice channel {interaction.user.mention}!", ephemeral=True, delete_after=15)
         return False
 
@@ -20,7 +23,7 @@ async def is_owner(view, interaction):
 
     # If owner is connected and isn't interacting user return false
     elif owner_id != interaction.user.id:
-        view.bot.logger.debug(f"User '{interaction.user}' interacted with control message that they don't own in guild '{interaction.guild.name}'.")
+        logger.debug(f"User '{interaction.user}' interacted with control message that they don't own in guild '{interaction.guild.name}'.")
         await interaction.response.send_message(f"You do not own this temporary channel {interaction.user.mention}!", ephemeral=True, delete_after=15)
         return False
 

@@ -1,7 +1,10 @@
+import logging
 import asyncio
 import time
 from cogs.control_vc.embed_updates import update_info_embed
 from cogs.manage_vcs.create_name import create_temp_channel_name
+
+logger = logging.getLogger(__name__)
 
 
 # Updates channel name to match its creator's template.
@@ -9,7 +12,7 @@ from cogs.manage_vcs.create_name import create_temp_channel_name
 async def update_channel_name_and_control_msg(bot, temp_channel_ids):
     sample_channel = bot.get_channel(temp_channel_ids[0]) if temp_channel_ids else None
     guild_name = sample_channel.guild.name if sample_channel else "unknown"
-    bot.logger.debug(
+    logger.debug(
         f"Updating {len(temp_channel_ids)} temp channel names & control msgs in guild '{guild_name}'..."
     )
     start = time.perf_counter()
@@ -27,23 +30,23 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
             channel_guild_name = guild.name if guild else "unknown"
         if temp_channel is None or db_temp_channel_info is None:
             if db_temp_channel_info is not None and temp_channel is None:
-                bot.logger.warning(
+                logger.warning(
                     f"Temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}' "
                     f"exists in database but channel was not found, skipping update."
                 )
             else:
-                bot.logger.debug(
+                logger.debug(
                     f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}': "
                     f"channel or db info not found."
                 )
             return
         if db_temp_channel_info.is_renamed:
-            bot.logger.debug(
+            logger.debug(
                 f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name}': manually renamed."
             )
             return
         if not temp_channel or not db_temp_channel_info.creator_id:  # Filter so only channels in the temp_channels db continue
-            bot.logger.warning(
+            logger.warning(
                 f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name}': missing channel or creator_id."
             )
             return
@@ -57,14 +60,14 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
             # Rename channel if not renamed and new name is different
             if temp_channel.name != new_channel_name:
                 if len(temp_channel.members) > 0:  # If empty it is going to be deleted, ignore
-                    bot.logger.debug(f"Renaming {temp_channel.name} to {new_channel_name} in guild '{channel_guild_name}'")
+                    logger.debug(f"Renaming {temp_channel.name} to {new_channel_name} in guild '{channel_guild_name}'")
                     await bot.TempChannelRenamer.schedule(temp_channel, new_channel_name)
                 else:
-                    bot.logger.debug(
+                    logger.debug(
                         f"Skipping rename for empty temp channel {temp_channel_id} in guild '{channel_guild_name}', pending deletion."
                     )
             else:
-                bot.logger.debug(
+                logger.debug(
                     f"Temp channel {temp_channel.name} ({temp_channel_id}) in guild '{channel_guild_name}' "
                     f"name unchanged ('{new_channel_name}'), skipping rename."
                 )
@@ -77,10 +80,10 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
     try:
         await asyncio.gather(*tasks)
     except Exception as e:
-        bot.logger.warning(
+        logger.warning(
             f"Unhandled error in update_channel_name_and_control_msg in guild '{guild_name}': {e}"
         )
 
     end = time.perf_counter()
     duration = end - start
-    bot.logger.debug(f"Temp channel name update completed in guild '{guild_name}' in {duration:.4f} seconds")
+    logger.debug(f"Temp channel name update completed in guild '{guild_name}' in {duration:.4f} seconds")

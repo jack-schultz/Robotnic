@@ -1,10 +1,13 @@
+import logging
 import os
 import sys
 import dotenv
 from config.paths import ENV_PATH
 
+logger = logging.getLogger(__name__)
 
-def load_tokens(logger) -> tuple[str, str | None]:
+
+def load_tokens() -> tuple[str, str | None]:
     # Check if .env exists, if not create a new one
     placeholder = "TOKEN_HERE"
     if not os.path.exists(ENV_PATH):

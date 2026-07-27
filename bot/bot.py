@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import discord
@@ -10,9 +11,11 @@ from bot.events.close import close
 from database.database import Database
 from database.repositories import Repositories
 
+logger = logging.getLogger(__name__)
+
 
 class Bot(discord.AutoShardedBot):
-    def __init__(self, token, topgg_token, logger, settings):
+    def __init__(self, token, topgg_token, settings):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.presences = True
@@ -20,7 +23,6 @@ class Bot(discord.AutoShardedBot):
         super().__init__(intents=intents)
 
         self.token = token
-        self.logger = logger
         self.settings = settings
 
         self.db = Database()
@@ -39,7 +41,7 @@ class Bot(discord.AutoShardedBot):
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py") and not filename.startswith("_"):
                 self.load_extension(f"cogs.{filename[:-3]}")
-                self.logger.debug(f"Loaded cog: {filename}")
+                logger.debug(f"Loaded cog: {filename}")
 
     def run(self):
         if not self.ready:
@@ -48,7 +50,7 @@ class Bot(discord.AutoShardedBot):
         try:
             super().run(self.token)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 "Could not log in. Likely invalid TOKEN. "
                 f"Please replace 'TOKEN_HERE' with your actual bot token. Error {e}"
             )

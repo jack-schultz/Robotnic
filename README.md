@@ -173,7 +173,8 @@ Below is the default `settings.json` with a table to explain.
         "stop": true,
         "guild_join": true,
         "channel_create": false,
-        "channel_remove": false
+        "channel_remove": false,
+        "creator_create": false
     },
     "api": {
         "port": 8000
