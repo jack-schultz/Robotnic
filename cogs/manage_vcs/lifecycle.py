@@ -38,10 +38,13 @@ async def create_on_join(member, before, after, bot):
     db_creator_channel_info = bot.repos.creator_channels.get_info(creator_channel.id)
     if db_creator_channel_info.child_category_id != 0:
         category = bot.get_channel(db_creator_channel_info.child_category_id)
+        if category is None:
+            bot.logger.warning(
+                f"Configured child category {db_creator_channel_info.child_category_id} not found for creator channel {creator_channel.id} in guild '{guild_name}'"
+            )
         bot.logger.debug(
             f"Using configured child category {db_creator_channel_info.child_category_id} "
-            f"({category.name if category else 'not found'}) for creator channel {creator_channel.id} "
-            f"in guild '{guild_name}'"
+            f"({category.name if category else 'not found'}) for creator channel {creator_channel.id} in guild '{guild_name}'"
         )
     else:
         category = creator_channel.category
@@ -63,7 +66,7 @@ async def create_on_join(member, before, after, bot):
             bot.logger.debug(f"Using category overwrites from {category.name} for temp channel in {creator_channel.id} in guild '{guild_name}'")
         else:
             overwrites = creator_channel.overwrites
-            bot.logger.debug(
+            bot.logger.warning(
                 f"No category available for overwrite source, falling back to creator channel overwrites for {creator_channel.id} in guild '{guild_name}'"
             )
     else:
@@ -89,9 +92,12 @@ async def create_on_join(member, before, after, bot):
             missing_permissions.append(perm)
 
     if not has_all_perms:
-        bot.logger.debug(
+        bot.logger.warning(
             f"Missing guild permissions to create temp channel for {member} in guild '{guild_name}', aborting. "
             f"Missing: {', '.join(missing_permissions)}"
+        )
+        bot.logger.debug(
+            f"Notified {member} of missing permissions in guild '{guild_name}'"
         )
         embed = discord.Embed()
         embed.add_field(name="Required",
@@ -128,9 +134,9 @@ async def create_on_join(member, before, after, bot):
             position=creator_channel.position,
         )
     except discord.Forbidden as e:
-        bot.logger.debug(
+        bot.logger.warning(
             f"Permission error creating temp channel in category in guild '{guild_name}', "
-            f"handled by sending a message notifying of lack of perms. {e}"
+            f"notifying user of missing permissions. {e}"
         )
         response_text = f"Sorry {member.mention}, I do not have permission to create a channel in the desired category"
         if category:
@@ -181,7 +187,7 @@ async def create_on_join(member, before, after, bot):
         await view.send_initial_message(member, channel_name=channel_name)
         bot.logger.debug(f"Finalized temp channel {new_temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
     except Exception as e:
-        bot.logger.debug(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
+        bot.logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
 
     # Sends messages in the guild log channel and the bot's notification channel
     embed = discord.Embed(
@@ -223,9 +229,10 @@ async def delete_on_leave(member, before, after, bot):
         return
 
     except discord.Forbidden as e:
-        bot.logger.debug(
-            f"Permission error removing temp channel in guild '{guild_name}', "
-            f"handled by sending a message notifying of lack of perms. {e}")
+        bot.logger.warning(
+            f"Permission error removing temp channel {old_temp_channel.id} in guild '{guild_name}', "
+            f"notifying user of missing permissions. {e}"
+        )
         await old_temp_channel.send(f"Sorry {member.mention}, I do not have permission to delete this channel.", delete_after=300)
         return
 

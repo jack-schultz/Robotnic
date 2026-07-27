@@ -26,10 +26,16 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
             guild = bot.get_guild(db_temp_channel_info.guild_id)
             channel_guild_name = guild.name if guild else "unknown"
         if temp_channel is None or db_temp_channel_info is None:
-            bot.logger.debug(
-                f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}': "
-                f"channel or db info not found, handled."
-            )
+            if db_temp_channel_info is not None and temp_channel is None:
+                bot.logger.warning(
+                    f"Temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}' "
+                    f"exists in database but channel was not found, skipping update."
+                )
+            else:
+                bot.logger.debug(
+                    f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}': "
+                    f"channel or db info not found."
+                )
             return
         if db_temp_channel_info.is_renamed:
             bot.logger.debug(
@@ -37,7 +43,7 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
             )
             return
         if not temp_channel or not db_temp_channel_info.creator_id:  # Filter so only channels in the temp_channels db continue
-            bot.logger.debug(
+            bot.logger.warning(
                 f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name}': missing channel or creator_id."
             )
             return
@@ -71,7 +77,9 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
     try:
         await asyncio.gather(*tasks)
     except Exception as e:
-        bot.logger.debug(f"Unhandled error in func update_channel_name_and_control_msg in guild '{guild_name}' {e}")
+        bot.logger.warning(
+            f"Unhandled error in update_channel_name_and_control_msg in guild '{guild_name}': {e}"
+        )
 
     end = time.perf_counter()
     duration = end - start

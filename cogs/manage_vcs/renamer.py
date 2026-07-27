@@ -106,8 +106,8 @@ class TempChannelRenamer:
                     await asyncio.sleep(retry_seconds + 1)
                     continue
                 else:
-                    self.bot.logger.debug(
-                        f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}', unhandled. {error}"
+                    self.bot.logger.warning(
+                        f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}': {error}"
                     )
                     raise
 

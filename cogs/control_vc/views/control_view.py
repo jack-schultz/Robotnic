@@ -260,7 +260,7 @@ class ControlView(View):
         await self.update_view()
 
     async def on_timeout(self):
-        self.bot.logger.error(f"Control message timed out in {self.control_message.channel.name}")
+        self.bot.logger.warning(f"Control message timed out for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
         self.clear_items()
         self.add_item(
             discord.ui.Button(
@@ -273,8 +273,8 @@ class ControlView(View):
         try:
             await self.control_message.edit(view=self)
         except Exception as e:
-            self.bot.logger.debug(
-                f"Failed to update control message after timeout in guild '{self.temp_channel.guild.name}'. Handled. {e}"
+            self.bot.logger.warning(
+                f"Failed to update control message after timeout for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}': {e}"
             )
 
     # --- Callbacks ---
@@ -344,8 +344,8 @@ class ControlView(View):
             try:
                 await interaction.channel.delete_messages(messages_to_delete)
             except Exception as e:
-                self.bot.logger.debug(
-                    f"Failed to bulk delete messages in temp channel {interaction.channel.id} in guild '{interaction.guild.name}', handled. {e}"
+                self.bot.logger.warning(
+                    f"Failed to bulk delete messages in temp channel {interaction.channel.id} in guild '{interaction.guild.name}': {e}"
                 )
                 await interaction.followup.send(f"Failed, {e}", ephemeral=True, delete_after=15)
 
@@ -387,13 +387,15 @@ class ControlView(View):
                     f"Channel not found removing temp channel in guild '{interaction.guild.name}', handled. {e}"
                 )
             except discord.Forbidden as e:
-                self.bot.logger.debug(
-                    f"Permission error removing temp channel in guild '{interaction.guild.name}', handled by sending a message notifying of lack of perms. {e}"
+                self.bot.logger.warning(
+                    f"Permission error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}', notifying user of missing permissions. {e}"
                 )
                 await interaction.channel.send(f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.", delete_after=300)
                 return
             except Exception as e:
-                self.bot.logger.error(f"Unknown error removing temp channel, handled. {e}")
+                self.bot.logger.error(
+                    f"Unknown error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}': {e}"
+                )
 
             self.bot.repos.temp_channels.remove(interaction.channel.id)
             self.bot.logger.debug(

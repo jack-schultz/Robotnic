@@ -18,7 +18,7 @@ class CreatorMenuCog(commands.Cog):
         for channel_id in creator_channel_ids:
             channel = self.bot.get_channel(channel_id)
             if channel is None:
-                self.bot.logger.debug(f"Removing unfound/deleted creator channel from database")
+                self.bot.logger.warning(f"Removing unfound/deleted creator channel {channel_id} from database in guild '{ctx.guild.name}'")
                 self.bot.repos.creator_channels.remove(channel_id)
 
         embeds = [ListCreatorsEmbed(guild=ctx.guild, bot=self.bot)]

@@ -85,7 +85,7 @@ async def clear_empty_temp_channels(bot):
             for channel_id in temp_channel_ids:
                 channel = bot.get_channel(channel_id)
                 if channel is None:
-                    bot.logger.debug(f"Removing unfound/deleted temp channel from database")
+                    bot.logger.warning(f"Removing unfound/deleted temp channel from database")
                     bot.repos.temp_channels.remove(channel_id)
                     continue
 
@@ -95,9 +95,23 @@ async def clear_empty_temp_channels(bot):
                     await channel.guild.chunk()
 
                 if len(channel.members) == 0:
-                    bot.logger.debug(f"Deleting empty temp channel \'{channel.name}\'")
-                    await channel.delete()
-                    bot.repos.temp_channels.remove(channel.id)
+                    bot.logger.debug(f"Deleting empty temp channel '{channel.name}' in guild '{channel.guild.name}'")
+                    try:
+                        await channel.delete()
+                        bot.repos.temp_channels.remove(channel.id)
+                    except discord.NotFound:
+                        bot.repos.temp_channels.remove(channel.id)
+                        bot.logger.debug(
+                            f"Empty temp channel {channel.id} already deleted in guild '{channel.guild.name}', removed db entry"
+                        )
+                    except discord.Forbidden as e:
+                        bot.logger.warning(
+                            f"Permission error deleting empty temp channel {channel.id} in guild '{channel.guild.name}': {e}"
+                        )
+                    except Exception as e:
+                        bot.logger.warning(
+                            f"Failed to delete empty temp channel {channel.id} in guild '{channel.guild.name}': {e}"
+                        )
 
         except Exception as e:
             bot.logger.error(f"Error in {__name__} task: {e}")
