@@ -273,10 +273,15 @@ class ControlView(View):
         try:
             await self.control_message.edit(view=self)
         except Exception as e:
-            self.bot.logger.debug(f"Failed to update control message after timeout. Handled. {e}")
+            self.bot.logger.debug(
+                f"Failed to update control message after timeout in guild '{self.temp_channel.guild.name}'. Handled. {e}"
+            )
 
     # --- Callbacks ---
     async def public_button_callback(self, interaction: discord.Interaction):
+        self.bot.logger.debug(
+            f"Setting temp channel {interaction.channel.id} to public in guild '{interaction.guild.name}'"
+        )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.PUBLIC.value)
 
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=True)
@@ -286,6 +291,9 @@ class ControlView(View):
         await interaction.response.defer()
 
     async def lock_button_callback(self, interaction: discord.Interaction):
+        self.bot.logger.debug(
+            f"Setting temp channel {interaction.channel.id} to locked in guild '{interaction.guild.name}'"
+        )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.LOCKED.value)
 
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=False)
@@ -294,6 +302,9 @@ class ControlView(View):
         await interaction.response.defer()
 
     async def hide_button_callback(self, interaction: discord.Interaction):
+        self.bot.logger.debug(
+            f"Setting temp channel {interaction.channel.id} to hidden in guild '{interaction.guild.name}'"
+        )
         self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.HIDDEN.value)
 
         new_overwrite = discord.PermissionOverwrite(view_channel=False, connect=False)
@@ -333,6 +344,9 @@ class ControlView(View):
             try:
                 await interaction.channel.delete_messages(messages_to_delete)
             except Exception as e:
+                self.bot.logger.debug(
+                    f"Failed to bulk delete messages in temp channel {interaction.channel.id} in guild '{interaction.guild.name}', handled. {e}"
+                )
                 await interaction.followup.send(f"Failed, {e}", ephemeral=True, delete_after=15)
 
         embed = discord.Embed(
@@ -369,16 +383,26 @@ class ControlView(View):
             try:
                 await interaction.channel.delete()
             except discord.NotFound as e:
-                self.bot.logger.debug(f"Channel not found removing temp channel, handled. {e}")
+                self.bot.logger.debug(
+                    f"Channel not found removing temp channel in guild '{interaction.guild.name}', handled. {e}"
+                )
             except discord.Forbidden as e:
-                self.bot.logger.debug(f"Permission error removing temp channel, handled by sending a message notifying of lack of perms. {e}")
+                self.bot.logger.debug(
+                    f"Permission error removing temp channel in guild '{interaction.guild.name}', handled by sending a message notifying of lack of perms. {e}"
+                )
                 await interaction.channel.send(f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.", delete_after=300)
                 return
             except Exception as e:
                 self.bot.logger.error(f"Unknown error removing temp channel, handled. {e}")
 
             self.bot.repos.temp_channels.remove(interaction.channel.id)
+            self.bot.logger.debug(
+                f"Deleted temp channel {interaction.channel.id} via control message confirmation in guild '{interaction.guild.name}'"
+            )
         except asyncio.TimeoutError:
+            self.bot.logger.debug(
+                f"Channel deletion confirmation timed out for temp channel {interaction.channel.id} in guild '{interaction.guild.name}', handled."
+            )
             try:
                 # If the user does not respond in time, send a timeout message
                 embed = discord.Embed(

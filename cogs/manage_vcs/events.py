@@ -11,16 +11,18 @@ async def handle_voice_state_update(bot, member, before, after):
     if after.channel:  # If a user joined a channel
         creator_channel_ids = bot.repos.creator_channels.get_ids()
         if after.channel.id in creator_channel_ids:  # Filter to creator channels
+            bot.logger.debug(f"Routing {member} to create_on_join for creator channel {after.channel.id} in guild '{member.guild.name}'")
             await create_on_join(member, before, after, bot)
 
     if before.channel:  # If a user left a channel
         temp_channel_ids = bot.repos.temp_channels.get_ids(guild_id=before.channel.guild.id)
         if before.channel.id in temp_channel_ids:  # Filter to temp channels
+            bot.logger.debug(f"Routing {member} leave from temp channel {before.channel.id} to delete_on_leave in guild '{before.channel.guild.name}'")
             await delete_on_leave(member, before, after, bot)
 
             # Update channel names of all temp channels in the guild
             # Technically channel names only need to be updated on activity change and deleting a channel (this), no background task required.
-            bot.logger.debug(f"Updating temp channel names in a guild because a user left a temp_vc")
+            bot.logger.debug(f"Updating temp channel names in guild '{before.channel.guild.name}' because a user left a temp_vc")
             await update_channel_name_and_control_msg(bot, temp_channel_ids)
 
 
@@ -29,5 +31,5 @@ async def handle_presence_update(bot, before, after):
         return
     temp_channel = after.channel
 
-    bot.logger.debug(f"Updating {temp_channel.name} due to activity change")
+    bot.logger.debug(f"Updating {temp_channel.name} due to activity change in guild '{temp_channel.guild.name}'")
     await update_channel_name_and_control_msg(bot, [temp_channel.id])

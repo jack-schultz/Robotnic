@@ -164,7 +164,7 @@ Below is the default `settings.json` with a table to explain.
 {
     "debug": {
         "discord": false,
-        "bot": true
+        "bot": false
     },
     "notifications": {
         "channel_id": null,

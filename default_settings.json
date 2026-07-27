@@ -1,7 +1,7 @@
 {
     "debug": {
         "discord": false,
-        "bot": true
+        "bot": false
     },
     "notifications": {
         "channel_id": null,

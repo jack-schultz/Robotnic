@@ -31,13 +31,18 @@ class TempChannelRenamer:
         """
 
         # Create a queue for this channel if needed
+        guild_name = channel.guild.name
         self.pending_name[channel.id] = new_name
-        self.bot.logger.debug(f"[RENAMER] Queued rename request for channel {channel.name} ({channel.id}): '{new_name}'.")
+        self.bot.logger.debug(
+            f"[RENAMER] Queued rename request for channel {channel.name} ({channel.id}) in guild '{guild_name}': '{new_name}'."
+        )
 
         # Start a worker for this channel if none exists
         if (channel.id not in self.rename_workers or self.rename_workers[channel.id].done()):
             self.rename_workers[channel.id] = asyncio.create_task(self._worker(channel))
-            self.bot.logger.debug(f"[RENAMER] Started worker task for channel {channel.name} ({channel.id})")
+            self.bot.logger.debug(
+                f"[RENAMER] Started worker task for channel {channel.name} ({channel.id}) in guild '{guild_name}'"
+            )
 
     async def _worker(self, channel):
         """
@@ -46,10 +51,13 @@ class TempChannelRenamer:
         """
 
         new_name = self.pending_name[channel.id]
+        guild_name = channel.guild.name
 
         while True:
             self.bot.logger.debug(
-                f"[RENAMER] Worker for channel {channel.name} ({channel.id}) received rename request '{new_name}'.")
+                f"[RENAMER] Worker for channel {channel.name} ({channel.id}) in guild '{guild_name}' "
+                f"received rename request '{new_name}'."
+            )
 
             # Small delay to collect multiple rapid rename requests
             await asyncio.sleep(1.0)
@@ -60,22 +68,31 @@ class TempChannelRenamer:
             time_remaining = self.minimum_interval - time_since_last
             if time_remaining > 0:
                 self.bot.logger.debug(
-                    f"[RENAMER] Channel {channel.name} ({channel.id}) must wait {time_remaining:.2f} seconds before renaming again.")
+                    f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
+                    f"must wait {time_remaining:.2f} seconds before renaming again."
+                )
                 await asyncio.sleep(time_remaining)
 
             # Get new name which may have changed while waiting
             new_name = self.pending_name[channel.id]
 
-            self.bot.logger.debug(f"[RENAMER] Renaming channel {channel.name} ({channel.id}) to '{new_name}'.")
+            self.bot.logger.debug(
+                f"[RENAMER] Renaming channel {channel.name} ({channel.id}) in guild '{guild_name}' to '{new_name}'."
+            )
 
         # Try to perform the rename
             try:
                 if channel.name != new_name:
                     await channel.edit(name=new_name)
-                    self.bot.logger.debug(f"[RENAMER] Successfully renamed channel {channel.name} ({channel.id}) to '{new_name}'.")
+                    self.bot.logger.debug(
+                        f"[RENAMER] Successfully renamed channel {channel.name} ({channel.id}) in guild '{guild_name}' to '{new_name}'."
+                    )
                     self.last_rename_time[channel.id] = time.time()
                 else:
-                    self.bot.logger.debug(f"[RENAMER] Channel {channel.name} ({channel.id}) is already named '{new_name}'.")
+                    self.bot.logger.debug(
+                        f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
+                        f"is already named '{new_name}'."
+                    )
                 new_name = None
 
             except discord.HTTPException as error:
@@ -83,15 +100,22 @@ class TempChannelRenamer:
                     # The library almost never throws this.
                     retry_seconds = getattr(error, "retry_after", 10)
                     self.bot.logger.warning(
-                        f"[RENAMER] Channel {channel.name} ({channel.id}) hit a rate limit. Retrying in {retry_seconds + 1} seconds.")
+                        f"[RENAMER] Channel {channel.name} ({channel.id}) in guild '{guild_name}' "
+                        f"hit a rate limit. Retrying in {retry_seconds + 1} seconds."
+                    )
                     await asyncio.sleep(retry_seconds + 1)
                     continue
                 else:
+                    self.bot.logger.debug(
+                        f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}', unhandled. {error}"
+                    )
                     raise
 
             # If there are no pending rename requests, exit the worker
             if new_name is None:
-                self.bot.logger.debug(f"[RENAMER] Worker has renamed {channel.name} ({channel.id}). Exiting.")
+                self.bot.logger.debug(
+                    f"[RENAMER] Worker has renamed {channel.name} ({channel.id}) in guild '{guild_name}'. Exiting."
+                )
                 break
 
         # Cleanup after the worker finishes
