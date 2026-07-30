@@ -146,7 +146,16 @@ async def create_on_join(member, before, after, bot):
             response_text = response_text + f" (`{category.name}`)."
         else:
             response_text = response_text + "."
-        await creator_channel.send(response_text, delete_after=300)
+        try:
+            await creator_channel.send(response_text, delete_after=300)
+        except discord.Forbidden as e:
+            logger.warning(
+                f"Could not notify {member} of missing permissions in creator channel {creator_channel.id} in guild '{guild_name}'. {e}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Error notifying {member} of missing permissions in guild '{guild_name}'. {e}"
+            )
         return
 
     logger.debug(
