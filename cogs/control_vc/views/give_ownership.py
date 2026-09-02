@@ -1,5 +1,5 @@
 import discord
-from cogs.control_vc.embed_updates import schedule_info_embed
+from cogs.control_vc.embed_scheduler import schedule_info_embed
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 
 

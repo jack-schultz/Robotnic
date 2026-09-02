@@ -25,7 +25,6 @@ class DonateEmbed(discord.Embed):
         self.set_footer(text="📩 Need more help? Reach out for support below!")
 
 
-
 class HelpEmbed(discord.Embed):
     def __init__(self):
         super().__init__()
