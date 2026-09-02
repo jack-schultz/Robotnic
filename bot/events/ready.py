@@ -1,7 +1,7 @@
 import logging
 from bot.discord_audit import BotLogService, GuildLogService
 from bot.tasks import background
-from cogs.control_vc.views.control_view import register_persistent_control_views
+from cogs.control_vc.views.control_view import refresh_control_messages
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,8 @@ async def on_ready(bot):
     logger.info(f"Created background tasks")
 
     # Reconnect to control panels of existing temp channels
-    await register_persistent_control_views(bot)
-    logger.info(f"Registered control views")
+    await refresh_control_messages(bot)
+    logger.info("Refreshed control messages")
 
     # Sync commands and notify
     await bot.sync_commands()

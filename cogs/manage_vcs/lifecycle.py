@@ -181,9 +181,8 @@ async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_nam
         )
 
         # Send control message in channel chat
-        view = ControlView(bot, temp_channel)
-        bot.add_view(view)
-        await view.send_initial_message(member, channel_name=channel_name)
+        view = ControlView.for_channel(bot, temp_channel)
+        await view.send_control_message(temp_channel, member, channel_name=channel_name)
         logger.debug(f"Finalized temp channel {temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
     except Exception as e:
         logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
