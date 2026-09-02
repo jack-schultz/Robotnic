@@ -33,8 +33,8 @@ async def create_on_join(member, before, after, bot):
     # int -> that amount
     # Name Template:
     # {user} - replaced by users nickname or display name
-    # {activity} - not implemented
-    # {count} - not implemented
+    # {activity} - replaced by activities being played in the vc, duplicates filtered out, ordered by shortest to longest name
+    # {count} - replaced by a number, starts at 1, increments per temp channel
 
     creator_channel = after.channel
 
