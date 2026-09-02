@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.manage_vcs.events import handle_voice_state_update, handle_presence_update
+from cogs.manage_vcs.events import handle_voice_state_update, handle_presence_update, handle_guild_channel_delete
 
 
 class ManageVcsCog(commands.Cog):

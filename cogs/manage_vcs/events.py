@@ -30,9 +30,11 @@ async def handle_voice_state_update(bot, member, before, after):
 
 
 async def handle_presence_update(bot, before, after):
-    if not hasattr(after, "channel"):
+    if after.voice is None or after.voice.channel is None:
         return
-    temp_channel = after.channel
+    temp_channel = after.voice.channel
+    if temp_channel.id not in bot.repos.temp_channels.get_ids(guild_id=after.guild.id):
+        return
 
     logger.debug(f"Updating {temp_channel.name} due to activity change in guild '{temp_channel.guild.name}'")
     await update_channel_name_and_control_msg(bot, [temp_channel.id])
