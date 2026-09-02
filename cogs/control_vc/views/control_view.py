@@ -13,6 +13,10 @@ from cogs.control_vc.views.ban_user import BanUserView
 logger = logging.getLogger(__name__)
 
 
+def _custom_id(channel_id, action):
+    return f"ctrl:{channel_id}:{action}"
+
+
 async def update_overwrites(bot, channel, new_overwrite):
     # Gets the default_role_id as stored by the creator channel db
     creator_id = bot.repos.temp_channels.get_info(channel.id).creator_id
@@ -54,6 +58,7 @@ class ControlView(View):
             await self.temp_channel.send(f"{owner_member.mention}, this is *your* vc. Use the message above to control it.", delete_after=1)
 
     def create_items(self):
+        channel_id = self.temp_channel.id
         control_options = self.bot.repos.guild_settings.get(self.temp_channel.guild.id)["control_options"]
         guild_settings = self.bot.repos.guild_settings.get(self.temp_channel.guild.id)
         enabled_controls = list(guild_settings["enabled_controls"])
@@ -66,64 +71,70 @@ class ControlView(View):
                 emoji="🔒",
                 style=discord.ButtonStyle.success if channel_state == ChannelState.LOCKED.value else discord.ButtonStyle.primary,
                 row=3,
-                # disabled=(channel_state == ChannelState.LOCKED.value)
+                custom_id=_custom_id(channel_id, "lock"),
             )
             hide_button = discord.ui.Button(
                 label="",
                 emoji="🙈",
                 style=discord.ButtonStyle.success if channel_state == ChannelState.HIDDEN.value else discord.ButtonStyle.primary,
                 row=3,
-                # disabled=(channel_state == ChannelState.HIDDEN.value)
+                custom_id=_custom_id(channel_id, "hide"),
             )
             public_button = discord.ui.Button(
                 label="",
                 emoji="🌐",
                 style=discord.ButtonStyle.success if channel_state == ChannelState.PUBLIC.value else discord.ButtonStyle.primary,
                 row=3,
-                # disabled=(channel_state == ChannelState.PUBLIC.value)
+                custom_id=_custom_id(channel_id, "public"),
             )
             name_button = discord.ui.Button(
                 label="",
                 emoji="🏷️",
                 style=discord.ButtonStyle.secondary,
-                row=0
+                row=0,
+                custom_id=_custom_id(channel_id, "rename"),
             )
             limit_button = discord.ui.Button(
                 label="",
                 emoji="🚧",
                 style=discord.ButtonStyle.secondary,
-                row=0
+                row=0,
+                custom_id=_custom_id(channel_id, "limit"),
             )
             clear_button = discord.ui.Button(
                 label="",
                 emoji="🧽",
                 style=discord.ButtonStyle.danger,
-                row=1
+                row=1,
+                custom_id=_custom_id(channel_id, "clear"),
             )
             delete_button = discord.ui.Button(
                 label="",
                 emoji="🗑️",
                 style=discord.ButtonStyle.danger,
-                row=1
+                row=1,
+                custom_id=_custom_id(channel_id, "delete"),
             )
             give_button = discord.ui.Button(
                 label="",
                 emoji="🎁",
                 style=discord.ButtonStyle.success,
-                row=0
+                row=0,
+                custom_id=_custom_id(channel_id, "give"),
             )
             ban_button = discord.ui.Button(
                 label="",
                 emoji="🔨",
                 style=discord.ButtonStyle.danger,
-                row=1
+                row=1,
+                custom_id=_custom_id(channel_id, "ban"),
             )
             banner_button = discord.ui.Button(
                 label="- - - - - - - - - - - - - - - - - - - -",
-                #emoji="",
                 style=discord.ButtonStyle.secondary,
                 row=2,
-                disabled=True
+                disabled=True,
+                custom_id=_custom_id(channel_id, "banner"),
             )
 
             if "rename" in enabled_controls:
@@ -171,9 +182,9 @@ class ControlView(View):
         if not enabled_controls:
             button = discord.ui.Button(
                 label="No Available Options",
-                # emoji="",
                 style=discord.ButtonStyle.secondary,
-                disabled=True
+                disabled=True,
+                custom_id=_custom_id(channel_id, "no_options"),
             )
             self.add_item(button)
             return
@@ -201,6 +212,7 @@ class ControlView(View):
                         min_values=1,
                         max_values=1,
                         options=options,
+                        custom_id=_custom_id(channel_id, "action_select"),
                     )
 
                 async def callback(select_self, interaction: discord.Interaction):
@@ -219,7 +231,7 @@ class ControlView(View):
                     elif choice == "delete":
                         await self.delete_button_callback(interaction)
 
-                    await self.update_view()  # Clears selected option of dropdown
+                    await self.recreate_items(interaction)
 
             class StateDropdown(discord.ui.Select):
                 def __init__(select_self):
@@ -237,6 +249,7 @@ class ControlView(View):
                         min_values=1,
                         max_values=1,
                         options=options,
+                        custom_id=_custom_id(channel_id, "state_select"),
                     )
 
                 async def callback(select_self, interaction: discord.Interaction):
@@ -254,18 +267,22 @@ class ControlView(View):
             if len({"lock", "hide"}.intersection(enabled_controls)) > 0:
                 self.add_item(StateDropdown())
 
-    async def update_view(self):
-        if self.control_message is None:
+    async def update_view(self, message=None):
+        target_message = message or self.control_message
+        if target_message is None:
             return
         try:
-            await self.control_message.edit(view=self, embeds=self.control_message.embeds)
+            await target_message.edit(view=self, embeds=target_message.embeds)
         except discord.NotFound:
             logger.debug(f"Control message gone while updating view for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
 
-    async def recreate_items(self):
+    async def recreate_items(self, interaction=None):
         self.clear_items()
         self.create_items()
-        await self.update_view()
+        message = self.control_message
+        if message is None and interaction is not None:
+            message = interaction.message
+        await self.update_view(message)
 
     async def on_timeout(self):
         logger.warning(f"Control message timed out for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
@@ -295,7 +312,7 @@ class ControlView(View):
 
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=True)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items()
+        await self.recreate_items(interaction)
 
     async def lock_button_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -306,7 +323,7 @@ class ControlView(View):
 
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=False)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items()
+        await self.recreate_items(interaction)
 
     async def hide_button_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -317,7 +334,7 @@ class ControlView(View):
 
         new_overwrite = discord.PermissionOverwrite(view_channel=False, connect=False)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items()
+        await self.recreate_items(interaction)
 
     async def name_button_callback(self, interaction: discord.Interaction):
         if not await is_owner(self, interaction):
@@ -448,4 +465,30 @@ class ControlView(View):
         await interaction.response.defer(ephemeral=True)
 
         await BanUserView(self.bot, interaction.channel).send_initial_message(interaction)
+
+
+async def register_persistent_control_views(bot):
+    db_channels = bot.repos.temp_channels.get_ids()
+    logger.info(f"Registering {len(db_channels)} persistent control views")
+    for channel_id in db_channels:
+        channel = bot.get_channel(channel_id)
+
+        if channel is None:
+            continue
+
+        logger.info(f"Registering {channel.name}")
+
+        view = ControlView(bot, channel)
+        bot.add_view(view)
+
+        try:
+            async for message in channel.history(limit=10, oldest_first=True):
+                if message.author.id == bot.user.id and message.components:
+                    view.control_message = message
+                    await message.edit(view=view, embeds=message.embeds)
+                    break
+        except discord.NotFound:
+            logger.debug(f"Control message already gone for temp channel {channel_id} during view registration")
+        except Exception as e:
+            logger.warning(f"Failed to refresh control message for temp channel {channel_id}: {e}")
 

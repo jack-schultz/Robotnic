@@ -182,6 +182,7 @@ async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_nam
 
         # Send control message in channel chat
         view = ControlView(bot, temp_channel)
+        bot.add_view(view)
         await view.send_initial_message(member, channel_name=channel_name)
         logger.debug(f"Finalized temp channel {temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
     except Exception as e:
@@ -213,7 +214,7 @@ async def _dm_user_on_create(bot, temp_channel, member):
         color=discord.Color.green()
     )
     embed.add_field(name="Channel", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
-    await member.send(f"", embed=embed, view=AcknowledgeButtonView(member.id))
+    await member.send(f"", embed=embed, view=AcknowledgeButtonView(bot))
 
 
 async def create_on_join(member, before, after, bot):

@@ -1,11 +1,15 @@
 import discord
 from discord.ext import commands
 from cogs.manage_vcs.events import handle_voice_state_update, handle_presence_update, handle_guild_channel_delete
+from cogs.manage_vcs.views.dm_owner_button import AcknowledgeButtonView
 
 
 class ManageVcsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def cog_load(self):
+        self.bot.add_view(AcknowledgeButtonView(self.bot))
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
