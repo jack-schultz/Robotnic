@@ -6,13 +6,13 @@ from cogs.manage_vcs.views.dm_owner_button import AcknowledgeButtonView
 logger = logging.getLogger(__name__)
 
 
-async def dm_user_on_create(bot, temp_channel, member):
+async def dm_user_on_create(bot, temp_channel, member, control_view):
     embed = discord.Embed(
-        title="TempChannel Create",
-        description="",
+        title="You Are The Admin of Your Channel",
+        description=f"As the owner of <#{temp_channel.id}> you can moderate the users you are in a call with. To view your control panel, click [here]({control_view.message.jump_url})",
         color=discord.Color.green()
     )
-    embed.add_field(name="Channel", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
+    embed.add_field(name="Kick a Member", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
     await member.send(f"", embed=embed, view=AcknowledgeButtonView())
 
 

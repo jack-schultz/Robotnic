@@ -127,6 +127,7 @@ async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_nam
         view = ControlView.for_channel(bot, temp_channel)
         await view.send_control_message(temp_channel, member, channel_name=channel_name)
         logger.debug(f"Finalized temp channel {temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
+        return view
     except Exception as e:
         logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
 
@@ -194,10 +195,10 @@ async def create_on_join(member, before, after, bot):
     #  ========== 7. Update channel named based on naming scheme (slow, done last) ==========
     channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_info)
     logger.debug(f"Generated temp channel name '{channel_name}' for {new_temp_channel.id} in guild '{guild_name}'")
-    await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
+    control_view = await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
 
     # 8. ======== Send DM to Owner ==========
-    await dm_user_on_create(bot, new_temp_channel, member)
+    await dm_user_on_create(bot, new_temp_channel, member, control_view)
 
     # 9. ======== Send Logs ==========
     await send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
