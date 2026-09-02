@@ -76,6 +76,14 @@ async def update_presence(bot):
                 stats.creators = creator_count
                 stats.channels = temp_channel_count
 
+            # Display embed ratelimiting stats periodically for debugging
+            embed_stats = bot.EmbedUpdateScheduler.stats
+            logger.debug(
+                f"Embed scheduler stats: scheduled={embed_stats['scheduled']} "
+                f"edited={embed_stats['edited']} skipped={embed_stats['skipped']} "
+                f"rate_limited={embed_stats['rate_limited']}"
+            )
+
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")
 

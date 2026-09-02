@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import time
-from cogs.control_vc.embed_updates import update_info_embed
+from cogs.control_vc.embed_updates import schedule_info_embed
 from cogs.manage_vcs.create_name import create_temp_channel_name
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
                 )
 
         # Update control message
-        await update_info_embed(bot, temp_channel, title=new_channel_name)
+        await schedule_info_embed(bot, temp_channel, title=new_channel_name)
 
     # Run all updates concurrently
     tasks = (update(channel_id) for channel_id in temp_channel_ids)

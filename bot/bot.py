@@ -4,6 +4,7 @@ import sys
 import discord
 from topgg import DBLClient
 from cogs.manage_vcs.renamer import TempChannelRenamer
+from cogs.control_vc.embed_scheduler import EmbedUpdateScheduler
 from bot.events.ready import on_ready
 from bot.events.guild_join import on_guild_join
 from bot.events.errors import on_application_command_error
@@ -28,9 +29,11 @@ class Bot(discord.AutoShardedBot):
         self.db = Database()
         self.repos = Repositories(self.db)
         self.TempChannelRenamer = TempChannelRenamer(self)
+        self.EmbedUpdateScheduler = EmbedUpdateScheduler(self)
 
         # Set later in on_ready()
         self.ready = False
+        self._background_tasks_started = False
         self.BotLogService = None
         self.GuildLogService = None
 

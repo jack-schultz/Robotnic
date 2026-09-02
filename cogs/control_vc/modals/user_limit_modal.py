@@ -1,5 +1,5 @@
 import discord
-from cogs.control_vc.embed_updates import update_info_embed
+from cogs.control_vc.embed_updates import schedule_info_embed
 
 
 class UserLimitModal(discord.ui.Modal):
@@ -31,10 +31,7 @@ class UserLimitModal(discord.ui.Modal):
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=15)
             return
 
-        # Update the channel user limit
-        if user_limit != self.channel.user_limit:
-            await self.channel.edit(user_limit=int(user_limit))
-        await update_info_embed(self.bot, self.channel, user_limit=user_limit)  # Only required if limit is displayed in info embed. hardcoded on/off atm
+        await schedule_info_embed(self.bot, self.channel, user_limit=user_limit)
 
         embed = discord.Embed(
             title="Changes Saved",

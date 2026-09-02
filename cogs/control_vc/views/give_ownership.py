@@ -1,5 +1,5 @@
 import discord
-from cogs.control_vc.embed_updates import update_info_embed
+from cogs.control_vc.embed_updates import schedule_info_embed
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 
 
@@ -55,7 +55,7 @@ class GiveOwnershipView(discord.ui.View):
 
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, None)
 
-                    await update_info_embed(self.bot, self.channel)
+                    await schedule_info_embed(self.bot, self.channel)
 
                 else:
                     selected_member = interaction.guild.get_member(int(self.values[0]))
