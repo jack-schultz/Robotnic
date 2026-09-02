@@ -24,7 +24,6 @@ async def handle_voice_state_update(bot, member, before, after):
             await delete_on_leave(member, before, after, bot)
 
             # Update channel names of all temp channels in the guild
-            # Technically channel names only need to be updated on activity change and deleting a channel (this), no background task required.
             logger.debug(f"Updating temp channel names in guild '{before.channel.guild.name}' because a user left a temp_vc")
             await update_channel_name_and_control_msg(bot, temp_channel_ids)
 

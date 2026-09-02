@@ -26,7 +26,7 @@ async def create_tasks(bot):
 
 
 # Technically shouldn't be required as manage_vcs.update_name.update_channel_name_and_control_msg is run every time a user leaves a vc
-# This is here in case of desync. Hopefully can be removed once the bot is tested properly
+# This is here in case of desync. Only runs every 5 minutes. Will be reduced as bot is tested better.
 async def update_temp_channel_names(bot):
     await bot.wait_until_ready()  # Ensure the bot is fully connected
     while not bot.is_closed():  # Run on a schedule
