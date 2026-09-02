@@ -102,7 +102,7 @@ async def clear_empty_temp_channels(bot):
             for channel_id in temp_channel_ids:
                 channel = bot.get_channel(channel_id)
                 if channel is None:
-                    logger.warning(f"Removing unfound/deleted temp channel from database")
+                    logger.debug(f"Removing unfound/deleted temp channel {channel_id} from database")
                     bot.repos.temp_channels.remove(channel_id)
                     continue
 

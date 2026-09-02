@@ -63,7 +63,10 @@ class CreateView(View):
         ]
         self.clear_items()
         self.create_items()
-        await self.message.edit(view=self, embeds=embeds)
+        try:
+            await self.message.edit(view=self, embeds=embeds)
+        except discord.NotFound:
+            logger.debug("CreateView message gone during update")
 
     # Dropdown callback
     async def select_callback(self, interaction: discord.Interaction):
@@ -102,7 +105,11 @@ class CreateView(View):
         return None
 
     async def on_timeout(self):
+        if self.message is None:
+            return
         try:
-            await self.message.delete_original_response()
-        except Exception as e:
-            logger.error(f"Unable to update CreateView message after timeout, message likely deleted before timeout.")
+            await self.message.delete()
+        except discord.NotFound:
+            pass
+        except Exception:
+            logger.debug("Unable to delete CreateView message after timeout, message likely deleted already.")

@@ -38,6 +38,8 @@ class ChangeNameModal(discord.ui.Modal):
         self.add_item(self.channel_name)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
         # Update the channel
         channel_name = str(self.channel_name.value or self.channel.name)
         if len(channel_name) > 100:
@@ -70,7 +72,15 @@ class ChangeNameModal(discord.ui.Modal):
                 await self.bot.GuildLogService.send(event="profanity_block", guild=interaction.guild, message=f"", embed=embed)
 
                 if profanity_check_setting == "alert & block":
-                    return await interaction.response.send_message("Sorry, that input was flagged for profanity.", ephemeral=True, delete_after=90)
+                    try:
+                        await interaction.followup.send(
+                            "Sorry, that input was flagged for profanity.",
+                            ephemeral=True,
+                            delete_after=90,
+                        )
+                    except (discord.NotFound, discord.HTTPException):
+                        pass
+                    return
 
         # If inputted name, schedule update channel and update db
         if self.channel_name.value:
@@ -88,7 +98,10 @@ class ChangeNameModal(discord.ui.Modal):
             color=discord.Color.blue()
         )
         embed.set_footer(text="This message will disappear in 30 seconds.")
-        await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=30)
+        try:
+            await interaction.followup.send(embed=embed, ephemeral=True, delete_after=30)
+        except (discord.NotFound, discord.HTTPException):
+            pass
 
         # Sends messages in the guild log channel - uses get_guild_logs_channel_id instead of get_guild_settings for read efficiency
         embed = discord.Embed(

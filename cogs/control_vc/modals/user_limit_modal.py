@@ -19,6 +19,8 @@ class UserLimitModal(discord.ui.Modal):
         self.add_item(self.user_limit)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
         user_limit = self.user_limit.value or str(self.channel.user_limit)
 
         if not user_limit.isnumeric():
@@ -28,10 +30,20 @@ class UserLimitModal(discord.ui.Modal):
                 color=discord.Color.red()
             )
             embed.set_footer(text="This message will disappear in 15 seconds.")
-            await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=15)
+            try:
+                await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+            except (discord.NotFound, discord.HTTPException):
+                pass
             return
 
-        await schedule_info_embed(self.bot, self.channel, user_limit=user_limit)
+        limit_value = int(user_limit)
+        if limit_value != self.channel.user_limit:
+            try:
+                await self.channel.edit(user_limit=limit_value)
+            except discord.NotFound:
+                return
+
+            await schedule_info_embed(self.bot, self.channel, user_limit=user_limit)
 
         embed = discord.Embed(
             title="Changes Saved",
@@ -39,4 +51,7 @@ class UserLimitModal(discord.ui.Modal):
             color=discord.Color.blue()
         )
         embed.set_footer(text="This message will disappear in 15 seconds.")
-        await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=15)
+        try:
+            await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+        except (discord.NotFound, discord.HTTPException):
+            pass

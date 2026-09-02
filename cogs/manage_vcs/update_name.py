@@ -30,10 +30,11 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
             channel_guild_name = guild.name if guild else "unknown"
         if temp_channel is None or db_temp_channel_info is None:
             if db_temp_channel_info is not None and temp_channel is None:
-                logger.warning(
+                logger.debug(
                     f"Temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}' "
-                    f"exists in database but channel was not found, skipping update."
+                    f"exists in database but channel was not found, removing stale row."
                 )
+                bot.repos.temp_channels.remove(temp_channel_id)
             else:
                 logger.debug(
                     f"Skipping temp channel {temp_channel_id} in guild '{channel_guild_name or 'unknown'}': "

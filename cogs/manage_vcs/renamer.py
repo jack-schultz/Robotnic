@@ -108,11 +108,22 @@ class TempChannelRenamer:
                     )
                     await asyncio.sleep(retry_seconds + 1)
                     continue
-                else:
-                    logger.warning(
-                        f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}': {error}"
+                if error.status == 404:
+                    logger.debug(
+                        f"[RENAMER] Channel {channel.id} in guild '{guild_name}' not found during rename, removing stale row."
                     )
-                    raise
+                    self.bot.repos.temp_channels.remove(channel.id)
+                    break
+                logger.warning(
+                    f"[RENAMER] HTTP error renaming channel {channel.name} ({channel.id}) in guild '{guild_name}': {error}"
+                )
+                raise
+            except discord.NotFound:
+                logger.debug(
+                    f"[RENAMER] Channel {channel.id} in guild '{guild_name}' not found during rename, removing stale row."
+                )
+                self.bot.repos.temp_channels.remove(channel.id)
+                break
 
             # If there are no pending rename requests, exit the worker
             if new_name is None:

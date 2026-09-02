@@ -133,11 +133,11 @@ class ControlView(View):
             if "clear" in enabled_controls:
                 self.add_item(clear_button)
             if "ban" in enabled_controls:
-                self.add_item(delete_button)
+                self.add_item(ban_button)
             if "give" in enabled_controls:
                 self.add_item(give_button)
             if "delete" in enabled_controls:
-                self.add_item(ban_button)
+                self.add_item(delete_button)
 
             if "lock" in enabled_controls or "hide" in enabled_controls:
                 self.add_item(banner_button)
@@ -255,7 +255,12 @@ class ControlView(View):
                 self.add_item(StateDropdown())
 
     async def update_view(self):
-        await self.control_message.edit(view=self, embeds=self.control_message.embeds)
+        if self.control_message is None:
+            return
+        try:
+            await self.control_message.edit(view=self, embeds=self.control_message.embeds)
+        except discord.NotFound:
+            logger.debug(f"Control message gone while updating view for temp channel {self.temp_channel.id} in guild '{self.temp_channel.guild.name}'")
 
     async def recreate_items(self):
         self.clear_items()
@@ -282,6 +287,7 @@ class ControlView(View):
 
     # --- Callbacks ---
     async def public_button_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         logger.debug(
             f"Setting temp channel {interaction.channel.id} to public in guild '{interaction.guild.name}'"
         )
@@ -290,10 +296,9 @@ class ControlView(View):
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=True)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
         await self.recreate_items()
-        # Acknowledge without sending a message
-        await interaction.response.defer()
 
     async def lock_button_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         logger.debug(
             f"Setting temp channel {interaction.channel.id} to locked in guild '{interaction.guild.name}'"
         )
@@ -302,9 +307,9 @@ class ControlView(View):
         new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=False)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
         await self.recreate_items()
-        await interaction.response.defer()
 
     async def hide_button_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         logger.debug(
             f"Setting temp channel {interaction.channel.id} to hidden in guild '{interaction.guild.name}'"
         )
@@ -313,7 +318,6 @@ class ControlView(View):
         new_overwrite = discord.PermissionOverwrite(view_channel=False, connect=False)
         await update_overwrites(self.bot, interaction.channel, new_overwrite)
         await self.recreate_items()
-        await interaction.response.defer()
 
     async def name_button_callback(self, interaction: discord.Interaction):
         if not await is_owner(self, interaction):
@@ -383,27 +387,38 @@ class ControlView(View):
             confirmation_message = await self.bot.wait_for("message", check=check, timeout=60)
 
             # Delete the channel from the database and then delete the channel
+            deleted = False
             try:
                 await interaction.channel.delete()
+                deleted = True
             except discord.NotFound as e:
                 logger.debug(
                     f"Channel not found removing temp channel in guild '{interaction.guild.name}', handled. {e}"
                 )
+                deleted = True
             except discord.Forbidden as e:
-                logger.warning(
+                logger.debug(
                     f"Permission error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}', notifying user of missing permissions. {e}"
                 )
-                await interaction.channel.send(f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.", delete_after=300)
+                try:
+                    await interaction.followup.send(
+                        f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.",
+                        ephemeral=True,
+                    )
+                except (discord.NotFound, discord.HTTPException):
+                    pass
                 return
             except Exception as e:
                 logger.error(
                     f"Unknown error removing temp channel {interaction.channel.id} in guild '{interaction.guild.name}': {e}"
                 )
+                return
 
-            self.bot.repos.temp_channels.remove(interaction.channel.id)
-            logger.debug(
-                f"Deleted temp channel {interaction.channel.id} via control message confirmation in guild '{interaction.guild.name}'"
-            )
+            if deleted:
+                self.bot.repos.temp_channels.remove(interaction.channel.id)
+                logger.debug(
+                    f"Deleted temp channel {interaction.channel.id} via control message confirmation in guild '{interaction.guild.name}'"
+                )
         except asyncio.TimeoutError:
             logger.debug(
                 f"Channel deletion confirmation timed out for temp channel {interaction.channel.id} in guild '{interaction.guild.name}', handled."
@@ -417,7 +432,7 @@ class ControlView(View):
                 )
                 embed.set_footer(text="This message will disappear in 15 seconds.")
                 await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
-            except e:
+            except (discord.NotFound, discord.HTTPException):
                 pass
 
     async def give_button_callback(self, interaction: discord.Interaction):
