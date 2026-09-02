@@ -7,46 +7,15 @@ from cogs.manage_vcs.create_name import create_temp_channel_name
 logger = logging.getLogger(__name__)
 
 
-async def create_on_join(member, before, after, bot):
-    guild_name = member.guild.name
-    logger.debug(f"{member} joined creator channel {after.channel} in guild '{guild_name}'")
-
-    # Logic flow:
-    # 1. Retrieve child settings from db
-    # 2. Get category & overwrites, both depend on settings
-    # 3. Create channel & move user
-    # 4. Create name
-    # 5. Edit channel w correct name & overwrites and disable permission sync
-    # 6. Send logs and notifications messages
-
-    # SETTINGS from db
-    # Category:
-    # 0 -> Creator channel category
-    # id -> Specific category
-    # Note: no way to make channel have no category if the creator has a category
-    # Overwrites:
-    # 0 -> no overwrites
-    # 1 -> overwrites from creator
-    # 2 -> overwrites from category
-    # User Limit:
-    # 0 -> unlimited
-    # int -> that amount
-    # Name Template:
-    # {user} - replaced by users nickname or display name
-    # {activity} - replaced by activities being played in the vc, duplicates filtered out, ordered by shortest to longest name
-    # {count} - replaced by a number, starts at 1, increments per temp channel
-
-    creator_channel = after.channel
-
-    db_creator_channel_info = bot.repos.creator_channels.get_info(creator_channel.id)
-    if db_creator_channel_info.child_category_id != 0:
-        category = bot.get_channel(db_creator_channel_info.child_category_id)
+def _get_child_category(db_info, creator_channel, bot, guild_name):
+    if db_info.child_category_id != 0:
+        category = bot.get_channel(db_info.child_category_id)
         if category is None:
             logger.warning(
-                f"Configured child category {db_creator_channel_info.child_category_id} not found for creator channel {creator_channel.id} in guild '{guild_name}'"
+                f"Configured child category {db_info.child_category_id} not found for creator channel {creator_channel.id} in guild '{guild_name}'"
             )
         logger.debug(
-            f"Using configured child category {db_creator_channel_info.child_category_id} "
+            f"Using configured child category {db_info.child_category_id} "
             f"({category.name if category else 'not found'}) for creator channel {creator_channel.id} in guild '{guild_name}'"
         )
     else:
@@ -56,14 +25,17 @@ async def create_on_join(member, before, after, bot):
             f"({category.name if category else 'none'}) for creator channel {creator_channel.id} "
             f"in guild '{guild_name}'"
         )
+    return category
 
+
+def _get_child_overwrites(db_info, creator_channel, category, guild_name):
     # 0 -> no overwrites
     # 1 -> overwrites from creator
     # 2 -> overwrites from category
-    if db_creator_channel_info.child_overwrites == 1:
+    if db_info.child_overwrites == 1:
         overwrites = creator_channel.overwrites
         logger.debug(f"Using creator channel overwrites for temp channel in {creator_channel.id} in guild '{guild_name}'")
-    elif db_creator_channel_info.child_overwrites == 2:
+    elif db_info.child_overwrites == 2:
         if category:
             overwrites = category.overwrites
             logger.debug(f"Using category overwrites from {category.name} for temp channel in {creator_channel.id} in guild '{guild_name}'")
@@ -75,7 +47,40 @@ async def create_on_join(member, before, after, bot):
     else:
         overwrites = {}
         logger.debug(f"Using no inherited overwrites for temp channel in {creator_channel.id} in guild '{guild_name}'")
+    return overwrites
 
+
+def _collate_temp_channel_overwrites(overwrites, bot_user, member):
+    overwrites[bot_user] = discord.PermissionOverwrite(
+        view_channel=True,
+        manage_channels=True,
+        send_messages=True,
+        manage_messages=True,
+        read_message_history=True,
+        connect=True,
+        move_members=True,
+    )
+    overwrites[member] = discord.PermissionOverwrite(
+        view_channel=True,
+        send_messages=True,
+        read_message_history=True,
+        connect=True,
+    )
+
+
+def _next_temp_channel_count(bot, creator_channel_id, temp_channel_id, guild_name):
+    counts = bot.repos.temp_channels.get_counts(creator_channel_id)
+    if len(counts) < 1:
+        count = 1
+    else:
+        count = max(counts) + 1
+    logger.debug(
+        f"Assigned count {count} to temp channel {temp_channel_id} from creator channel {creator_channel_id} in guild '{guild_name}'"
+    )
+    return count
+
+
+async def _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
     permissions_to_check = [
         "manage_channels",
         "manage_roles",
@@ -111,24 +116,11 @@ async def create_on_join(member, before, after, bot):
         if category:
             response_text = response_text + f"Make sure they are not overwritten by the category (In this case `{category.name}`)."
         await creator_channel.send(response_text, embed=embed, delete_after=300)
-        return
+        return False
+    return True
 
-    overwrites[bot.user] = discord.PermissionOverwrite(
-        view_channel=True,
-        manage_channels=True,
-        send_messages=True,
-        manage_messages=True,
-        read_message_history=True,
-        connect=True,
-        move_members=True,
-    )
-    overwrites[member] = discord.PermissionOverwrite(
-        view_channel=True,
-        send_messages=True,
-        read_message_history=True,
-        connect=True,
-    )
 
+async def _create_temp_voice_channel(creator_channel, category, overwrites, member, guild_name):
     try:
         new_temp_channel = await creator_channel.guild.create_voice_channel(
             name="⌛",
@@ -156,67 +148,132 @@ async def create_on_join(member, before, after, bot):
             logger.warning(
                 f"Error notifying {member} of missing permissions in guild '{guild_name}'. {e}"
             )
-        return
+        return None
 
     logger.debug(
         f"Created temp channel {new_temp_channel.id} for {member} in category "
         f"{category.name if category else 'none'} in guild '{guild_name}'"
     )
+    return new_temp_channel
 
-    counts = bot.repos.temp_channels.get_counts(creator_channel.id)
-    if len(counts) < 1:
-        count = 1
-    else:
-        count = max(counts) + 1
-    logger.debug(
-        f"Assigned count {count} to temp channel {new_temp_channel.id} from creator channel {creator_channel.id} in guild '{guild_name}'"
-    )
 
+async def _move_member_to_temp_channel(member, temp_channel, guild_name):
     try:
-        await member.move_to(new_temp_channel)
-        logger.debug(f"Moved {member} to {new_temp_channel} in guild '{guild_name}'")
+        await member.move_to(temp_channel)
+        logger.debug(f"Moved {member} to {temp_channel} in guild '{guild_name}'")
     except Exception as e:
         logger.debug(
             f"Error creating voice channel in guild '{guild_name}', most likely a quick join and leave. Handled. {e}"
         )
-        await new_temp_channel.delete()
-        return
+        await temp_channel.delete()
+        return False
+    return True
 
-    bot.repos.temp_channels.add(new_temp_channel.guild.id, new_temp_channel.id, creator_channel.id, member.id, 0, count, False)
-    logger.debug(f"Registered temp channel {new_temp_channel.id} in database for owner {member.id} in guild '{guild_name}'")
-    channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_creator_channel_info)
-    logger.debug(f"Generated temp channel name '{channel_name}' for {new_temp_channel.id} in guild '{guild_name}'")
 
+async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_name, guild_name):
     try:
-        # Could use bot.renamer to avoid rate-limit problems
-        await new_temp_channel.edit(
+        # Could use bot.TempChannelRenamer to avoid rate-limit problems but this does not support user limit yet
+        # Fine to use without scheduling as rate limit bucket will never be full immediately after creation
+        await temp_channel.edit(
             name=channel_name,
-            user_limit=db_creator_channel_info.user_limit,
+            user_limit=db_info.user_limit,
         )
 
         # Send control message in channel chat
-        view = ControlView(bot, new_temp_channel)
+        view = ControlView(bot, temp_channel)
         await view.send_initial_message(member, channel_name=channel_name)
-        logger.debug(f"Finalized temp channel {new_temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
+        logger.debug(f"Finalized temp channel {temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
     except Exception as e:
         logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
 
-    # Sends messages in the guild log channel and the bot's notification channel
+
+async def _send_temp_channel_create_logs(bot, temp_channel, member, guild_name):
     embed = discord.Embed(
         title="TempChannel Create",
         description="",
         color=discord.Color.green()
     )
     embed.add_field(name="Channel",
-                    value=f"`{new_temp_channel.name}` (`{new_temp_channel.id}`)",
+                    value=f"`{temp_channel.name}` (`{temp_channel.id}`)",
                     inline=False)
     embed.add_field(name="User",
                     value=f"`{member}` (`{member.id}`)",
                     inline=False)
     embed.timestamp = datetime.datetime.now()
-    await bot.GuildLogService.send(event="channel_create", guild=new_temp_channel.guild, message=f"", embed=embed)
-    await bot.BotLogService.send(event="channel_create", message=f"Temp Channel (`{new_temp_channel.name}`) was made in server (`{member.guild.name}`) by user (`{member}`)")
-    logger.debug(f"Sent create logs for temp channel {new_temp_channel.name} ({new_temp_channel.id}) in guild '{guild_name}'")
+    await bot.GuildLogService.send(event="channel_create", guild=temp_channel.guild, message=f"", embed=embed)
+    await bot.BotLogService.send(event="channel_create", message=f"Temp Channel (`{temp_channel.name}`) was made in server (`{member.guild.name}`) by user (`{member}`)")
+    logger.debug(f"Sent create logs for temp channel {temp_channel.name} ({temp_channel.id}) in guild '{guild_name}'")
+
+
+async def create_on_join(member, before, after, bot):
+    guild_name = member.guild.name
+    creator_channel = after.channel
+    logger.debug(f"{member} joined creator channel {creator_channel} in guild '{guild_name}'")
+
+    # Logic flow:
+    # 1. Retrieve child settings from db
+    # 2. Get category & overwrites, both depend on settings
+    # 3. Notify of missing permissions
+    # 4. Collate overwrites
+    # 5. Create channel & move user
+    # 6. Add channel to DB
+    # 7. Update channel named based on naming scheme, this is slow and is therefore done last
+    # 8. Send DM to Owner
+    # 9. Send Logs
+
+    #  ========== 1. Get settings from DB ==========
+    # SETTINGS needed from db for naming scheme
+    # Category:
+    # 0 -> Creator channel category
+    # id -> Specific category
+    # Note: no way to make channel have no category if the creator has a category
+    # Overwrites:
+    # 0 -> no overwrites
+    # 1 -> overwrites from creator
+    # 2 -> overwrites from category
+    # User Limit:
+    # 0 -> unlimited
+    # int -> that amount
+    # Name Template:
+    # {user} - replaced by users nickname or display name
+    # {activity} - replaced by activities being played in the vc, duplicates filtered out, ordered by shortest to longest name
+    # {count} - replaced by a number, starts at 1, increments per temp channel
+    db_info = bot.repos.creator_channels.get_info(creator_channel.id)
+
+    #  ========== 2. Get category & overwrites ==========
+    category = _get_child_category(db_info, creator_channel, bot, guild_name)
+    overwrites = _get_child_overwrites(db_info, creator_channel, category, guild_name)
+
+    #  ========== 3. Notify of missing permissions ==========
+    if not await _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
+        return
+
+    #  ========== 4. Collate overwrites ==========
+    _collate_temp_channel_overwrites(overwrites, bot.user, member)
+
+    #  ========== 5. Create channel & move user ==========
+    new_temp_channel = await _create_temp_voice_channel(
+        creator_channel, category, overwrites, member, guild_name
+    )
+    if new_temp_channel is None:
+        return
+    if not await _move_member_to_temp_channel(member, new_temp_channel, guild_name):
+        return
+
+    #  ========== 6. Add channel to DB ==========
+    count = _next_temp_channel_count(bot, creator_channel.id, new_temp_channel.id, guild_name)
+    bot.repos.temp_channels.add(new_temp_channel.guild.id, new_temp_channel.id, creator_channel.id, member.id, 0, count, False)
+    logger.debug(f"Registered temp channel {new_temp_channel.id} in database for owner {member.id} in guild '{guild_name}'")
+
+    #  ========== 7. Update channel named based on naming scheme (slow, done last) ==========
+    channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_info)
+    logger.debug(f"Generated temp channel name '{channel_name}' for {new_temp_channel.id} in guild '{guild_name}'")
+    await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
+
+    # 8. ======== Send DM to Owner ==========
+
+    # 9. ======== Send Logs ==========
+    await _send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
 
 
 async def delete_on_leave(member, before, after, bot):
