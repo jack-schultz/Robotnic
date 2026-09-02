@@ -9,17 +9,25 @@ class ButtonsView(discord.ui.View):
     def create_items(self):
         self.add_item(
             discord.ui.Button(
-                label="Support the Developer",
-                url="https://github.com/sponsors/jack-schultz",
+                label="Ko-fi",
+                url="https://ko-fi.com/jackschultzdev",
                 emoji="💖",
                 style=discord.ButtonStyle.link
             )
         )
         self.add_item(
             discord.ui.Button(
-                label="Discord Support Server",
+                label="Support Server",
                 url="https://discord.gg/rcAREJyMV5",
                 emoji="🔧",
+                style=discord.ButtonStyle.link
+            )
+        )
+        self.add_item(
+            discord.ui.Button(
+                label="Website",
+                url="https://jackschultz.dev/Robotnic/",
+                emoji="🌏",
                 style=discord.ButtonStyle.link
             )
         )
