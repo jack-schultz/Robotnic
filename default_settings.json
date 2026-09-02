@@ -9,6 +9,7 @@
         "reconnect": true,
         "stop": true,
         "guild_join": true,
+        "guild_leave": true,
         "channel_create": false,
         "channel_remove": false,
         "creator_create": false

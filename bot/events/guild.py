@@ -1,7 +1,7 @@
 import discord
 
 
-async def on_guild_join(self, guild):
+async def on_guild_join(bot, guild):
     # This event is triggered when the bot joins a new guild
     for channel in guild.text_channels:
         if channel.permissions_for(guild.me).send_messages:
@@ -41,6 +41,29 @@ async def on_guild_join(self, guild):
     embed.add_field(name="Server ID", value=guild.id, inline=True)
     embed.add_field(name="Owner", value=f"{guild.owner} (ID: {guild.owner_id})", inline=True)
     embed.add_field(name="Member Count", value=guild.member_count, inline=True)
+    embed.add_field(name="Text Channel Count", value=str(len(guild.text_channels)), inline=True)
+    embed.add_field(name="Region/Locale", value=str(guild.preferred_locale), inline=True)
+    unix_time = int(guild.created_at.timestamp())
+    embed.add_field(name="Creation Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+    unix_time = int(guild.get_member(bot.user.id).joined_at.timestamp())
+    embed.add_field(name="Joined Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+    await bot.BotLogService.send(event="guild_join", message=f"", embed=embed)
+
+
+async def on_guild_remove(bot, guild):
+    # Create the embed with the server information
+    embed = discord.Embed(
+        title="Left a Server!",
+        description=f"",
+        color=discord.Color.red()
+    )
+    embed.add_field(name="Server Name", value=guild.name, inline=True)
+    embed.add_field(name="Server ID", value=guild.id, inline=True)
+    embed.add_field(name="Owner", value=f"{guild.owner} (ID: {guild.owner_id})", inline=True)
+    embed.add_field(name="Member Count", value=guild.member_count, inline=True)
+    embed.add_field(name="Text Channel Count", value=str(len(guild.text_channels)), inline=True)
     embed.add_field(name="Creation Date", value=guild.created_at.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
     embed.add_field(name="Region/Locale", value=str(guild.preferred_locale), inline=True)
-    await self.BotLogService.send(event="guild_join", message=f"", embed=embed)
+    unix_time = int(guild.get_member(bot.user.id).joined_at.timestamp())
+    embed.add_field(name="Joined Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+    await bot.BotLogService.send(event="guild_leave", message=f"", embed=embed)

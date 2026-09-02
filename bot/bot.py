@@ -6,7 +6,7 @@ from topgg import DBLClient
 from cogs.manage_vcs.renamer import TempChannelRenamer
 from cogs.control_vc.embed_scheduler import EmbedUpdateScheduler
 from bot.events.ready import on_ready
-from bot.events.guild_join import on_guild_join
+from bot.events.guild import on_guild_join, on_guild_remove
 from bot.events.errors import on_application_command_error
 from bot.events.close import close
 from database.database import Database
@@ -69,6 +69,9 @@ class Bot(discord.AutoShardedBot):
 
     async def on_guild_join(self, guild):
         await on_guild_join(self, guild)
+
+    async def on_guild_remove(self, guild):
+        await on_guild_remove(self, guild)
 
     async def on_application_command_error(self, ctx, exception):
         await on_application_command_error(self, ctx, exception)
