@@ -85,7 +85,8 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
     """
     guild_name = channel.guild.name
     control_message = None
-    async for message in channel.history(limit=1, oldest_first=True):
+    messages = channel.history(limit=1, oldest_first=True)
+    async for message in messages:
         control_message = message
     if control_message is None:
         logger.debug(
