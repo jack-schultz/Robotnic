@@ -13,24 +13,26 @@ class GeneralCCog(commands.Cog):
     async def ping(self, ctx):
         await ctx.respond(f"Pong! Latency is {self.bot.latency}")
 
-    @discord.slash_command(description="Get support using Robotnic or support the creator.")
-    async def support(self, ctx):
-        embeds = [
-            DonateEmbed()
-        ]
-        await ctx.respond(f"{ctx.user.mention}", embeds=embeds, view=ButtonsView())
-
-    # Aliases to /support
     @discord.slash_command(description="Get help using Robotnic or support the creator.")
     async def help(self, ctx):
         embeds = [
             HelpEmbed()
         ]
-        await ctx.respond(f"{ctx.user.mention}", embeds=embeds, view=ButtonsView())
+        await ctx.respond(f"", embeds=embeds, view=ButtonsView())
 
-    @discord.slash_command(description="Support the creator of Robotnic.")
+    @discord.slash_command(description="Get support using Robotnic or support the creator.")
     async def donate(self, ctx):
-        await self.support.callback(self, ctx)
+        await ctx.respond(f"", embeds=[DonateEmbed()], view=ButtonsView())
+
+    # Alias to /donate
+    @discord.slash_command(description="Support the creator of Robotnic.")
+    async def support(self, ctx):
+        await self.donate.callback(self, ctx)
+
+    # Alias to /donate
+    @discord.slash_command(description="Support the creator of Robotnic.")
+    async def website(self, ctx):
+        await self.donate.callback(self, ctx)
 
 
 def setup(bot):

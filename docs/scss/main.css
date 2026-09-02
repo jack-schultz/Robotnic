@@ -1,5 +1,5 @@
 .button {
-  background-color: #5865f2;
+  background-color: #23a559;
   color: #fff;
   padding: 10px 20px;
   text-align: center;
@@ -18,14 +18,14 @@
   transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .button:hover {
-  background-color: #7983f5;
+  background-color: #1d8f4c;
   transform: translateY(-1px);
   -webkit-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   -moz-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 .button:active {
-  background-color: #5865f2;
+  background-color: #186e3a;
   transform: translateY(0);
   -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -294,7 +294,7 @@ code {
 .hero__links a {
   color: #ffffff;
   font-weight: 500;
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 3px;
   text-decoration-color: rgba(255, 255, 255, 0.45);
 }
@@ -548,3 +548,5 @@ code {
     padding: 24px 20px;
   }
 }
+
+/*# sourceMappingURL=main.css.map */
