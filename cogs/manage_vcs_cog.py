@@ -8,8 +8,9 @@ class ManageVcsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def cog_load(self):
-        self.bot.add_view(AcknowledgeButtonView(self.bot))
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.add_view(AcknowledgeButtonView())
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):

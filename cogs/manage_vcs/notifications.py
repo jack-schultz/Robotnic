@@ -13,7 +13,7 @@ async def dm_user_on_create(bot, temp_channel, member):
         color=discord.Color.green()
     )
     embed.add_field(name="Channel", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
-    await member.send(f"", embed=embed, view=AcknowledgeButtonView(bot))
+    await member.send(f"", embed=embed, view=AcknowledgeButtonView())
 
 
 async def send_temp_channel_create_logs(bot, temp_channel, member, guild_name):
