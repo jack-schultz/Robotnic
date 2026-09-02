@@ -85,14 +85,17 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
     """
     guild_name = channel.guild.name
     control_message = None
-    messages = channel.history(limit=1, oldest_first=True)
-    async for message in messages:
-        control_message = message
-    if control_message is None:
-        logger.debug(
-            f"No control message found for temp channel {channel.id} in guild '{guild_name}'"
-        )
-        return "not_found"
+    try:
+        messages = channel.history(limit=1, oldest_first=True)
+        async for message in messages:
+            control_message = message
+        if control_message is None:
+            logger.debug(
+                f"No control message found for temp channel {channel.id} in guild '{guild_name}'"
+            )
+            return "not_found"
+    except Exception as e:
+        logger.warning("Erred", exc_info=True)
 
     if len(control_message.embeds) < 2:
         logger.warning(

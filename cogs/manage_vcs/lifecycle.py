@@ -3,6 +3,7 @@ import datetime
 import discord
 from cogs.control_vc.views.control_view import ControlView
 from cogs.manage_vcs.create_name import create_temp_channel_name
+from cogs.manage_vcs.views.dm_owner_button import AcknowledgeButtonView
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +206,16 @@ async def _send_temp_channel_create_logs(bot, temp_channel, member, guild_name):
     logger.debug(f"Sent create logs for temp channel {temp_channel.name} ({temp_channel.id}) in guild '{guild_name}'")
 
 
+async def _dm_user_on_create(bot, temp_channel, member):
+    embed = discord.Embed(
+        title="TempChannel Create",
+        description="",
+        color=discord.Color.green()
+    )
+    embed.add_field(name="Channel", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
+    await member.send(f"", embed=embed, view=AcknowledgeButtonView(member.id))
+
+
 async def create_on_join(member, before, after, bot):
     guild_name = member.guild.name
     creator_channel = after.channel
@@ -271,6 +282,7 @@ async def create_on_join(member, before, after, bot):
     await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
 
     # 8. ======== Send DM to Owner ==========
+    await _dm_user_on_create(bot, new_temp_channel, member)
 
     # 9. ======== Send Logs ==========
     await _send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
