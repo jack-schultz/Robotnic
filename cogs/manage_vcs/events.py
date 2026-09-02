@@ -36,3 +36,10 @@ async def handle_presence_update(bot, before, after):
 
     logger.debug(f"Updating {temp_channel.name} due to activity change in guild '{temp_channel.guild.name}'")
     await update_channel_name_and_control_msg(bot, [temp_channel.id])
+
+
+async def handle_guild_channel_delete(bot, channel):
+    if channel.id not in bot.repos.temp_channels.get_ids():
+        return
+    logger.debug(f"Removing temp channel {channel.id} from database after channel delete in guild '{channel.guild.name}'")
+    bot.repos.temp_channels.remove(channel.id)

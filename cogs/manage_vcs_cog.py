@@ -16,6 +16,10 @@ class ManageVcsCog(commands.Cog):
     async def on_presence_update(self, before: discord.Member, after: discord.Member):
         await handle_presence_update(self.bot, before, after)
 
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel):
+        await handle_guild_channel_delete(self.bot, channel)
+
 
 def setup(bot):
     bot.add_cog(ManageVcsCog(bot))

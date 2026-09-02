@@ -25,3 +25,5 @@ async def on_ready(bot):
     await bot.sync_commands()
     logger.info(f'Commands synced')
     await bot.BotLogService.send(event="start", message=f"Commands synced.")
+
+    bot.ready = True
