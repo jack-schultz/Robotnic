@@ -1,4 +1,5 @@
 import logging
+import random
 import discord
 import asyncio
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
@@ -8,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 async def create_tasks(bot):
+    if bot._background_tasks_started:
+        logger.debug("Background tasks already running, skipping duplicate startup")
+        return []
+
+    bot._background_tasks_started = True
     tasks = []
 
     # These are the functions in this file that will run periodically in bot.loop
@@ -30,7 +36,7 @@ async def update_temp_channel_names(bot):
             await update_channel_name_and_control_msg(bot, temp_channel_ids)
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")
-        await asyncio.sleep(90)  # 1.5 minutes (90 seconds)
+        await asyncio.sleep(300 + random.uniform(0, 30))
 
 
 async def update_presence(bot):
