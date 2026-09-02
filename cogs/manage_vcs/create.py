@@ -1,72 +1,15 @@
 import logging
-import datetime
 import discord
 from cogs.control_vc.views.control_view import ControlView
+from cogs.manage_vcs.child_settings import (
+    collate_temp_channel_overwrites,
+    get_child_category,
+    get_child_overwrites,
+)
 from cogs.manage_vcs.create_name import create_temp_channel_name
-from cogs.manage_vcs.views.dm_owner_button import AcknowledgeButtonView
+from cogs.manage_vcs.notifications import dm_user_on_create, send_temp_channel_create_logs
 
 logger = logging.getLogger(__name__)
-
-
-def _get_child_category(db_info, creator_channel, bot, guild_name):
-    if db_info.child_category_id != 0:
-        category = bot.get_channel(db_info.child_category_id)
-        if category is None:
-            logger.warning(
-                f"Configured child category {db_info.child_category_id} not found for creator channel {creator_channel.id} in guild '{guild_name}'"
-            )
-        logger.debug(
-            f"Using configured child category {db_info.child_category_id} "
-            f"({category.name if category else 'not found'}) for creator channel {creator_channel.id} in guild '{guild_name}'"
-        )
-    else:
-        category = creator_channel.category
-        logger.debug(
-            f"Using creator channel category "
-            f"({category.name if category else 'none'}) for creator channel {creator_channel.id} "
-            f"in guild '{guild_name}'"
-        )
-    return category
-
-
-def _get_child_overwrites(db_info, creator_channel, category, guild_name):
-    # 0 -> no overwrites
-    # 1 -> overwrites from creator
-    # 2 -> overwrites from category
-    if db_info.child_overwrites == 1:
-        overwrites = creator_channel.overwrites
-        logger.debug(f"Using creator channel overwrites for temp channel in {creator_channel.id} in guild '{guild_name}'")
-    elif db_info.child_overwrites == 2:
-        if category:
-            overwrites = category.overwrites
-            logger.debug(f"Using category overwrites from {category.name} for temp channel in {creator_channel.id} in guild '{guild_name}'")
-        else:
-            overwrites = creator_channel.overwrites
-            logger.warning(
-                f"No category available for overwrite source, falling back to creator channel overwrites for {creator_channel.id} in guild '{guild_name}'"
-            )
-    else:
-        overwrites = {}
-        logger.debug(f"Using no inherited overwrites for temp channel in {creator_channel.id} in guild '{guild_name}'")
-    return overwrites
-
-
-def _collate_temp_channel_overwrites(overwrites, bot_user, member):
-    overwrites[bot_user] = discord.PermissionOverwrite(
-        view_channel=True,
-        manage_channels=True,
-        send_messages=True,
-        manage_messages=True,
-        read_message_history=True,
-        connect=True,
-        move_members=True,
-    )
-    overwrites[member] = discord.PermissionOverwrite(
-        view_channel=True,
-        send_messages=True,
-        read_message_history=True,
-        connect=True,
-    )
 
 
 def _next_temp_channel_count(bot, creator_channel_id, temp_channel_id, guild_name):
@@ -188,34 +131,6 @@ async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_nam
         logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
 
 
-async def _send_temp_channel_create_logs(bot, temp_channel, member, guild_name):
-    embed = discord.Embed(
-        title="TempChannel Create",
-        description="",
-        color=discord.Color.green()
-    )
-    embed.add_field(name="Channel",
-                    value=f"`{temp_channel.name}` (`{temp_channel.id}`)",
-                    inline=False)
-    embed.add_field(name="User",
-                    value=f"`{member}` (`{member.id}`)",
-                    inline=False)
-    embed.timestamp = datetime.datetime.now()
-    await bot.GuildLogService.send(event="channel_create", guild=temp_channel.guild, message=f"", embed=embed)
-    await bot.BotLogService.send(event="channel_create", message=f"Temp Channel (`{temp_channel.name}`) was made in server (`{member.guild.name}`) by user (`{member}`)")
-    logger.debug(f"Sent create logs for temp channel {temp_channel.name} ({temp_channel.id}) in guild '{guild_name}'")
-
-
-async def _dm_user_on_create(bot, temp_channel, member):
-    embed = discord.Embed(
-        title="TempChannel Create",
-        description="",
-        color=discord.Color.green()
-    )
-    embed.add_field(name="Channel", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
-    await member.send(f"", embed=embed, view=AcknowledgeButtonView(bot))
-
-
 async def create_on_join(member, before, after, bot):
     guild_name = member.guild.name
     creator_channel = after.channel
@@ -252,15 +167,15 @@ async def create_on_join(member, before, after, bot):
     db_info = bot.repos.creator_channels.get_info(creator_channel.id)
 
     #  ========== 2. Get category & overwrites ==========
-    category = _get_child_category(db_info, creator_channel, bot, guild_name)
-    overwrites = _get_child_overwrites(db_info, creator_channel, category, guild_name)
+    category = get_child_category(db_info, creator_channel, bot, guild_name)
+    overwrites = get_child_overwrites(db_info, creator_channel, category, guild_name)
 
     #  ========== 3. Notify of missing permissions ==========
     if not await _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
         return
 
     #  ========== 4. Collate overwrites ==========
-    _collate_temp_channel_overwrites(overwrites, bot.user, member)
+    collate_temp_channel_overwrites(overwrites, bot.user, member)
 
     #  ========== 5. Create channel & move user ==========
     new_temp_channel = await _create_temp_voice_channel(
@@ -282,57 +197,7 @@ async def create_on_join(member, before, after, bot):
     await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
 
     # 8. ======== Send DM to Owner ==========
-    await _dm_user_on_create(bot, new_temp_channel, member)
+    await dm_user_on_create(bot, new_temp_channel, member)
 
     # 9. ======== Send Logs ==========
-    await _send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
-
-
-async def delete_on_leave(member, before, after, bot):
-    old_temp_channel = before.channel
-    guild_name = member.guild.name
-    logger.debug(f"{member} left temp channel {old_temp_channel.name} ({old_temp_channel.id}) in guild '{guild_name}'")
-
-    if len(old_temp_channel.members) >= 1:
-        logger.debug(f"Temp channel {old_temp_channel.id} still has {len(old_temp_channel.members)} member(s) in guild '{guild_name}', skipping delete")
-        return
-
-    logger.debug(f"Left temp channel is empty in guild '{guild_name}'. Deleting...")
-
-    try:
-        await old_temp_channel.delete()
-        bot.repos.temp_channels.remove(old_temp_channel.id)
-        logger.debug(f"Deleted {old_temp_channel.name} in guild '{guild_name}'")
-
-    except discord.NotFound as e:
-        bot.repos.temp_channels.remove(old_temp_channel.id)
-        logger.debug(f"Channel not found removing entry in db in guild '{guild_name}', handled. {e}")
-        return
-
-    except discord.Forbidden as e:
-        logger.warning(
-            f"Permission error removing temp channel {old_temp_channel.id} in guild '{guild_name}', "
-            f"notifying user of missing permissions. {e}"
-        )
-        await old_temp_channel.send(f"Sorry {member.mention}, I do not have permission to delete this channel.", delete_after=300)
-        return
-
-    except Exception as e:
-        logger.error(f"Unknown error removing temp channel in guild '{guild_name}'. {e}")
-        return
-
-    embed = discord.Embed(
-        title="TempChannel Removed",
-        description="",
-        color=discord.Color.orange()
-    )
-    embed.add_field(name="Channel",
-                    value=f"`{old_temp_channel.name}` (`{old_temp_channel.id}`)",
-                    inline=False)
-    embed.add_field(name="Last Connected User",
-                    value=f"`{member}` (`{member.id}`)",
-                    inline=False)
-    embed.timestamp = datetime.datetime.now()
-    await bot.GuildLogService.send(event="channel_remove", guild=member.guild, message=f"", embed=embed)
-    await bot.BotLogService.send(event="channel_remove", message=f"Temp Channel was removed in server (`{member.guild.name}`) by user (`{member}`)")
-    logger.debug(f"Sent remove logs for temp channel {old_temp_channel.name} ({old_temp_channel.id}) in guild '{guild_name}'")
+    await send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)

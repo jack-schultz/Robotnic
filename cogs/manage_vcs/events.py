@@ -1,5 +1,6 @@
 import logging
-from cogs.manage_vcs.lifecycle import create_on_join, delete_on_leave
+from cogs.manage_vcs.create import create_on_join
+from cogs.manage_vcs.delete import delete_on_leave
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 
 logger = logging.getLogger(__name__)
