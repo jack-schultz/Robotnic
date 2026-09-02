@@ -1,5 +1,8 @@
 import sqlite3
 from config.paths import DB_PATH
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Database:
@@ -37,6 +40,11 @@ class Database:
                 "control_options": "TEXT",
                 "enabled_log_events": "TEXT",
             },
+            "user_notifications": {
+                "user_id": "INTEGER",
+                "dm_owner_controls": "INTEGER",
+                "dm_admin_donate": "INTEGER",
+            },
         }
 
         for table_name, columns in tables.items():
@@ -53,6 +61,7 @@ class Database:
             # Add missing columns
             for column_name, column_type in columns.items():
                 if column_name not in existing_columns:
+                    logger.warning(f"Column {column_name} not found in table {table_name}, adding it to existing table.")
                     self.cursor.execute(
                         f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
                     )
