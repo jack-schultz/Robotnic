@@ -58,8 +58,8 @@ class ControlView(View):
         embed = discord.Embed(color=discord.Color.green())
         embed.description = (
             "This is a [FOSS](<https://wikipedia.org/wiki/Free_and_open-source_software>) project.\n"
-            "You can contribute [here](<https://github.com/jack-schultz/Robotnic>) or support it "
-            "[here](<https://github.com/sponsors/jack-schultz>)."
+            "You can contribute [here](<https://github.com/jack-schultz/Robotnic>) or support the dev "
+            "[here](<https://ko-fi.com/jackschultzdev>)."
         )
         embeds = [
             embed,
