@@ -3,7 +3,7 @@ import discord
 
 class BanUserView(discord.ui.View):
     def __init__(self, bot, channel):
-        super().__init__(timeout=60)
+        super().__init__(timeout=300)
         self.bot = bot
         self.channel = channel
         self.message = None
@@ -29,6 +29,8 @@ class BanUserView(discord.ui.View):
 
             if isinstance(target, discord.Member) and target.id == owner_id:
                 continue
+            if isinstance(target, discord.Member) and target.id == self.bot.user.id:
+                continue
 
             await self.channel.set_permissions(target, **ban_perms)
             affected.append(target)
@@ -40,6 +42,18 @@ class BanUserView(discord.ui.View):
             embed = discord.Embed(
                 title="Banned!",
                 description=f"Banned {len(affected)} member(s)/role(s) from your channel.",
+                color=0x00FF00
+            )
+            embed.set_footer(text="This message will disappear in 10 seconds.")
+            await interaction.response.send_message(
+                embed=embed,
+                ephemeral=True,
+                delete_after=10
+            )
+        else:
+            embed = discord.Embed(
+                title="Select valid users or roles to ban",
+                description=f"",
                 color=0x00FF00
             )
             embed.set_footer(text="This message will disappear in 10 seconds.")
@@ -74,6 +88,18 @@ class BanUserView(discord.ui.View):
             embed = discord.Embed(
                 title="Allowed!",
                 description=f"Allowed {len(affected)} member(s)/role(s) in your channel.",
+                color=0x00FF00
+            )
+            embed.set_footer(text="This message will disappear in 10 seconds.")
+            await interaction.response.send_message(
+                embed=embed,
+                ephemeral=True,
+                delete_after=10
+            )
+        else:
+            embed = discord.Embed(
+                title="Select valid users or roles to Allow",
+                description=f"",
                 color=0x00FF00
             )
             embed.set_footer(text="This message will disappear in 10 seconds.")

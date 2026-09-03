@@ -43,7 +43,7 @@ class UserLimitModal(discord.ui.Modal):
             except discord.NotFound:
                 return
 
-            await schedule_info_embed(self.bot, self.channel, user_limit=user_limit)
+            await self.bot.EmbedUpdateScheduler.schedule(self.channel, user_limit=user_limit)
 
         embed = discord.Embed(
             title="Changes Saved",

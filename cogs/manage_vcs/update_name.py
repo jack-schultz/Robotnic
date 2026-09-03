@@ -74,7 +74,7 @@ async def update_channel_name_and_control_msg(bot, temp_channel_ids):
                 )
 
         # Update control message
-        await schedule_info_embed(bot, temp_channel, title=new_channel_name)
+        await bot.EmbedUpdateScheduler.schedule(temp_channel, title=new_channel_name)
 
     # Run all updates concurrently
     tasks = (update(channel_id) for channel_id in temp_channel_ids)
