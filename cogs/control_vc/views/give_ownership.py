@@ -55,7 +55,7 @@ class GiveOwnershipView(discord.ui.View):
 
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, None)
 
-                    await schedule_info_embed(self.bot, self.channel)
+                    await self.bot.EmbedUpdateScheduler.schedule(self.channel)
 
                 else:
                     selected_member = interaction.guild.get_member(int(self.values[0]))

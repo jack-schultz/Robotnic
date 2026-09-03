@@ -85,7 +85,7 @@ class ChangeNameModal(discord.ui.Modal):
         # If inputted name, schedule update channel and update db
         if self.channel_name.value:
             await self.bot.TempChannelRenamer.schedule(self.channel, channel_name)
-            await schedule_info_embed(self.bot, self.channel, title=channel_name)
+            await self.bot.EmbedUpdateScheduler.schedule(self.channel, title=channel_name)
             self.bot.repos.temp_channels.set_is_renamed(self.channel.id, True)
         else:
             # If left blank the channel rename override is reset

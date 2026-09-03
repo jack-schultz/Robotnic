@@ -19,7 +19,7 @@ async def is_owner(view, interaction):
     # If owner isn't connected. Make interacting user owner and update info embed
     if owner_id is None or owner_id not in connected_user_ids:
         view.bot.repos.temp_channels.set_owner_id(interaction.channel.id, interaction.user.id)
-        await schedule_info_embed(view.bot, interaction.channel)
+        await view.bot.EmbedUpdateScheduler.schedule(interaction.channel)
 
     # If owner is connected and isn't interacting user return false
     elif owner_id != interaction.user.id:

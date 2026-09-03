@@ -13,7 +13,6 @@ class EmbedUpdateScheduler:
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.pending = {}
         self.workers = {}
-        self.stats = {"scheduled": 0, "skipped": 0, "edited": 0, "rate_limited": 0}
 
     async def schedule(self, channel, *, title=None, user_limit=None):
         channel_id = channel.id
@@ -22,7 +21,6 @@ class EmbedUpdateScheduler:
             pending["title"] = title
         if user_limit is not None:
             pending["user_limit"] = user_limit
-        self.stats["scheduled"] += 1
 
         worker = self.workers.get(channel_id)
         if worker is None or worker.done():
@@ -50,15 +48,12 @@ class EmbedUpdateScheduler:
                     while True:
                         result = await edit_info_embed(self.bot, channel, **kwargs)
                         if result == "edited":
-                            self.stats["edited"] += 1
                             break
                         if result == "skipped":
-                            self.stats["skipped"] += 1
                             break
                         if result == "not_found":
                             break
                         if result == "rate_limited":
-                            self.stats["rate_limited"] += 1
                             continue
                         break
 
@@ -72,10 +67,6 @@ class EmbedUpdateScheduler:
 def _info_embed_signature(embed: discord.Embed) -> tuple:
     fields = tuple((field.name, field.value) for field in embed.fields)
     return (embed.title, fields)
-
-
-async def schedule_info_embed(bot, channel, title=None, user_limit=None):
-    await bot.EmbedUpdateScheduler.schedule(channel, title=title, user_limit=user_limit)
 
 
 async def edit_info_embed(bot, channel, title=None, user_limit=None):
@@ -95,7 +86,7 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
             )
             return "not_found"
     except Exception as e:
-        logger.warning("Erred", exc_info=True)
+        logger.warning("Erred finding channel control message", exc_info=True)
 
     if len(control_message.embeds) < 2:
         logger.warning(
