@@ -1,7 +1,6 @@
 import logging
 import asyncio
 import time
-from cogs.control_vc.embed_scheduler import schedule_info_embed
 from cogs.manage_vcs.create_name import create_temp_channel_name
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,4 @@
 import discord
-from cogs.control_vc.embed_scheduler import schedule_info_embed
 
 
 class UserLimitModal(discord.ui.Modal):
