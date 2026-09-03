@@ -7,13 +7,33 @@ logger = logging.getLogger(__name__)
 
 
 async def dm_user_on_create(bot, temp_channel, member, control_view):
+    if bot.repos.user_notifications.get_dm_owner_controls(member.id):
+        return
+
+    message_jump_link = f"https://discord.com/channels/{temp_channel.guild.id}/{temp_channel.id}/{control_view.message.id}"
+
     embed = discord.Embed(
-        title="You Are The Admin of Your Channel",
-        description=f"As the owner of <#{temp_channel.id}> you can moderate the users you are in a call with. To view your control panel, click [here]({control_view.message.jump_url})",
-        color=discord.Color.green()
+        title="You Control Your Channel",
+        description=(
+            f"You are the owner of {message_jump_link}.\n\n"
+        ),
+        color=discord.Color.green(),
     )
-    embed.add_field(name="Kick a Member", value=f"`{temp_channel.name}` (`{temp_channel.id}`)",)
-    await member.send(f"", embed=embed, view=AcknowledgeButtonView())
+    embed.add_field(
+        name="What can you control?",
+        value=(
+            "• **Members:** Kick or ban specific members.\n"
+            "• **Channel settings:** Change the name or user limit.\n"
+            "• **Access:** Keep your channel public, lock it, or hide it.\n"
+            "• **Private channels:** Lock/Hide and allow only selected members or roles.\n"
+        ),
+        inline=False,
+    )
+
+    await member.send(
+        embed=embed,
+        view=AcknowledgeButtonView(message_jump_link),
+    )
 
 
 async def send_temp_channel_create_logs(bot, temp_channel, member, guild_name):

@@ -44,6 +44,14 @@ class UserNotificationsRepository:  # bot.repos.guild_settings
             """, (user_id,))
         self.db.connection.commit()
 
+    def clear_dm_owner_controls(self, user_id: int):
+        self.db.cursor.execute("""
+            UPDATE user_notifications
+            SET dm_owner_controls = 0
+            WHERE user_id = ?
+        """, (user_id,))
+        self.db.connection.commit()
+
     def get_dm_admin_donate(self, user_id: int):
         self.db.cursor.execute("""
             SELECT dm_admin_donate
