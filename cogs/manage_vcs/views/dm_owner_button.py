@@ -61,7 +61,7 @@ class AcknowledgedButtonView(discord.ui.View):
             self.jump_link_button = discord.ui.Button(
                 label="Control Panel",
                 url=f"{jump_link}",
-                emoji="↗️",
+                emoji="⚙️",
                 style=discord.ButtonStyle.link,
             )
             self.add_item(self.jump_link_button)
