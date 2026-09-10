@@ -38,6 +38,7 @@ REQUIRED_PERMISSIONS_DISPLAY = (
     "`view_channel`, `manage_channels`, `manage_roles`, `send_messages`, "
     "`manage_messages`, `read_message_history`, `connect`, `move_members`"
 )
+MAX_OVERWRITE_ISSUES = 10
 
 
 def _missing_permissions_from(permissions):
@@ -48,26 +49,128 @@ def _missing_permissions_from(permissions):
     ]
 
 
+def _parent_permissions(me, category):
+    if category:
+        return category.permissions_for(me)
+    return me.guild_permissions
+
+
+def _overwrite_target_label(target):
+    if isinstance(target, discord.Role):
+        return target.name
+    if isinstance(target, (discord.Member, discord.User)):
+        return str(target)
+    return str(getattr(target, "id", target))
+
+
+def _has_explicit_manage_roles_overwrite(me, category):
+    if not category:
+        return False
+    member_overwrite = category.overwrites_for(me)
+    if member_overwrite.manage_roles is True:
+        return True
+    for role in me.roles:
+        role_overwrite = category.overwrites_for(role)
+        if role_overwrite.manage_roles is True:
+            return True
+    return False
+
+
+def _diagnose_create_overwrites(me, category, overwrites):
+    if me.guild_permissions.administrator:
+        return []
+
+    parent_perms = _parent_permissions(me, category)
+    can_set_manage_roles = _has_explicit_manage_roles_overwrite(me, category)
+    issues = []
+
+    for target, overwrite in overwrites.items():
+        label = _overwrite_target_label(target)
+        allow, deny = overwrite.pair()
+        for perms in (allow, deny):
+            for perm_name, is_set in perms:
+                if not is_set:
+                    continue
+                if perm_name == "manage_roles":
+                    if not can_set_manage_roles:
+                        issues.append(
+                            f"`manage_roles` for `{label}` "
+                            f"(needs Administrator or a category overwrite granting me `manage_roles`)"
+                        )
+                elif not getattr(parent_perms, perm_name, False):
+                    issues.append(f"`{perm_name}` for `{label}`")
+                if len(issues) >= MAX_OVERWRITE_ISSUES:
+                    return issues
+    return issues
+
+
 async def _send_missing_permissions_notice(
-    member, creator_channel, category, missing_permissions, guild_name, scope_label
+    member,
+    creator_channel,
+    category,
+    guild_name,
+    scope_label,
+    missing_permissions=None,
+    overwrite_issues=None,
+    discord_error=None,
 ):
+    missing_permissions = missing_permissions or []
+    overwrite_issues = overwrite_issues or []
+    detail_parts = []
+    if missing_permissions:
+        detail_parts.append(f"Missing: {', '.join(missing_permissions)}")
+    if overwrite_issues:
+        detail_parts.append(f"Overwrite issues: {', '.join(overwrite_issues)}")
+    if discord_error:
+        detail_parts.append(f"Discord: {discord_error}")
     logger.warning(
-        f"Missing {scope_label} permissions to create temp channel for {member} in guild '{guild_name}', aborting. "
-        f"Missing: {', '.join(missing_permissions)}"
+        f"Cannot create temp channel for {member} in guild '{guild_name}' ({scope_label}). "
+        + ("; ".join(detail_parts) if detail_parts else "No diagnostic details")
     )
-    logger.debug(f"Notified {member} of missing permissions in guild '{guild_name}'")
+    logger.debug(f"Notified {member} of create permission issues in guild '{guild_name}'")
+
     embed = discord.Embed()
     embed.add_field(name="Required", value=REQUIRED_PERMISSIONS_DISPLAY)
-    embed.add_field(
-        name="Missing",
-        value=f"{', '.join(f'`{perm}`' for perm in missing_permissions)}",
-    )
-    response_text = f"Sorry {member.mention}, I require the following permissions."
-    if category:
-        response_text = (
-            response_text
-            + f" Make sure they are not overwritten by the category (In this case `{category.name}`)."
+    if missing_permissions:
+        embed.add_field(
+            name="Missing",
+            value=f"{', '.join(f'`{perm}`' for perm in missing_permissions)}",
         )
+    if overwrite_issues:
+        issues_value = "\n".join(f"- {issue}" for issue in overwrite_issues)
+        if len(issues_value) > 1024:
+            issues_value = issues_value[:1021] + "..."
+        embed.add_field(name="Overwrite issues", value=issues_value)
+    if discord_error and not missing_permissions and not overwrite_issues:
+        error_value = discord_error if len(discord_error) <= 1024 else discord_error[:1021] + "..."
+        embed.add_field(name="Discord error", value=error_value)
+
+    if missing_permissions:
+        response_text = f"Sorry {member.mention}, I require the following permissions."
+        if category:
+            response_text = (
+                response_text
+                + f" Make sure they are not overwritten by the category (In this case `{category.name}`)."
+            )
+    elif overwrite_issues:
+        response_text = (
+            f"Sorry {member.mention}, I cannot apply the configured permission overwrites "
+            f"when creating the channel."
+        )
+        if category:
+            response_text = (
+                response_text
+                + f" Make sure they are not overwritten by the category (In this case `{category.name}`)."
+            )
+    else:
+        response_text = (
+            f"Sorry {member.mention}, I do not have permission to create a channel "
+            f"in the desired category"
+        )
+        if category:
+            response_text = response_text + f" (`{category.name}`)."
+        else:
+            response_text = response_text + "."
     try:
         await creator_channel.send(response_text, embed=embed, delete_after=300)
     except discord.Forbidden as e:
@@ -84,7 +187,12 @@ async def _notify_if_missing_guild_permissions(member, creator_channel, category
     missing_permissions = _missing_permissions_from(member.guild.me.guild_permissions)
     if missing_permissions:
         await _send_missing_permissions_notice(
-            member, creator_channel, category, missing_permissions, guild_name, "guild"
+            member,
+            creator_channel,
+            category,
+            guild_name,
+            "guild",
+            missing_permissions=missing_permissions,
         )
         return False
     return True
@@ -98,7 +206,30 @@ async def _notify_if_missing_category_permissions(member, creator_channel, categ
     )
     if missing_permissions:
         await _send_missing_permissions_notice(
-            member, creator_channel, category, missing_permissions, guild_name, "category"
+            member,
+            creator_channel,
+            category,
+            guild_name,
+            "category",
+            missing_permissions=missing_permissions,
+        )
+        return False
+    return True
+
+
+async def _notify_if_invalid_create_overwrites(
+    member, creator_channel, category, overwrites, guild_name
+):
+    me = member.guild.me
+    overwrite_issues = _diagnose_create_overwrites(me, category, overwrites)
+    if overwrite_issues:
+        await _send_missing_permissions_notice(
+            member,
+            creator_channel,
+            category,
+            guild_name,
+            "overwrites",
+            overwrite_issues=overwrite_issues,
         )
         return False
     return True
@@ -117,35 +248,22 @@ async def _create_temp_voice_channel(creator_channel, category, overwrites, memb
             f"Permission error creating temp channel in category in guild '{guild_name}', "
             f"notifying user of missing permissions. {e}"
         )
+        me = member.guild.me
         missing_permissions = []
         if category:
-            missing_permissions = _missing_permissions_from(
-                category.permissions_for(member.guild.me)
-            )
-        if missing_permissions:
-            await _send_missing_permissions_notice(
-                member, creator_channel, category, missing_permissions, guild_name, "category"
-            )
-        else:
-            response_text = (
-                f"Sorry {member.mention}, I do not have permission to create a channel "
-                f"in the desired category"
-            )
-            if category:
-                response_text = response_text + f" (`{category.name}`)."
-            else:
-                response_text = response_text + "."
-            try:
-                await creator_channel.send(response_text, delete_after=300)
-            except discord.Forbidden as notify_error:
-                logger.warning(
-                    f"Could not notify {member} of missing permissions in creator channel "
-                    f"{creator_channel.id} in guild '{guild_name}'. {notify_error}"
-                )
-            except Exception as notify_error:
-                logger.warning(
-                    f"Error notifying {member} of missing permissions in guild '{guild_name}'. {notify_error}"
-                )
+            missing_permissions = _missing_permissions_from(category.permissions_for(me))
+        overwrite_issues = _diagnose_create_overwrites(me, category, overwrites)
+        discord_error = e.text or str(e)
+        await _send_missing_permissions_notice(
+            member,
+            creator_channel,
+            category,
+            guild_name,
+            "category",
+            missing_permissions=missing_permissions,
+            overwrite_issues=overwrite_issues,
+            discord_error=discord_error,
+        )
         return None
 
     logger.debug(
@@ -233,6 +351,10 @@ async def create_on_join(member, before, after, bot):
 
     #  ========== 4. Collate overwrites ==========
     collate_temp_channel_overwrites(overwrites, bot.user, member)
+    if not await _notify_if_invalid_create_overwrites(
+        member, creator_channel, category, overwrites, guild_name
+    ):
+        return
 
     #  ========== 5. Create channel & move user ==========
     new_temp_channel = await _create_temp_voice_channel(
