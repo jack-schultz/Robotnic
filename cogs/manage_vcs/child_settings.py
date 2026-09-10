@@ -58,6 +58,7 @@ def collate_temp_channel_overwrites(overwrites, bot_user, member):
         view_channel=True,
         manage_channels=True,
         send_messages=True,
+        embed_links=True,
         manage_messages=True,
         read_message_history=True,
         connect=True,

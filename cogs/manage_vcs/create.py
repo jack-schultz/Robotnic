@@ -343,7 +343,90 @@ async def _move_member_to_temp_channel(member, temp_channel, guild_name):
     return True
 
 
-async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_name, guild_name):
+FINALIZE_EDIT_PERMISSIONS = ["manage_channels"]
+FINALIZE_SEND_PERMISSIONS = [
+    "view_channel",
+    "send_messages",
+    "embed_links",
+    "read_message_history",
+]
+
+
+def _missing_channel_permissions(channel, me, required_permissions):
+    perms = channel.permissions_for(me)
+    return [
+        perm
+        for perm in required_permissions
+        if not getattr(perms, perm, False)
+    ]
+
+
+async def _notify_finalize_permission_failure(
+    member,
+    creator_channel,
+    temp_channel,
+    guild_name,
+    action,
+    missing_permissions,
+    discord_error,
+):
+    detail = (
+        f"Missing in `{temp_channel}`: {', '.join(missing_permissions)}"
+        if missing_permissions
+        else f"Discord: {discord_error}"
+    )
+    logger.warning(
+        f"Cannot {action} for temp channel {temp_channel.id} in guild '{guild_name}'. {detail}"
+    )
+
+    response_text = (
+        f"Sorry {member.mention}, I could not {action} in {temp_channel.mention}."
+    )
+    embed = discord.Embed()
+    embed.add_field(
+        name="Required",
+        value=", ".join(f"`{perm}`" for perm in (
+            FINALIZE_EDIT_PERMISSIONS if action == "rename the channel"
+            else FINALIZE_SEND_PERMISSIONS
+        )),
+    )
+    if missing_permissions:
+        embed.add_field(
+            name="Missing in temp channel",
+            value=", ".join(f"`{perm}`" for perm in missing_permissions),
+        )
+    else:
+        error_value = discord_error if len(discord_error) <= 1024 else discord_error[:1021] + "..."
+        embed.add_field(name="Discord error", value=error_value)
+
+    for notify_channel in (temp_channel, creator_channel):
+        try:
+            await notify_channel.send(response_text, embed=embed, delete_after=300)
+            return
+        except discord.Forbidden:
+            try:
+                await notify_channel.send(
+                    f"{response_text} Missing: "
+                    f"{', '.join(f'`{perm}`' for perm in missing_permissions) if missing_permissions else discord_error}",
+                    delete_after=300,
+                )
+                return
+            except Exception:
+                continue
+        except Exception as e:
+            logger.warning(
+                f"Error notifying {member} about finalize failure in guild '{guild_name}'. {e}"
+            )
+    logger.warning(
+        f"Could not notify {member} of finalize failure for temp channel {temp_channel.id} "
+        f"in guild '{guild_name}'"
+    )
+
+
+async def _finalize_temp_channel(
+    bot, temp_channel, member, db_info, channel_name, guild_name, creator_channel
+):
+    me = temp_channel.guild.me
     try:
         # Could use bot.TempChannelRenamer to avoid rate-limit problems but this does not support user limit yet
         # Fine to use without scheduling as rate limit bucket will never be full immediately after creation
@@ -351,14 +434,66 @@ async def _finalize_temp_channel(bot, temp_channel, member, db_info, channel_nam
             name=channel_name,
             user_limit=db_info.user_limit,
         )
+    except discord.Forbidden as e:
+        missing = _missing_channel_permissions(temp_channel, me, FINALIZE_EDIT_PERMISSIONS)
+        await _notify_finalize_permission_failure(
+            member,
+            creator_channel,
+            temp_channel,
+            guild_name,
+            "rename the channel",
+            missing,
+            e.text or str(e),
+        )
+        return None
+    except Exception as e:
+        logger.warning(
+            f"Error renaming temp channel {temp_channel.id} in guild '{guild_name}', handled. {e}"
+        )
+        return None
 
-        # Send control message in channel chat
+    try:
         view = ControlView.for_channel(bot, temp_channel)
         await view.send_control_message(temp_channel, member, channel_name=channel_name)
-        logger.debug(f"Finalized temp channel {temp_channel.id} as '{channel_name}' with control message in guild '{guild_name}'")
+        logger.debug(
+            f"Finalized temp channel {temp_channel.id} as '{channel_name}' "
+            f"with control message in guild '{guild_name}'"
+        )
         return view
+    except discord.Forbidden as e:
+        missing = _missing_channel_permissions(temp_channel, me, FINALIZE_SEND_PERMISSIONS)
+        if not missing:
+            # Effective perms look fine; dump channel overwrites for support logs.
+            for target, overwrite in temp_channel.overwrites.items():
+                bits = _overwrite_permission_names(overwrite)
+                logger.warning(
+                    f"Control message Forbidden dump ({guild_name}): "
+                    f"`{_overwrite_target_label(target)}` -> {', '.join(bits) if bits else '(empty)'}"
+                )
+            perms = temp_channel.permissions_for(me)
+            logger.warning(
+                f"Control message Forbidden dump ({guild_name}): bot effective in channel: "
+                + ", ".join(
+                    f"{perm}={getattr(perms, perm, False)}"
+                    for perm in FINALIZE_SEND_PERMISSIONS
+                )
+            )
+        await _notify_finalize_permission_failure(
+            member,
+            creator_channel,
+            temp_channel,
+            guild_name,
+            "send the control message",
+            missing,
+            e.text or str(e),
+        )
+        return None
     except Exception as e:
-        logger.warning(f"Error finalizing creation of voice channel in guild '{guild_name}', handled. {e}")
+        logger.warning(
+            f"Error sending control message for temp channel {temp_channel.id} "
+            f"in guild '{guild_name}', handled. {e}"
+        )
+        return None
 
 
 async def create_on_join(member, before, after, bot):
@@ -430,7 +565,11 @@ async def create_on_join(member, before, after, bot):
     #  ========== 7. Update channel named based on naming scheme (slow, done last) ==========
     channel_name = create_temp_channel_name(bot, new_temp_channel, db_creator_channel_info=db_info)
     logger.debug(f"Generated temp channel name '{channel_name}' for {new_temp_channel.id} in guild '{guild_name}'")
-    control_view = await _finalize_temp_channel(bot, new_temp_channel, member, db_info, channel_name, guild_name)
+    control_view = await _finalize_temp_channel(
+        bot, new_temp_channel, member, db_info, channel_name, guild_name, creator_channel
+    )
+    if control_view is None:
+        return
 
     # 8. ======== Send DM to Owner ==========
     await dm_user_on_create(bot, new_temp_channel, member, control_view)
