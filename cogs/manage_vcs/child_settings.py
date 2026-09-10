@@ -48,6 +48,12 @@ def get_child_overwrites(db_info, creator_channel, category, guild_name):
 
 
 def collate_temp_channel_overwrites(overwrites, bot_user, member):
+    # Discord rejects channel create when manage_roles is set in overwrites
+    # unless the bot is Administrator; strip it from inherited overwrites.
+    for overwrite in overwrites.values():
+        if overwrite.manage_roles is not None:
+            overwrite.manage_roles = None
+
     overwrites[bot_user] = discord.PermissionOverwrite(
         view_channel=True,
         manage_channels=True,
