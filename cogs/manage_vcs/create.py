@@ -49,12 +49,6 @@ def _missing_permissions_from(permissions):
     ]
 
 
-def _parent_permissions(me, category):
-    if category:
-        return category.permissions_for(me)
-    return me.guild_permissions
-
-
 def _overwrite_target_label(target):
     if isinstance(target, discord.Role):
         return target.name
@@ -76,11 +70,22 @@ def _has_explicit_manage_roles_overwrite(me, category):
     return False
 
 
+def _overwrite_permission_names(overwrite):
+    names = []
+    allow, deny = overwrite.pair()
+    for perms, action in ((allow, "allow"), (deny, "deny")):
+        for perm_name, is_set in perms:
+            if is_set:
+                names.append(f"{action}:{perm_name}")
+    return names
+
+
 def _diagnose_create_overwrites(me, category, overwrites):
+    """Discord validates create overwrites against guild permissions, not category-effective ones."""
     if me.guild_permissions.administrator:
         return []
 
-    parent_perms = _parent_permissions(me, category)
+    guild_perms = me.guild_permissions
     can_set_manage_roles = _has_explicit_manage_roles_overwrite(me, category)
     issues = []
 
@@ -97,11 +102,57 @@ def _diagnose_create_overwrites(me, category, overwrites):
                             f"`manage_roles` for `{label}` "
                             f"(needs Administrator or a category overwrite granting me `manage_roles`)"
                         )
-                elif not getattr(parent_perms, perm_name, False):
-                    issues.append(f"`{perm_name}` for `{label}`")
+                elif not getattr(guild_perms, perm_name, False):
+                    issues.append(
+                        f"`{perm_name}` for `{label}` (bot lacks this on its guild role)"
+                    )
                 if len(issues) >= MAX_OVERWRITE_ISSUES:
                     return issues
     return issues
+
+
+def _format_overwrite_dump(me, category, overwrites):
+    """Build a log-friendly dump when Discord rejects create but diagnosis is empty."""
+    guild_perms = me.guild_permissions
+    category_perms = category.permissions_for(me) if category else None
+    lines = [
+        f"bot guild administrator={guild_perms.administrator}",
+        f"bot has explicit category manage_roles overwrite="
+        f"{_has_explicit_manage_roles_overwrite(me, category)}",
+    ]
+    for target, overwrite in overwrites.items():
+        label = _overwrite_target_label(target)
+        bits = _overwrite_permission_names(overwrite)
+        missing_on_guild = []
+        allow, deny = overwrite.pair()
+        for perms in (allow, deny):
+            for perm_name, is_set in perms:
+                if not is_set:
+                    continue
+                if perm_name == "manage_roles":
+                    if not guild_perms.administrator and not _has_explicit_manage_roles_overwrite(
+                        me, category
+                    ):
+                        missing_on_guild.append(perm_name)
+                elif not getattr(guild_perms, perm_name, False):
+                    missing_on_guild.append(perm_name)
+        line = f"overwrite `{label}`: {', '.join(bits) if bits else '(empty)'}"
+        if missing_on_guild:
+            line += f" | missing on guild role: {', '.join(sorted(set(missing_on_guild)))}"
+        if category_perms is not None:
+            missing_on_category = []
+            for perms in (allow, deny):
+                for perm_name, is_set in perms:
+                    if is_set and perm_name != "manage_roles" and not getattr(
+                        category_perms, perm_name, False
+                    ):
+                        missing_on_category.append(perm_name)
+            if missing_on_category:
+                line += (
+                    f" | missing on category: {', '.join(sorted(set(missing_on_category)))}"
+                )
+        lines.append(line)
+    return lines
 
 
 async def _send_missing_permissions_notice(
@@ -244,16 +295,22 @@ async def _create_temp_voice_channel(creator_channel, category, overwrites, memb
             position=creator_channel.position,
         )
     except discord.Forbidden as e:
-        logger.warning(
-            f"Permission error creating temp channel in category in guild '{guild_name}', "
-            f"notifying user of missing permissions. {e}"
-        )
         me = member.guild.me
         missing_permissions = []
         if category:
             missing_permissions = _missing_permissions_from(category.permissions_for(me))
         overwrite_issues = _diagnose_create_overwrites(me, category, overwrites)
         discord_error = e.text or str(e)
+        logger.warning(
+            f"Permission error creating temp channel in category in guild '{guild_name}'. {e}"
+        )
+        if overwrite_issues:
+            logger.warning(
+                f"Overwrite diagnosis for guild '{guild_name}': {', '.join(overwrite_issues)}"
+            )
+        else:
+            for line in _format_overwrite_dump(me, category, overwrites):
+                logger.warning(f"Create Forbidden dump ({guild_name}): {line}")
         await _send_missing_permissions_notice(
             member,
             creator_channel,
