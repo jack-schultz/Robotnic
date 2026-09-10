@@ -24,42 +24,82 @@ def _next_temp_channel_count(bot, creator_channel_id, temp_channel_id, guild_nam
     return count
 
 
-async def _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
-    permissions_to_check = [
-        "manage_channels",
-        "manage_roles",
-        "view_channel",
-        "send_messages",
-        "connect",
-        "move_members",
-        "manage_messages",
-        "read_message_history"
-    ]
-    has_all_perms = True
-    missing_permissions = []
-    for perm in permissions_to_check:
-        has_perm = getattr(member.guild.me.guild_permissions, perm, False)
-        if not has_perm:
-            has_all_perms = False
-            missing_permissions.append(perm)
+PERMISSIONS_TO_CHECK = [
+    "manage_channels",
+    "manage_roles",
+    "view_channel",
+    "send_messages",
+    "connect",
+    "move_members",
+    "manage_messages",
+    "read_message_history",
+]
+REQUIRED_PERMISSIONS_DISPLAY = (
+    "`view_channel`, `manage_channels`, `manage_roles`, `send_messages`, "
+    "`manage_messages`, `read_message_history`, `connect`, `move_members`"
+)
 
-    if not has_all_perms:
-        logger.warning(
-            f"Missing guild permissions to create temp channel for {member} in guild '{guild_name}', aborting. "
-            f"Missing: {', '.join(missing_permissions)}"
+
+def _missing_permissions_from(permissions):
+    return [
+        perm
+        for perm in PERMISSIONS_TO_CHECK
+        if not getattr(permissions, perm, False)
+    ]
+
+
+async def _send_missing_permissions_notice(
+    member, creator_channel, category, missing_permissions, guild_name, scope_label
+):
+    logger.warning(
+        f"Missing {scope_label} permissions to create temp channel for {member} in guild '{guild_name}', aborting. "
+        f"Missing: {', '.join(missing_permissions)}"
+    )
+    logger.debug(f"Notified {member} of missing permissions in guild '{guild_name}'")
+    embed = discord.Embed()
+    embed.add_field(name="Required", value=REQUIRED_PERMISSIONS_DISPLAY)
+    embed.add_field(
+        name="Missing",
+        value=f"{', '.join(f'`{perm}`' for perm in missing_permissions)}",
+    )
+    response_text = f"Sorry {member.mention}, I require the following permissions."
+    if category:
+        response_text = (
+            response_text
+            + f" Make sure they are not overwritten by the category (In this case `{category.name}`)."
         )
-        logger.debug(
-            f"Notified {member} of missing permissions in guild '{guild_name}'"
-        )
-        embed = discord.Embed()
-        embed.add_field(name="Required",
-                        value="`view_channel`, `manage_channels`, `manage_roles`, `send_messages`, `manage_messages`, `read_message_history`, `connect`, `move_members`")
-        embed.add_field(name="Missing",
-                        value=f"{', '.join(f'`{perm}`' for perm in missing_permissions)}")
-        response_text = f"Sorry {member.mention}, I require the following permissions."
-        if category:
-            response_text = response_text + f"Make sure they are not overwritten by the category (In this case `{category.name}`)."
+    try:
         await creator_channel.send(response_text, embed=embed, delete_after=300)
+    except discord.Forbidden as e:
+        logger.warning(
+            f"Could not notify {member} of missing permissions in creator channel {creator_channel.id} in guild '{guild_name}'. {e}"
+        )
+    except Exception as e:
+        logger.warning(
+            f"Error notifying {member} of missing permissions in guild '{guild_name}'. {e}"
+        )
+
+
+async def _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
+    missing_permissions = _missing_permissions_from(member.guild.me.guild_permissions)
+    if missing_permissions:
+        await _send_missing_permissions_notice(
+            member, creator_channel, category, missing_permissions, guild_name, "guild"
+        )
+        return False
+    return True
+
+
+async def _notify_if_missing_category_permissions(member, creator_channel, category, guild_name):
+    if not category:
+        return True
+    missing_permissions = _missing_permissions_from(
+        category.permissions_for(member.guild.me)
+    )
+    if missing_permissions:
+        await _send_missing_permissions_notice(
+            member, creator_channel, category, missing_permissions, guild_name, "category"
+        )
         return False
     return True
 
@@ -77,21 +117,35 @@ async def _create_temp_voice_channel(creator_channel, category, overwrites, memb
             f"Permission error creating temp channel in category in guild '{guild_name}', "
             f"notifying user of missing permissions. {e}"
         )
-        response_text = f"Sorry {member.mention}, I do not have permission to create a channel in the desired category"
+        missing_permissions = []
         if category:
-            response_text = response_text + f" (`{category.name}`)."
+            missing_permissions = _missing_permissions_from(
+                category.permissions_for(member.guild.me)
+            )
+        if missing_permissions:
+            await _send_missing_permissions_notice(
+                member, creator_channel, category, missing_permissions, guild_name, "category"
+            )
         else:
-            response_text = response_text + "."
-        try:
-            await creator_channel.send(response_text, delete_after=300)
-        except discord.Forbidden as e:
-            logger.warning(
-                f"Could not notify {member} of missing permissions in creator channel {creator_channel.id} in guild '{guild_name}'. {e}"
+            response_text = (
+                f"Sorry {member.mention}, I do not have permission to create a channel "
+                f"in the desired category"
             )
-        except Exception as e:
-            logger.warning(
-                f"Error notifying {member} of missing permissions in guild '{guild_name}'. {e}"
-            )
+            if category:
+                response_text = response_text + f" (`{category.name}`)."
+            else:
+                response_text = response_text + "."
+            try:
+                await creator_channel.send(response_text, delete_after=300)
+            except discord.Forbidden as notify_error:
+                logger.warning(
+                    f"Could not notify {member} of missing permissions in creator channel "
+                    f"{creator_channel.id} in guild '{guild_name}'. {notify_error}"
+                )
+            except Exception as notify_error:
+                logger.warning(
+                    f"Error notifying {member} of missing permissions in guild '{guild_name}'. {notify_error}"
+                )
         return None
 
     logger.debug(
@@ -173,6 +227,8 @@ async def create_on_join(member, before, after, bot):
 
     #  ========== 3. Notify of missing permissions ==========
     if not await _notify_if_missing_guild_permissions(member, creator_channel, category, guild_name):
+        return
+    if not await _notify_if_missing_category_permissions(member, creator_channel, category, guild_name):
         return
 
     #  ========== 4. Collate overwrites ==========
