@@ -1,4 +1,5 @@
 import logging
+from cogs.control_vc.member_actions.handler import sync_sanctions_for_voice_state
 from cogs.manage_vcs.create import create_on_join
 from cogs.manage_vcs.delete import delete_on_leave
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
@@ -11,6 +12,8 @@ async def handle_voice_state_update(bot, member, before, after):
     if before is not None and after is not None:
         if before.channel == after.channel:
             return
+
+    await sync_sanctions_for_voice_state(bot, member, before, after)
 
     if after.channel:  # If a user joined a channel
         creator_channel_ids = bot.repos.creator_channels.get_ids()

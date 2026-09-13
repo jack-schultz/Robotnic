@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.control_vc import context_menus
+from cogs.control_vc.member_actions import context_menus
 
 
 class Control_Vc_cog(commands.Cog):
