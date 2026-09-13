@@ -14,23 +14,33 @@ ALLOW_PERMS = {
 # Abstracted into functions allowing both the control menu or context menu (right click menu) to use the same ban/allow logic
 # 1. List of users is fed into ban_targets() or allow_targets()
 # 2. ban_targets() or allow_targets() filters targets and passes them to _apply_overwrites()
-# 3. _apply_overwrites() adds them to current overwrites, updates the channel and returns affected
+# 3. _apply_overwrites() updates the channel for each target and returns affected
 # 4. ban_targets() uses effected list to disconnect users
 # 5. ban_targets() or allow_targets() return affected list
 
 async def _apply_overwrites(channel, targets, perms):
     affected = []
-    overwrites = channel.overwrites
-    overwrite = discord.PermissionOverwrite(**perms)
 
     for target in targets:
         if not target:
             continue
-        overwrites[target] = overwrite
         affected.append(target)
 
-    if affected:
+    if not affected:
+        return affected
+
+    # set_permissions is one request per target
+    # Discord rate-limits 10 every 10 seconds.
+    # so bulk edit if more than 10.
+    if len(affected) > 10:
+        overwrites = channel.overwrites
+        overwrite = discord.PermissionOverwrite(**perms)
+        for target in affected:
+            overwrites[target] = overwrite
         await channel.edit(overwrites=overwrites)
+    else:
+        for target in affected:
+            await channel.set_permissions(target, **perms)
 
     return affected
 
