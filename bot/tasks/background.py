@@ -2,7 +2,7 @@ import logging
 import random
 import discord
 import asyncio
-from cogs.control_vc.member_actions.handler import clear_orphaned_sanctions
+from cogs.control_vc.member_actions.handler.mute_deafen import clear_orphaned_sanctions
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 from api.stats import stats
 

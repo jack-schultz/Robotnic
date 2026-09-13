@@ -1,7 +1,7 @@
 import discord
 
 from cogs.control_vc.enums import Action
-from cogs.control_vc.member_actions.handler import handle_action
+from cogs.control_vc.member_actions.handler.actions import handle_action
 
 
 class _MemberSelectView(discord.ui.View):

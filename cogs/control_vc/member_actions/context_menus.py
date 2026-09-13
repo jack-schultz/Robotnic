@@ -1,5 +1,5 @@
 from cogs.control_vc.enums import Action
-from cogs.control_vc.member_actions.handler import handle_action
+from cogs.control_vc.member_actions.handler.actions import handle_action
 
 
 async def ban_user(bot, ctx, user):

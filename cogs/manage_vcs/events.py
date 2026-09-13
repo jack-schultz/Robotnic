@@ -1,5 +1,5 @@
 import logging
-from cogs.control_vc.member_actions.handler import (
+from cogs.control_vc.member_actions.handler.mute_deafen import (
     note_external_server_mute,
     sync_sanctions_for_voice_state,
 )
