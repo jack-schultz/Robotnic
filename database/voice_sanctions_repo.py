@@ -68,8 +68,16 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
             return False, False
         return bool(row[0]), bool(row[1])
 
+    def has_stored_prior(self, guild_id, user_id):
+        row = self._prior_row(guild_id, user_id)
+        return row is not None and row[0] is not None and row[1] is not None
+
     def save_prior(self, guild_id, user_id, muted, deafened):
-        if self._prior_row(guild_id, user_id) is not None:
+        row = self._prior_row(guild_id, user_id)
+        if row is not None and row[0] is not None and row[1] is not None:
+            return
+        if row is not None:
+            self.update_prior(guild_id, user_id, muted, deafened)
             return
         self.db.cursor.execute("""
             INSERT INTO voice_sanctions
