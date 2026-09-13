@@ -26,7 +26,7 @@ async def dm_user_on_create(bot, temp_channel, member, control_view):
     embed.add_field(
         name="What can you control?",
         value=(
-            "• **Members:** Kick or ban specific members.\n"
+            "• **Members:** Ban, mute, or deafen specific members.\n"
             "• **Channel settings:** Change the name or user limit.\n"
             "• **Access:** Keep your channel public, lock it, or hide it.\n"
             "• **Private channels:** Lock/Hide and allow only selected members or roles.\n"

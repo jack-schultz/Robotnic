@@ -30,6 +30,8 @@ class SettingsModal(discord.ui.DesignerModal):
             discord.SelectOption(value="limit", label="Edit User Limit", emoji="🚧", default="limit" in enabled_controls),
             discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽", default="clear" in enabled_controls),
             discord.SelectOption(value="ban", label="Ban Users or Roles", emoji="🔨", default="ban" in enabled_controls),
+            discord.SelectOption(value="mute", label="Mute Users", emoji="🔇", default="mute" in enabled_controls),
+            discord.SelectOption(value="deafen", label="Deafen Users", emoji="🔕", default="deafen" in enabled_controls),
             discord.SelectOption(value="give", label="Give Ownership", emoji="🎁", default="give" in enabled_controls),
             discord.SelectOption(value="delete", label="Delete Channel", emoji="🗑️", default="delete" in enabled_controls),
             discord.SelectOption(value="lock", label="Lock Channel", emoji="🔒", default="lock" in enabled_controls),

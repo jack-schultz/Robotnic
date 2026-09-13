@@ -9,10 +9,11 @@ from cogs.control_vc.modals.user_limit_modal import UserLimitModal
 from cogs.control_vc.modals.change_name_modal import ChangeNameModal
 from cogs.control_vc.views.give_ownership import GiveOwnershipView
 from cogs.control_vc.views.ban_user import BanUserView
+from cogs.control_vc.views.mute_deafen import DeafenUserView, MuteUserView
 
 logger = logging.getLogger(__name__)
 
-ALL_CONTROLS = ("rename", "limit", "clear", "ban", "give", "delete", "lock", "hide")
+ALL_CONTROLS = ("rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete", "lock", "hide")
 
 
 def _custom_id(action):
@@ -173,6 +174,20 @@ class ControlView(View):
             row=1,
             custom_id=_custom_id("ban"),
         )
+        mute_button = discord.ui.Button(
+            label="",
+            emoji="🔇",
+            style=discord.ButtonStyle.secondary,
+            row=1,
+            custom_id=_custom_id("mute"),
+        )
+        deafen_button = discord.ui.Button(
+            label="",
+            emoji="🔕",
+            style=discord.ButtonStyle.secondary,
+            row=1,
+            custom_id=_custom_id("deafen"),
+        )
         banner_button = discord.ui.Button(
             label="- - - - - - - - - - - - - - - - - - - -",
             style=discord.ButtonStyle.secondary,
@@ -189,6 +204,10 @@ class ControlView(View):
             self.add_item(clear_button)
         if "ban" in enabled_controls:
             self.add_item(ban_button)
+        if "mute" in enabled_controls:
+            self.add_item(mute_button)
+        if "deafen" in enabled_controls:
+            self.add_item(deafen_button)
         if "give" in enabled_controls:
             self.add_item(give_button)
         if "delete" in enabled_controls:
@@ -211,6 +230,8 @@ class ControlView(View):
         delete_button.callback = self.delete_button_callback
         give_button.callback = self.give_button_callback
         ban_button.callback = self.ban_button_callback
+        mute_button.callback = self.mute_button_callback
+        deafen_button.callback = self.deafen_button_callback
 
         if "labels" in control_options:
             lock_button.label = "Lock"
@@ -222,6 +243,8 @@ class ControlView(View):
             delete_button.label = "Delete"
             give_button.label = "Give"
             ban_button.label = "Ban/Allow User"
+            mute_button.label = "Mute Users"
+            deafen_button.label = "Deafen Users"
 
     def _add_dropdown_items(self, enabled_controls, channel_state, row=None):
         class ActionDropdown(discord.ui.Select):
@@ -235,6 +258,10 @@ class ControlView(View):
                     options.append(discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽"))
                 if "ban" in enabled_controls:
                     options.append(discord.SelectOption(value="ban", label="Ban/Allow Users or Roles", emoji="🔨"))
+                if "mute" in enabled_controls:
+                    options.append(discord.SelectOption(value="mute", label="Mute/Unmute Users", emoji="🔇"))
+                if "deafen" in enabled_controls:
+                    options.append(discord.SelectOption(value="deafen", label="Deafen/Undeafen Users", emoji="🔕"))
                 if "give" in enabled_controls:
                     options.append(discord.SelectOption(value="give", label="Give Ownership", emoji="🎁"))
                 if "delete" in enabled_controls:
@@ -263,6 +290,10 @@ class ControlView(View):
                     await self.clear_button_callback(interaction)
                 elif choice == "ban":
                     await self.ban_button_callback(interaction)
+                elif choice == "mute":
+                    await self.mute_button_callback(interaction)
+                elif choice == "deafen":
+                    await self.deafen_button_callback(interaction)
                 elif choice == "delete":
                     await self.delete_button_callback(interaction)
                 await self.recreate_items(interaction)
@@ -319,7 +350,7 @@ class ControlView(View):
                 elif choice == "hide":
                     await self.hide_button_callback(interaction)
 
-        if len({"rename", "limit", "clear", "ban", "give", "delete"}.intersection(enabled_controls)) > 0:
+        if len({"rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete"}.intersection(enabled_controls)) > 0:
             self.add_item(ActionDropdown())
         if len({"lock", "hide"}.intersection(enabled_controls)) > 0:
             self.add_item(StateDropdown())
@@ -490,6 +521,18 @@ class ControlView(View):
             return
         await interaction.response.defer(ephemeral=True)
         await BanUserView(self.bot, interaction.channel).send_initial_message(interaction)
+
+    async def mute_button_callback(self, interaction: discord.Interaction):
+        if not await is_owner(self, interaction):
+            return
+        await interaction.response.defer(ephemeral=True)
+        await MuteUserView(self.bot, interaction.channel).send_initial_message(interaction)
+
+    async def deafen_button_callback(self, interaction: discord.Interaction):
+        if not await is_owner(self, interaction):
+            return
+        await interaction.response.defer(ephemeral=True)
+        await DeafenUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
 
 async def refresh_control_messages(bot):
