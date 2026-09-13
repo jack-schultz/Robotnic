@@ -177,8 +177,7 @@ async def note_external_server_mute(bot, member, after):
 
 
 async def _edit_voice(member, muted, deafened):
-    # Discord requires mute when deafening.
-    target_mute = bool(muted or deafened)
+    target_mute = bool(deafened)
     target_deaf = bool(deafened)
     key = (member.guild.id, member.id)
     _pending_edits.add(key)
