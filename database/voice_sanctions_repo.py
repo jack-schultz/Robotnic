@@ -15,7 +15,7 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
         return bool(row[0]), bool(row[1])
 
     def set_flags(self, guild_id, channel_id, user_id, muted=None, deafened=None):
-        current = self.get(guild_id, user_id)
+        current = self.get(guild_id, channel_id, user_id)
         muted_now = current[0] if current else False
         deafened_now = current[1] if current else False
         if muted is not None:
@@ -30,7 +30,7 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
         if current is None:
             self.db.cursor.execute("""
                 INSERT INTO voice_sanctions (guild_id, channel_id, user_id, muted, deafened)
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
             """, (guild_id, channel_id, user_id, int(muted_now), int(deafened_now)))
         else:
             self.db.cursor.execute("""
