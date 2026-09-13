@@ -65,6 +65,10 @@ _RESPONSES = {
     },
 }
 
+# Members whose next same-channel mute/deafen event was caused by this process.
+_pending_edits = set()
+
+
 _UNMUTE_AND_UNDEAFEN = {
     "title": "Unmuted and undeafened!",
     "one": "Unmuted and undeafened {mention}.",
@@ -158,22 +162,77 @@ async def _apply_access(bot, channel, action, targets):
     return affected
 
 
+def take_pending_edit(member):
+    key = (member.guild.id, member.id)
+    if key not in _pending_edits:
+        return False
+    _pending_edits.discard(key)
+    return True
+
+
+async def note_external_server_mute(bot, member, after):
+    if member.bot or take_pending_edit(member):
+        return
+    bot.repos.voice_sanctions.update_prior(member.guild.id, member.id, after.mute, after.deaf)
+
+
 async def _edit_voice(member, muted, deafened):
+    # Discord requires mute when deafening.
+    target_mute = bool(muted or deafened)
+    target_deaf = bool(deafened)
+    key = (member.guild.id, member.id)
+    _pending_edits.add(key)
     try:
-        await member.edit(mute=muted, deafen=deafened)
+        await member.edit(mute=target_mute, deafen=target_deaf)
     except discord.Forbidden as e:
+        _pending_edits.discard(key)
         logger.warning(
-            f"Missing permission to set mute={muted} deafen={deafened} for {member} "
+            f"Missing permission to set mute={target_mute} deafen={target_deaf} for {member} "
             f"in guild '{member.guild.name}': {e}"
         )
         return False
     except discord.HTTPException as e:
+        _pending_edits.discard(key)
         logger.debug(
-            f"Could not set mute={muted} deafen={deafened} for {member} "
+            f"Could not set mute={target_mute} deafen={target_deaf} for {member} "
             f"in guild '{member.guild.name}': {e}"
         )
         return False
     return True
+
+
+def _already_applied(member, muted, deafened):
+    voice = member.voice
+    if voice is None:
+        return False
+    return bool(voice.mute) == bool(muted or deafened) and bool(voice.deaf) == bool(deafened)
+
+
+async def _apply_bot_voice(bot, member, muted, deafened):
+    if member.voice is None or member.voice.channel is None:
+        return False
+    if _already_applied(member, muted, deafened):
+        return True
+    bot.repos.voice_sanctions.save_prior(
+        member.guild.id, member.id, member.voice.mute, member.voice.deaf
+    )
+    return await _edit_voice(member, muted, deafened)
+
+
+async def _restore_prior(bot, member):
+    prior = bot.repos.voice_sanctions.get_prior(member.guild.id, member.id)
+    if prior is None:
+        return False
+    if member.voice is None or member.voice.channel is None:
+        return False
+    muted, deafened = prior
+    if _already_applied(member, muted, deafened):
+        bot.repos.voice_sanctions.clear_discord_reset(member.guild.id, member.id)
+        return True
+    if await _edit_voice(member, muted, deafened):
+        bot.repos.voice_sanctions.clear_discord_reset(member.guild.id, member.id)
+        return True
+    return False
 
 
 def _in_channel(member, channel):
@@ -187,7 +246,7 @@ async def _sync_member_voice(bot, channel, member):
     flags = bot.repos.voice_sanctions.get(channel.guild.id, channel.id, member.id)
     muted = flags[0] if flags else False
     deafened = flags[1] if flags else False
-    await _edit_voice(member, muted, deafened)
+    await _apply_bot_voice(bot, member, muted, deafened)
 
 
 async def _apply_sanction(bot, channel, action, targets):
@@ -276,17 +335,17 @@ async def clear_orphaned_sanctions(bot):
 
     logger.debug(f"Removed {deleted} orphaned voice sanction row(s)")
     for guild_id, user_id in affected:
-        await _clear_or_mark_reset(bot, guild_id, user_id)
-
-
-async def _clear_or_mark_reset(bot, guild_id, user_id):
-    guild = bot.get_guild(guild_id)
-    member = guild.get_member(user_id) if guild else None
-    in_voice = member is not None and member.voice is not None and member.voice.channel is not None
-    if in_voice and await _edit_voice(member, False, False):
-        bot.repos.voice_sanctions.clear_discord_reset(guild_id, user_id)
-        return
-    bot.repos.voice_sanctions.mark_discord_reset(guild_id, user_id)
+        guild = bot.get_guild(guild_id)
+        member = guild.get_member(user_id) if guild else None
+        if member is None:
+            continue
+        voice = member.voice
+        channel = voice.channel if voice else None
+        if channel is not None and bot.repos.temp_channels.get_info(channel.id) is not None:
+            flags = bot.repos.voice_sanctions.get(guild_id, channel.id, user_id)
+            if flags and (flags[0] or flags[1]):
+                continue
+        await _restore_prior(bot, member)
 
 
 async def sync_sanctions_for_voice_state(bot, member, before, after):
@@ -301,7 +360,7 @@ async def sync_sanctions_for_voice_state(bot, member, before, after):
     if after_channel is not None:
         await _apply_or_clear_on_join(bot, member, after_channel)
     elif before_channel is not None:
-        await _clear_discord_sanctions(bot, member, before_channel)
+        await _restore_prior(bot, member)
 
 
 async def _apply_or_clear_on_join(bot, member, channel):
@@ -316,28 +375,7 @@ async def _apply_or_clear_on_join(bot, member, channel):
         flags = bot.repos.voice_sanctions.get(channel.guild.id, channel.id, member.id)
 
     if flags and (flags[0] or flags[1]):
-        if await _edit_voice(member, flags[0], flags[1]):
-            bot.repos.voice_sanctions.clear_discord_reset(channel.guild.id, member.id)
+        await _apply_bot_voice(bot, member, flags[0], flags[1])
         return
 
-    needs_clear = removed_active or bot.repos.voice_sanctions.any_active(
-        channel.guild.id, member.id, exclude_channel_id=channel.id
-    )
-    if not needs_clear:
-        return
-
-    if await _edit_voice(member, False, False):
-        bot.repos.voice_sanctions.clear_discord_reset(channel.guild.id, member.id)
-    elif removed_active:
-        bot.repos.voice_sanctions.mark_discord_reset(channel.guild.id, member.id)
-
-
-async def _clear_discord_sanctions(bot, member, channel):
-    flags = bot.repos.voice_sanctions.get(channel.guild.id, channel.id, member.id)
-    sanctioned_here = flags and (flags[0] or flags[1])
-    if not sanctioned_here and not bot.repos.voice_sanctions.any_active(channel.guild.id, member.id):
-        return
-    if await _edit_voice(member, False, False):
-        bot.repos.voice_sanctions.clear_discord_reset(channel.guild.id, member.id)
-    else:
-        bot.repos.voice_sanctions.mark_discord_reset(channel.guild.id, member.id)
+    await _restore_prior(bot, member)

@@ -1,6 +1,6 @@
 class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
-    # Marks that Discord mute/deafen still need clearing
-    # after the member left voice and the temp channel row was deleted.
+    # Not a channel. Holds the server mute/deafen from before the bot changed it,
+    # so leaving a temp channel can restore a moderator's mute.
     DISCORD_RESET = 0
 
     def __init__(self, db, repos):
@@ -51,20 +51,42 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
         """, (guild_id, channel_id, user_id))
         self.db.connection.commit()
 
-    # Discord's server mute and deafen apply to the whole guild. When someone
-    # leaves a temp channel, the bot tries to clear that mute so they are not muted everywhere else.
-    # Discord rejects that edit if they are no longer in a voice channel.
-    # If the temp channel is then deleted, delete_for_channel() removes the real sanction row, and
-    # the bot would forget that it still needs to unmute them.
-    # This allows for writing a placeholder row so that does not happen. channel_id is 0 and muted is set to 1.
-    def mark_discord_reset(self, guild_id, user_id):
-        current = self.get(guild_id, self.DISCORD_RESET, user_id)
-        if current is None:
-            self.db.cursor.execute("""
-                INSERT INTO voice_sanctions (guild_id, channel_id, user_id, muted, deafened)
-                VALUES (?, ?, ?, 1, 0)
-            """, (guild_id, self.DISCORD_RESET, user_id))
-            self.db.connection.commit()
+    def _prior_row(self, guild_id, user_id):
+        self.db.cursor.execute("""
+            SELECT prior_muted, prior_deafened
+            FROM voice_sanctions
+            WHERE guild_id = ? AND channel_id = ? AND user_id = ?
+        """, (guild_id, self.DISCORD_RESET, user_id))
+        return self.db.cursor.fetchone()
+
+    def get_prior(self, guild_id, user_id):
+        row = self._prior_row(guild_id, user_id)
+        if row is None:
+            return None
+        # Older reset rows have no priors and mean "restore unmuted".
+        if row[0] is None or row[1] is None:
+            return False, False
+        return bool(row[0]), bool(row[1])
+
+    def save_prior(self, guild_id, user_id, muted, deafened):
+        if self._prior_row(guild_id, user_id) is not None:
+            return
+        self.db.cursor.execute("""
+            INSERT INTO voice_sanctions
+                (guild_id, channel_id, user_id, muted, deafened, prior_muted, prior_deafened)
+            VALUES (?, ?, ?, 0, 0, ?, ?)
+        """, (guild_id, self.DISCORD_RESET, user_id, int(muted), int(deafened)))
+        self.db.connection.commit()
+
+    def update_prior(self, guild_id, user_id, muted, deafened):
+        if self._prior_row(guild_id, user_id) is None:
+            return
+        self.db.cursor.execute("""
+            UPDATE voice_sanctions
+            SET prior_muted = ?, prior_deafened = ?
+            WHERE guild_id = ? AND channel_id = ? AND user_id = ?
+        """, (int(muted), int(deafened), guild_id, self.DISCORD_RESET, user_id))
+        self.db.connection.commit()
 
     def clear_discord_reset(self, guild_id, user_id):
         self.delete(guild_id, self.DISCORD_RESET, user_id)
@@ -82,7 +104,7 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
         """
         Remove sanctions for channels that are no longer temp channels.
         Returns users who still had a mute or deafen flag, so the caller can
-        clear Discord or keep a reset placeholder.
+        restore their prior server mute if the bot had overridden it.
         """
         self.db.cursor.execute("""
             SELECT DISTINCT guild_id, user_id
@@ -120,16 +142,3 @@ class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
             if muted or deafened:
                 removed_active = True
         return removed_active
-
-    def any_active(self, guild_id, user_id, exclude_channel_id=None):
-        sql = """
-            SELECT 1 FROM voice_sanctions
-            WHERE guild_id = ? AND user_id = ? AND (muted = 1 OR deafened = 1)
-        """
-        params = [guild_id, user_id]
-        if exclude_channel_id is not None:
-            sql += " AND channel_id != ?"
-            params.append(exclude_channel_id)
-        sql += " LIMIT 1"
-        self.db.cursor.execute(sql, params)
-        return self.db.cursor.fetchone() is not None

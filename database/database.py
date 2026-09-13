@@ -52,6 +52,8 @@ class Database:
                 "user_id": "INTEGER",
                 "muted": "INTEGER",
                 "deafened": "INTEGER",
+                "prior_muted": "INTEGER",
+                "prior_deafened": "INTEGER",
             },
         }
 
