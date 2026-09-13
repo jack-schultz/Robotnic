@@ -25,6 +25,30 @@ class Control_Vc_cog(commands.Cog):
     ):
         await context_menus.allow_user(self.bot, ctx, user)
 
+    @discord.user_command(name="Mute User")
+    async def mute_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.mute_user(self.bot, ctx, user)
+
+    @discord.user_command(name="Deafen User")
+    async def deafen_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.deafen_user(self.bot, ctx, user)
+
+    @discord.user_command(name="Unmute & Undeafen User")
+    async def unmute_and_undeafen_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.unmute_and_undeafen_user(self.bot, ctx, user)
+
 
 def setup(bot):
     bot.add_cog(Control_Vc_cog(bot))

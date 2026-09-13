@@ -97,3 +97,30 @@ async def allow_user(bot, ctx: discord.ApplicationContext, user: discord.Member)
         )
         embed.set_footer(text="This message will disappear in 10 seconds.")
         await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+
+
+async def mute_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
+    channel = await _resolve_controlled_channel(bot, ctx)
+    if channel is None:
+        return
+
+    await ctx.defer(ephemeral=True)
+    # Add logic and response
+
+
+async def deafen_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
+    channel = await _resolve_controlled_channel(bot, ctx)
+    if channel is None:
+        return
+
+    await ctx.defer(ephemeral=True)
+    # Add logic and response
+
+
+async def unmute_and_undeafen_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
+    channel = await _resolve_controlled_channel(bot, ctx)
+    if channel is None:
+        return
+
+    await ctx.defer(ephemeral=True)
+    # Add logic and response
