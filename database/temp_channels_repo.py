@@ -112,6 +112,7 @@ class TempChannelsRepository:  # bot.repos.temp_channels
         """
         Remove a temporary channel record by its channel_id.
         """
+        self.repos.voice_sanctions.delete_for_channel(channel_id)
         self.db.cursor.execute(
             "DELETE FROM temp_channels WHERE channel_id = ?",
             (channel_id,)

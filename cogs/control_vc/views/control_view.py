@@ -8,8 +8,7 @@ from cogs.control_vc.owner import is_owner
 from cogs.control_vc.modals.user_limit_modal import UserLimitModal
 from cogs.control_vc.modals.change_name_modal import ChangeNameModal
 from cogs.control_vc.views.give_ownership import GiveOwnershipView
-from cogs.control_vc.views.ban_user import BanUserView
-from cogs.control_vc.views.mute_deafen import DeafenUserView, MuteUserView
+from cogs.control_vc.member_actions.views import BanUserView, DeafenUserView, MuteUserView
 
 logger = logging.getLogger(__name__)
 
