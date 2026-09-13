@@ -1,5 +1,66 @@
 import discord
 
+BAN_PERMS = {
+    "connect": False,
+    "view_channel": False,
+}
+
+ALLOW_PERMS = {
+    "connect": True,
+    "view_channel": True,
+}
+
+
+# Abstracted into functions allowing both the control menu or context menu (right click menu) to use the same ban/allow logic
+# 1. List of users is fed into ban_targets() or allow_targets()
+# 2. ban_targets() or allow_targets() filters targets and passes them to _apply_overwrites()
+# 3. _apply_overwrites() adds them to current overwrites, updates the channel and returns affected
+# 4. ban_targets() uses effected list to disconnect users
+# 5. ban_targets() or allow_targets() return affected list
+
+async def _apply_overwrites(channel, targets, perms):
+    affected = []
+    overwrites = channel.overwrites
+    overwrite = discord.PermissionOverwrite(**perms)
+
+    for target in targets:
+        if not target:
+            continue
+        overwrites[target] = overwrite
+        affected.append(target)
+
+    if affected:
+        await channel.edit(overwrites=overwrites)
+
+    return affected
+
+
+async def ban_targets(bot, channel, targets):
+    owner_id = bot.repos.temp_channels.get_info(channel.id).owner_id
+    connected_members = channel.members
+    valid_targets = []
+
+    for target in targets:
+        if not target:
+            continue
+        if isinstance(target, discord.Member) and target.id == owner_id:
+            continue
+        if isinstance(target, discord.Member) and target.id == bot.user.id:
+            continue
+        valid_targets.append(target)
+
+    affected = await _apply_overwrites(channel, valid_targets, BAN_PERMS)
+
+    for target in affected:
+        if isinstance(target, discord.Member) and target in connected_members:
+            await target.move_to(None)
+
+    return affected
+
+
+async def allow_targets(bot, channel, targets):
+    return await _apply_overwrites(channel, targets, ALLOW_PERMS)
+
 
 class BanUserView(discord.ui.View):
     def __init__(self, bot, channel):
@@ -14,29 +75,7 @@ class BanUserView(discord.ui.View):
         max_values=25
     )
     async def ban_select_callback(self, select, interaction: discord.Interaction):
-        ban_perms = {
-            "connect": False,
-            "view_channel": False
-        }
-
-        owner_id = self.bot.repos.temp_channels.get_info(self.channel.id).owner_id
-        connected_members = self.channel.members
-        affected = []
-
-        for target in select.values:
-            if not target:
-                continue
-
-            if isinstance(target, discord.Member) and target.id == owner_id:
-                continue
-            if isinstance(target, discord.Member) and target.id == self.bot.user.id:
-                continue
-
-            await self.channel.set_permissions(target, **ban_perms)
-            affected.append(target)
-
-            if isinstance(target, discord.Member) and target in connected_members:
-                await target.move_to(None)
+        affected = await ban_targets(self.bot, self.channel, select.values)
 
         if affected:
             embed = discord.Embed(
@@ -70,19 +109,7 @@ class BanUserView(discord.ui.View):
         max_values=25
     )
     async def allow_select_callback(self, select, interaction: discord.Interaction):
-        allow_perms = {
-            "connect": True,
-            "view_channel": True
-        }
-
-        affected = []
-
-        for target in select.values:
-            if not target:
-                continue
-
-            await self.channel.set_permissions(target, **allow_perms)
-            affected.append(target)
+        affected = await allow_targets(self.bot, self.channel, select.values)
 
         if affected:
             embed = discord.Embed(

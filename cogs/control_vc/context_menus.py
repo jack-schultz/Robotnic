@@ -1,152 +1,83 @@
 import discord
+from cogs.control_vc.owner import claim_or_verify_owner
+from cogs.control_vc.views.ban_user import allow_targets, ban_targets
 
 
-class ControlVcContextMenus:
-    def __init__(self, bot):
-        self.bot = bot
+async def _resolve_controlled_channel(bot, ctx: discord.ApplicationContext):
+    if not isinstance(ctx.author, discord.Member):
+        return None
 
-    # RIGHT CLICK USER -> APPS -> BAN USER
-    @discord.user_command(name="Ban User")
-    async def ban_user(
-        self,
-        ctx: discord.ApplicationContext,
-        user: discord.Member
-    ):
-        if not isinstance(ctx.author, discord.Member):
-            return
+    voice_channel = ctx.author.voice.channel if ctx.author.voice else None
 
-        voice_channel = (
-            ctx.author.voice.channel
-            if ctx.author.voice
-            else None
-        )
-
-        if voice_channel is None:
-            await ctx.respond(
-                "You must be in your controlled voice channel to use this.",
-                ephemeral=True
-            )
-            return
-
-        channel_info = self.bot.repos.temp_channels.get_info(
-            voice_channel.id
-        )
-
-        if channel_info is None:
-            await ctx.respond(
-                "This is not a controlled voice channel.",
-                ephemeral=True
-            )
-            return
-
-        if channel_info.owner_id != ctx.author.id:
-            await ctx.respond(
-                "Only the owner of this voice channel can ban users.",
-                ephemeral=True
-            )
-            return
-
-        if user.id == ctx.author.id:
-            await ctx.respond(
-                "You cannot ban yourself from your own channel.",
-                ephemeral=True
-            )
-            return
-
-        if user.id == self.bot.user.id:
-            await ctx.respond(
-                "You cannot ban the bot.",
-                ephemeral=True
-            )
-            return
-
-        await voice_channel.set_permissions(
-            user,
-            connect=False,
-            view_channel=False
-        )
-
-        if user in voice_channel.members:
-            try:
-                await user.move_to(None)
-            except discord.Forbidden:
-                pass
-
-        embed = discord.Embed(
-            title="🔨 User Banned",
-            description=(
-                f"{user.mention} has been banned from "
-                f"{voice_channel.mention}."
-            ),
-            color=0xFF0000
-        )
-        embed.footer = f"This message will be deleted in 30 seconds."
-
+    if voice_channel is None:
         await ctx.respond(
-            embed=embed,
+            f"You are not connected to a voice channel {ctx.author.mention}!",
             ephemeral=True,
-            delete_after=30
+            delete_after=15,
         )
+        return None
 
-    # RIGHT CLICK USER -> APPS -> ALLOW USER
-    @discord.user_command(name="Allow User")
-    async def allow_user(
-        self,
-        ctx: discord.ApplicationContext,
-        user: discord.Member
-    ):
-        if not isinstance(ctx.author, discord.Member):
-            return
-
-        voice_channel = (
-            ctx.author.voice.channel
-            if ctx.author.voice
-            else None
-        )
-
-        if voice_channel is None:
-            await ctx.respond(
-                "You must be in your controlled voice channel to use this.",
-                ephemeral=True
-            )
-            return
-
-        channel_info = self.bot.repos.temp_channels.get_info(
-            voice_channel.id
-        )
-
-        if channel_info is None:
-            await ctx.respond(
-                "This is not a controlled voice channel.",
-                ephemeral=True
-            )
-            return
-
-        if channel_info.owner_id != ctx.author.id:
-            await ctx.respond(
-                "Only the owner of this voice channel can allow users.",
-                ephemeral=True
-            )
-            return
-
-        await voice_channel.set_permissions(
-            user,
-            connect=True,
-            view_channel=True
-        )
-
-        embed = discord.Embed(
-            title="✅ User Allowed",
-            description=(
-                f"{user.mention} has been allowed to access "
-                f"{voice_channel.mention}."
-            ),
-            color=0x00FF00
-        )
-        embed.footer = f"This message will be deleted in 30 seconds."
-
+    if bot.repos.temp_channels.get_info(voice_channel.id) is None:
         await ctx.respond(
-            embed=embed,
+            "This is not a controlled voice channel.",
             ephemeral=True,
-            delete_after=30
+            delete_after=15,
         )
+        return None
+
+    ok, error = await claim_or_verify_owner(bot, voice_channel, ctx.author)
+    if not ok:
+        await ctx.respond(error, ephemeral=True, delete_after=15)
+        return None
+
+    return voice_channel
+
+
+async def ban_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
+    channel = await _resolve_controlled_channel(bot, ctx)
+    if channel is None:
+        return
+
+    affected = await ban_targets(bot, channel, [user])
+
+    if affected:
+        embed = discord.Embed(
+            title="Banned!",
+            description=f"Banned {len(affected)} member(s)/role(s) from your channel.",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+    else:
+        embed = discord.Embed(
+            title="Select valid users or roles to ban",
+            description="",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+
+
+async def allow_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
+    channel = await _resolve_controlled_channel(bot, ctx)
+    if channel is None:
+        return
+
+    affected = await allow_targets(bot, channel, [user])
+
+    if affected:
+        embed = discord.Embed(
+            title="Allowed!",
+            description=f"Allowed {len(affected)} member(s)/role(s) in your channel.",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+    else:
+        embed = discord.Embed(
+            title="Select valid users or roles to Allow",
+            description="",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
