@@ -72,11 +72,12 @@ class ChangeNameModal(discord.ui.Modal):
 
                 if profanity_check_setting == "alert & block":
                     try:
-                        await interaction.followup.send(
+                        reply = await interaction.followup.send(
                             "Sorry, that input was flagged for profanity.",
                             ephemeral=True,
-                            delete_after=90,
+                            wait=True,
                         )
+                        await reply.delete(delay=90)
                     except (discord.NotFound, discord.HTTPException):
                         pass
                     return
@@ -98,7 +99,8 @@ class ChangeNameModal(discord.ui.Modal):
         )
         embed.set_footer(text="This message will disappear in 30 seconds.")
         try:
-            await interaction.followup.send(embed=embed, ephemeral=True, delete_after=30)
+            reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+            await reply.delete(delay=30)
         except (discord.NotFound, discord.HTTPException):
             pass
 

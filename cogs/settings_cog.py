@@ -26,7 +26,8 @@ class SettingsMenuCog(commands.Cog):
             color=discord.Color.yellow()
         )
         embed.set_footer(text="This message will disappear in 30 seconds.")
-        await ctx.send_followup(embed=embed, ephemeral=True, delete_after=30)
+        reply = await ctx.send_followup(embed=embed, ephemeral=True, wait=True)
+        await reply.delete(delay=30)
 
     @settings.command(description="Select which controls users should have access to by default")
     async def controls(
@@ -41,7 +42,8 @@ class SettingsMenuCog(commands.Cog):
             color=discord.Color.yellow()
         )
         embed.set_footer(text="This message will disappear in 30 seconds.")
-        await ctx.send_followup(embed=embed, ephemeral=True, delete_after=30)
+        reply = await ctx.send_followup(embed=embed, ephemeral=True, wait=True)
+        await reply.delete(delay=30)
 
     @settings.command(description="Set the profanity check in channel names")
     async def profanity_filter(

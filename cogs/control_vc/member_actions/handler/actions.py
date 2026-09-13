@@ -67,11 +67,11 @@ def _unique(items):
 
 
 async def _reply_error(interaction, message):
-    kwargs = {"ephemeral": True, "delete_after": 15}
     if interaction.response.is_done():
-        await interaction.followup.send(message, **kwargs)
+        reply = await interaction.followup.send(message, ephemeral=True, wait=True)
+        await reply.delete(delay=15)
     else:
-        await interaction.response.send_message(message, **kwargs)
+        await interaction.response.send_message(message, ephemeral=True, delete_after=15)
 
 
 async def _resolve_channel(bot, user):
@@ -147,11 +147,12 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
     for member in _unique(voice_touched):
         await _sync_member_voice(bot, channel, member)
 
-    await interaction.followup.send(
+    reply = await interaction.followup.send(
         embed=_result_embed(actions, _unique(affected)),
         ephemeral=True,
-        delete_after=10,
+        wait=True,
     )
+    await reply.delete(delay=10)
 
 
 def _result_embed(actions, affected):

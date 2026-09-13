@@ -429,7 +429,10 @@ class ControlView(View):
                     f"Failed to bulk delete messages in temp channel {interaction.channel.id} "
                     f"in guild '{interaction.guild.name}': {e}"
                 )
-                await interaction.followup.send(f"Failed, {e}", ephemeral=True, delete_after=15)
+                reply = await interaction.followup.send(
+                    f"Failed, {e}", ephemeral=True, wait=True
+                )
+                await reply.delete(delay=15)
 
         embed = discord.Embed(
             title="Messages Deleted",
@@ -437,7 +440,8 @@ class ControlView(View):
             color=discord.Color.red(),
         )
         embed.set_footer(text="This message will disappear in 15 seconds.")
-        await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+        reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+        await reply.delete(delay=15)
 
     async def delete_button_callback(self, interaction: discord.Interaction):
         if not await is_owner(self, interaction):
@@ -450,7 +454,8 @@ class ControlView(View):
             color=discord.Color.orange(),
         )
         embed.set_footer(text="Awaiting your response...")
-        await interaction.followup.send(embed=embed, ephemeral=True, delete_after=60)
+        reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+        await reply.delete(delay=60)
 
         def check(message: discord.Message):
             return (
@@ -505,7 +510,8 @@ class ControlView(View):
                     color=discord.Color.red(),
                 )
                 embed.set_footer(text="This message will disappear in 15 seconds.")
-                await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+                reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+                await reply.delete(delay=15)
             except (discord.NotFound, discord.HTTPException):
                 pass
 
