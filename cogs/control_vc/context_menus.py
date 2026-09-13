@@ -40,7 +40,15 @@ async def ban_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
 
     affected = await ban_targets(bot, channel, [user])
 
-    if affected:
+    if len(affected) == 1:
+        embed = discord.Embed(
+            title="Banned!",
+            description=f"Banned {affected[0].mention} from your channel.",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+    elif len(affected) > 1:
         embed = discord.Embed(
             title="Banned!",
             description=f"Banned {len(affected)} member(s)/role(s) from your channel.",
@@ -50,7 +58,7 @@ async def ban_user(bot, ctx: discord.ApplicationContext, user: discord.Member):
         await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
     else:
         embed = discord.Embed(
-            title="Select valid users or roles to ban",
+            title="No bannable users or roles were selected.",
             description="",
             color=0x00FF00,
         )
@@ -65,7 +73,15 @@ async def allow_user(bot, ctx: discord.ApplicationContext, user: discord.Member)
 
     affected = await allow_targets(bot, channel, [user])
 
-    if affected:
+    if len(affected) == 1:
+        embed = discord.Embed(
+            title="Allowed!",
+            description=f"Allowed {affected[0].mention} to your channel.",
+            color=0x00FF00,
+        )
+        embed.set_footer(text="This message will disappear in 10 seconds.")
+        await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
+    elif len(affected) > 1:
         embed = discord.Embed(
             title="Allowed!",
             description=f"Allowed {len(affected)} member(s)/role(s) in your channel.",
@@ -75,7 +91,7 @@ async def allow_user(bot, ctx: discord.ApplicationContext, user: discord.Member)
         await ctx.respond(embed=embed, ephemeral=True, delete_after=10)
     else:
         embed = discord.Embed(
-            title="Select valid users or roles to Allow",
+            title="No allowable users or roles were selected.",
             description="",
             color=0x00FF00,
         )
