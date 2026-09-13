@@ -122,18 +122,20 @@ def _valid_targets(bot, channel, action, targets):
 
 
 async def _apply_overwrites(channel, targets, perms):
-    affected = []
-    overwrites = channel.overwrites
-    overwrite = discord.PermissionOverwrite(**perms)
-
-    for target in targets:
-        overwrites[target] = overwrite
-        affected.append(target)
-
-    if affected:
+    # set_permissions is one request per target
+    # Discord rate-limits 10 every 10 seconds.
+    # so bulk edit if more than 10.
+    if len(targets) > 10:
+        overwrites = channel.overwrites
+        overwrite = discord.PermissionOverwrite(**perms)
+        for target in targets:
+            overwrites[target] = overwrite
         await channel.edit(overwrites=overwrites)
+    else:
+        for target in targets:
+            await channel.set_permissions(target, **perms)
 
-    return affected
+    return targets
 
 
 async def _apply_access(bot, channel, action, targets):
