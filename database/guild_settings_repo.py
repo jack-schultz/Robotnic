@@ -3,7 +3,7 @@ import json
 defaults = {
     "guild_id": None,
     "logs_channel_id": None,
-    "enabled_controls": ["rename", "limit", "clear", "ban", "give", "delete", "lock", "hide"],
+    "enabled_controls": ["rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete", "lock", "hide"],
     "mention_owner_bool": 0,
     "dm_owner_bool": 0,
     "profanity_filter": "alert & block",
@@ -12,10 +12,28 @@ defaults = {
 }
 
 
+# Guilds that never customized controls still have this list stored.
+# Once they are migrated, this code and the below method can be removed in a future commit
+_PREVIOUS_DEFAULT_CONTROLS = ["rename", "limit", "clear", "ban", "give", "delete", "lock", "hide"]
+
+
 class GuildSettingsRepository:  # bot.repos.guild_settings
     def __init__(self, db, repos):
         self.db = db
         self.repos = repos
+        self._migrate_default_controls()
+
+    def _migrate_default_controls(self):
+        self.db.cursor.execute("SELECT guild_id, enabled_controls FROM guild_settings")
+        rows = self.db.cursor.fetchall()
+        for guild_id, raw in rows:
+            try:
+                controls = json.loads(raw) if raw else []
+            except json.JSONDecodeError:
+                continue
+            if controls != _PREVIOUS_DEFAULT_CONTROLS:
+                continue
+            self.edit(guild_id, enabled_controls=list(defaults["enabled_controls"]))
 
     def get(self, guild_id):
         self.db.cursor.execute("""
