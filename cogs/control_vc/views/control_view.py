@@ -14,10 +14,8 @@ from cogs.control_vc.member_actions.views import BanUserView, DeafenUserView, Mu
 logger = logging.getLogger(__name__)
 
 ALL_CONTROLS = ("rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete", "lock", "hide")
-
-
-def _custom_id(action):
-    return f"ctrl:{action}"
+STATE_ACTIONS = frozenset({"public", "lock", "hide"})
+SELECT_CUSTOM_IDS = frozenset({"action_select", "state_select"})
 
 
 class ControlView(View):
@@ -86,7 +84,7 @@ class ControlView(View):
                     label="No Available Options",
                     style=discord.ButtonStyle.secondary,
                     disabled=True,
-                    custom_id=_custom_id("no_options"),
+                    custom_id="no_options",
                 )
             )
             return
@@ -103,86 +101,87 @@ class ControlView(View):
             emoji="🔒",
             style=discord.ButtonStyle.success if channel_state == ChannelState.LOCKED.value else discord.ButtonStyle.primary,
             row=3,
-            custom_id=_custom_id("lock"),
+            custom_id="lock",
         )
         hide_button = discord.ui.Button(
             label="",
             emoji="🙈",
             style=discord.ButtonStyle.success if channel_state == ChannelState.HIDDEN.value else discord.ButtonStyle.primary,
             row=3,
-            custom_id=_custom_id("hide"),
+            custom_id="hide",
         )
         public_button = discord.ui.Button(
             label="",
             emoji="🌐",
             style=discord.ButtonStyle.success if channel_state == ChannelState.PUBLIC.value else discord.ButtonStyle.primary,
             row=3,
-            custom_id=_custom_id("public"),
+            custom_id="public",
         )
         name_button = discord.ui.Button(
             label="",
             emoji="🏷️",
             style=discord.ButtonStyle.secondary,
             row=0,
-            custom_id=_custom_id("rename"),
+            custom_id="rename",
         )
         limit_button = discord.ui.Button(
             label="",
             emoji="🚧",
             style=discord.ButtonStyle.secondary,
             row=0,
-            custom_id=_custom_id("limit"),
+            custom_id="limit",
         )
         clear_button = discord.ui.Button(
             label="",
             emoji="🧽",
             style=discord.ButtonStyle.danger,
             row=1,
-            custom_id=_custom_id("clear"),
+            custom_id="clear",
         )
         delete_button = discord.ui.Button(
             label="",
             emoji="🗑️",
             style=discord.ButtonStyle.danger,
             row=1,
-            custom_id=_custom_id("delete"),
+            custom_id="delete",
         )
         give_button = discord.ui.Button(
             label="",
             emoji="🎁",
             style=discord.ButtonStyle.success,
             row=0,
-            custom_id=_custom_id("give"),
+            custom_id="give",
         )
         ban_button = discord.ui.Button(
             label="",
             emoji="🔨",
             style=discord.ButtonStyle.danger,
             row=1,
-            custom_id=_custom_id("ban"),
+            custom_id="ban",
         )
         mute_button = discord.ui.Button(
             label="",
             emoji="🔇",
             style=discord.ButtonStyle.secondary,
             row=1,
-            custom_id=_custom_id("mute"),
+            custom_id="mute",
         )
         deafen_button = discord.ui.Button(
             label="",
             emoji="🔕",
             style=discord.ButtonStyle.secondary,
             row=1,
-            custom_id=_custom_id("deafen"),
+            custom_id="deafen",
         )
         banner_button = discord.ui.Button(
             label="- - - - - - - - - - - - - - - - - - - -",
             style=discord.ButtonStyle.secondary,
             row=2,
             disabled=True,
-            custom_id=_custom_id("banner"),
+            custom_id="banner",
         )
 
+        # Add buttons dependent on settings
         if "rename" in enabled_controls:
             self.add_item(name_button)
         if "limit" in enabled_controls:
@@ -208,17 +207,21 @@ class ControlView(View):
         if "hide" in enabled_controls:
             self.add_item(hide_button)
 
-        public_button.callback = self.public_button_callback
-        lock_button.callback = self.lock_button_callback
-        hide_button.callback = self.hide_button_callback
-        name_button.callback = self.name_button_callback
-        limit_button.callback = self.limit_button_callback
-        clear_button.callback = self.clear_button_callback
-        delete_button.callback = self.delete_button_callback
-        give_button.callback = self.give_button_callback
-        ban_button.callback = self.ban_button_callback
-        mute_button.callback = self.mute_button_callback
-        deafen_button.callback = self.deafen_button_callback
+        # Gives all the buttons the universal call_back
+        for button in (
+            public_button,
+            lock_button,
+            hide_button,
+            name_button,
+            limit_button,
+            clear_button,
+            delete_button,
+            give_button,
+            ban_button,
+            mute_button,
+            deafen_button,
+        ):
+            button.callback = self._callback
 
         if "labels" in control_options:
             lock_button.label = "Lock"
@@ -234,6 +237,7 @@ class ControlView(View):
             deafen_button.label = "Deafen Users"
 
     def _add_dropdown_items(self, enabled_controls, channel_state, row=None):
+        # Handles non-state controls
         class ActionDropdown(discord.ui.Select):
             def __init__(select_self):
                 options = []
@@ -259,37 +263,13 @@ class ControlView(View):
                     "min_values": 1,
                     "max_values": 1,
                     "options": options,
-                    "custom_id": _custom_id("action_select"),
+                    "custom_id": "action_select",
                 }
                 if row is not None:
                     select_kwargs["row"] = row
                 super().__init__(**select_kwargs)
 
-            async def callback(select_self, interaction: discord.Interaction):
-                if not await is_owner(self, interaction):
-                    await self._recreate_items(interaction)
-                    return
-                await interaction.response.defer()
-
-                choice = select_self.values[0]
-                if choice == "rename":
-                    await self.name_button_callback(interaction)
-                elif choice == "limit":
-                    await self.limit_button_callback(interaction)
-                elif choice == "give":
-                    await self.give_button_callback(interaction)
-                elif choice == "ban":
-                    await self.ban_button_callback(interaction)
-                elif choice == "mute":
-                    await self.mute_button_callback(interaction)
-                elif choice == "deafen":
-                    await self.deafen_button_callback(interaction)
-                elif choice == "clear":
-                    await self.clear_button_callback(interaction)
-                elif choice == "delete":
-                    await self.delete_button_callback(interaction)
-                await self._recreate_items(interaction)
-
+        # Handles state controls
         class StateDropdown(discord.ui.Select):
             def __init__(select_self):
                 options = []
@@ -326,26 +306,42 @@ class ControlView(View):
                     "min_values": 1,
                     "max_values": 1,
                     "options": options,
-                    "custom_id": _custom_id("state_select"),
+                    "custom_id": "state_select",
                 }
                 if row is not None:
                     select_kwargs["row"] = row
                 super().__init__(**select_kwargs)
 
-            async def callback(select_self, interaction: discord.Interaction):
-                await interaction.response.defer()
-                choice = select_self.values[0]
-                if choice == "public":
-                    await self.public_button_callback(interaction)
-                elif choice == "lock":
-                    await self.lock_button_callback(interaction)
-                elif choice == "hide":
-                    await self.hide_button_callback(interaction)
+        # Adds dropdowns if selected
+        selected_options = {"rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete"}.intersection(enabled_controls)
+        selected_visibility_options = {"lock", "hide"}.intersection(enabled_controls)
+        if len(selected_options) > 0:
+            dropdown = ActionDropdown()
+            dropdown.callback = self._callback
+            self.add_item(dropdown)
+        if len(selected_visibility_options) > 0:
+            dropdown = StateDropdown()
+            dropdown.callback = self._callback
+            self.add_item(dropdown)
 
-        if len({"rename", "limit", "clear", "ban", "mute", "deafen", "give", "delete"}.intersection(enabled_controls)) > 0:
-            self.add_item(ActionDropdown())
-        if len({"lock", "hide"}.intersection(enabled_controls)) > 0:
-            self.add_item(StateDropdown())
+    # All buttons and dropdowns callback to this
+    async def _callback(self, interaction: discord.Interaction):
+        custom_id = interaction.data["custom_id"]
+        is_from_select = custom_id in SELECT_CUSTOM_IDS
+        action = interaction.data["values"][0] if is_from_select else custom_id
+
+        if not await is_owner(self, interaction):
+            if is_from_select or custom_id in STATE_ACTIONS:
+                await self._recreate_items(interaction)
+            return
+
+        await interaction.response.defer(ephemeral=True)
+
+        # Run related method
+        await getattr(self, f"{action}_callback")(interaction)
+
+        if is_from_select or action in STATE_ACTIONS:
+            await self._recreate_items(interaction)
 
     async def _recreate_items(self, interaction):
         channel = interaction.channel
@@ -354,31 +350,27 @@ class ControlView(View):
             await interaction.message.edit(view=new_view, embeds=interaction.message.embeds)
         except discord.NotFound:
             logger.debug(
-                f"Control message gone while updating view for temp channel {channel.id} "
-                f"in guild '{channel.guild.name}'"
+                f"Control message gone while updating view for temp channel {channel.id} in guild '{channel.guild.name}'"
             )
 
-    async def public_button_callback(self, interaction: discord.Interaction):
+    # The callback methods should match the actions. These are triggered in ._callback()
+    # Example: `public` maps to `public_callback` following pattern `{action}_callback`
+    async def public_callback(self, interaction: discord.Interaction):
         await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.PUBLIC.value)
-        await self._recreate_items(interaction)
 
-    async def lock_button_callback(self, interaction: discord.Interaction):
+    async def lock_callback(self, interaction: discord.Interaction):
         await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.LOCKED.value)
-        await self._recreate_items(interaction)
 
-    async def hide_button_callback(self, interaction: discord.Interaction):
+    async def hide_callback(self, interaction: discord.Interaction):
         await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.HIDDEN.value)
-        await self._recreate_items(interaction)
 
-    async def name_button_callback(self, interaction: discord.Interaction):
-        modal = ChangeNameModal(self.bot, interaction.channel)
-        await interaction.followup.send_modal(modal)
+    async def rename_callback(self, interaction: discord.Interaction):
+        await interaction.followup.send_modal(ChangeNameModal(self.bot, interaction.channel))
 
-    async def limit_button_callback(self, interaction: discord.Interaction):
-        modal = UserLimitModal(self.bot, interaction.channel)
-        await interaction.followup.send_modal(modal)
+    async def limit_callback(self, interaction: discord.Interaction):
+        await interaction.followup.send_modal(UserLimitModal(self.bot, interaction.channel))
 
-    async def clear_button_callback(self, interaction: discord.Interaction):
+    async def clear_callback(self, interaction: discord.Interaction):
         excluded_message_ids = []
         if interaction.message:
             excluded_message_ids.append(interaction.message.id)
@@ -410,7 +402,7 @@ class ControlView(View):
         reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
         await reply.delete(delay=15)
 
-    async def delete_button_callback(self, interaction: discord.Interaction):
+    async def delete_callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="Channel Deletion Confirmation",
             description="Are you sure you want to delete this channel? Reply with 'yes' within 60 seconds to confirm.",
@@ -478,16 +470,16 @@ class ControlView(View):
             except (discord.NotFound, discord.HTTPException):
                 pass
 
-    async def give_button_callback(self, interaction: discord.Interaction):
+    async def give_callback(self, interaction: discord.Interaction):
         await GiveOwnershipView(self.bot, interaction.channel).send_initial_message(interaction)
 
-    async def ban_button_callback(self, interaction: discord.Interaction):
+    async def ban_callback(self, interaction: discord.Interaction):
         await BanUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
-    async def mute_button_callback(self, interaction: discord.Interaction):
+    async def mute_callback(self, interaction: discord.Interaction):
         await MuteUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
-    async def deafen_button_callback(self, interaction: discord.Interaction):
+    async def deafen_callback(self, interaction: discord.Interaction):
         await DeafenUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
 
