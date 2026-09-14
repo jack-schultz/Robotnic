@@ -2,6 +2,7 @@ import logging
 import asyncio
 import discord
 from discord.ui import View
+from cogs.control_vc.channel_actions.visibility import channel_action
 from cogs.control_vc.enums import ChannelState
 from cogs.control_vc.embeds import ChannelInfoEmbed, ControlIconsEmbed
 from cogs.control_vc.owner import is_owner
@@ -17,19 +18,6 @@ ALL_CONTROLS = ("rename", "limit", "clear", "ban", "mute", "deafen", "give", "de
 
 def _custom_id(action):
     return f"ctrl:{action}"
-
-
-async def update_overwrites(bot, channel, new_overwrite):
-    creator_id = bot.repos.temp_channels.get_info(channel.id).creator_id
-    default_role_id = bot.repos.creator_channels.get_info(creator_id).default_role_id
-    if default_role_id is None:
-        default_role = channel.guild.default_role
-    else:
-        default_role = channel.guild.get_role(default_role_id)
-
-    overwrites = channel.overwrites
-    overwrites[default_role] = new_overwrite
-    await channel.edit(overwrites=overwrites)
 
 
 class ControlView(View):
@@ -199,8 +187,6 @@ class ControlView(View):
             self.add_item(name_button)
         if "limit" in enabled_controls:
             self.add_item(limit_button)
-        if "clear" in enabled_controls:
-            self.add_item(clear_button)
         if "ban" in enabled_controls:
             self.add_item(ban_button)
         if "mute" in enabled_controls:
@@ -209,6 +195,8 @@ class ControlView(View):
             self.add_item(deafen_button)
         if "give" in enabled_controls:
             self.add_item(give_button)
+        if "clear" in enabled_controls:
+            self.add_item(clear_button)
         if "delete" in enabled_controls:
             self.add_item(delete_button)
 
@@ -253,8 +241,6 @@ class ControlView(View):
                     options.append(discord.SelectOption(value="rename", label="Rename Channel", emoji="🏷️"))
                 if "limit" in enabled_controls:
                     options.append(discord.SelectOption(value="limit", label="Edit User Limit", emoji="🚧"))
-                if "clear" in enabled_controls:
-                    options.append(discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽"))
                 if "ban" in enabled_controls:
                     options.append(discord.SelectOption(value="ban", label="Ban/Allow Users or Roles", emoji="🔨"))
                 if "mute" in enabled_controls:
@@ -263,6 +249,8 @@ class ControlView(View):
                     options.append(discord.SelectOption(value="deafen", label="Deafen/Undeafen Users", emoji="🔕"))
                 if "give" in enabled_controls:
                     options.append(discord.SelectOption(value="give", label="Give Ownership", emoji="🎁"))
+                if "clear" in enabled_controls:
+                    options.append(discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽"))
                 if "delete" in enabled_controls:
                     options.append(discord.SelectOption(value="delete", label="Delete Channel", emoji="🗑️"))
 
@@ -278,6 +266,11 @@ class ControlView(View):
                 super().__init__(**select_kwargs)
 
             async def callback(select_self, interaction: discord.Interaction):
+                if not await is_owner(self, interaction):
+                    await self._recreate_items(interaction)
+                    return
+                await interaction.response.defer()
+
                 choice = select_self.values[0]
                 if choice == "rename":
                     await self.name_button_callback(interaction)
@@ -285,17 +278,17 @@ class ControlView(View):
                     await self.limit_button_callback(interaction)
                 elif choice == "give":
                     await self.give_button_callback(interaction)
-                elif choice == "clear":
-                    await self.clear_button_callback(interaction)
                 elif choice == "ban":
                     await self.ban_button_callback(interaction)
                 elif choice == "mute":
                     await self.mute_button_callback(interaction)
                 elif choice == "deafen":
                     await self.deafen_button_callback(interaction)
+                elif choice == "clear":
+                    await self.clear_button_callback(interaction)
                 elif choice == "delete":
                     await self.delete_button_callback(interaction)
-                await self.recreate_items(interaction)
+                await self._recreate_items(interaction)
 
         class StateDropdown(discord.ui.Select):
             def __init__(select_self):
@@ -303,7 +296,6 @@ class ControlView(View):
                 if len({"lock", "hide"}.intersection(enabled_controls)) > 0:
                     options.append(
                         discord.SelectOption(
-
                             value="public",
                             label="Public",
                             emoji="🌐",
@@ -341,6 +333,7 @@ class ControlView(View):
                 super().__init__(**select_kwargs)
 
             async def callback(select_self, interaction: discord.Interaction):
+                await interaction.response.defer()
                 choice = select_self.values[0]
                 if choice == "public":
                     await self.public_button_callback(interaction)
@@ -354,7 +347,7 @@ class ControlView(View):
         if len({"lock", "hide"}.intersection(enabled_controls)) > 0:
             self.add_item(StateDropdown())
 
-    async def recreate_items(self, interaction):
+    async def _recreate_items(self, interaction):
         channel = interaction.channel
         new_view = ControlView.for_channel(self.bot, channel)
         try:
@@ -366,52 +359,26 @@ class ControlView(View):
             )
 
     async def public_button_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to public in guild '{interaction.guild.name}'"
-        )
-        self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.PUBLIC.value)
-        new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=True)
-        await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items(interaction)
+        await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.PUBLIC.value)
+        await self._recreate_items(interaction)
 
     async def lock_button_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to locked in guild '{interaction.guild.name}'"
-        )
-        self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.LOCKED.value)
-        new_overwrite = discord.PermissionOverwrite(view_channel=True, connect=False)
-        await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items(interaction)
+        await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.LOCKED.value)
+        await self._recreate_items(interaction)
 
     async def hide_button_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to hidden in guild '{interaction.guild.name}'"
-        )
-        self.bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.HIDDEN.value)
-        new_overwrite = discord.PermissionOverwrite(view_channel=False, connect=False)
-        await update_overwrites(self.bot, interaction.channel, new_overwrite)
-        await self.recreate_items(interaction)
+        await channel_action(bot=self.bot, interaction=interaction, new_state=ChannelState.HIDDEN.value)
+        await self._recreate_items(interaction)
 
     async def name_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
         modal = ChangeNameModal(self.bot, interaction.channel)
-        await interaction.response.send_modal(modal)
+        await interaction.followup.send_modal(modal)
 
     async def limit_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
         modal = UserLimitModal(self.bot, interaction.channel)
-        await interaction.response.send_modal(modal)
+        await interaction.followup.send_modal(modal)
 
     async def clear_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
-
         excluded_message_ids = []
         if interaction.message:
             excluded_message_ids.append(interaction.message.id)
@@ -444,10 +411,6 @@ class ControlView(View):
         await reply.delete(delay=15)
 
     async def delete_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
-
         embed = discord.Embed(
             title="Channel Deletion Confirmation",
             description="Are you sure you want to delete this channel? Reply with 'yes' within 60 seconds to confirm.",
@@ -516,27 +479,15 @@ class ControlView(View):
                 pass
 
     async def give_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
         await GiveOwnershipView(self.bot, interaction.channel).send_initial_message(interaction)
 
     async def ban_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
         await BanUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
     async def mute_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
         await MuteUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
     async def deafen_button_callback(self, interaction: discord.Interaction):
-        if not await is_owner(self, interaction):
-            return
-        await interaction.response.defer(ephemeral=True)
         await DeafenUserView(self.bot, interaction.channel).send_initial_message(interaction)
 
 
