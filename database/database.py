@@ -46,6 +46,15 @@ class Database:
                 "dm_owner_controls": "INTEGER",
                 "dm_admin_donate": "INTEGER",
             },
+            "voice_sanctions": {
+                "guild_id": "INTEGER",
+                "channel_id": "INTEGER",
+                "user_id": "INTEGER",
+                "muted": "INTEGER",
+                "deafened": "INTEGER",
+                "prior_muted": "INTEGER",
+                "prior_deafened": "INTEGER",
+            },
         }
 
         for table_name, columns in tables.items():

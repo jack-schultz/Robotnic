@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.control_vc import context_menus
+from cogs.control_vc.member_actions import context_menus
 
 
 class Control_Vc_cog(commands.Cog):
@@ -24,6 +24,30 @@ class Control_Vc_cog(commands.Cog):
         user: discord.Member
     ):
         await context_menus.allow_user(self.bot, ctx, user)
+
+    @discord.user_command(name="Mute User")
+    async def mute_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.mute_user(self.bot, ctx, user)
+
+    @discord.user_command(name="Deafen User")
+    async def deafen_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.deafen_user(self.bot, ctx, user)
+
+    @discord.user_command(name="Unmute & Undeafen User")
+    async def unmute_and_undeafen_user(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await context_menus.unmute_and_undeafen_user(self.bot, ctx, user)
 
 
 def setup(bot):

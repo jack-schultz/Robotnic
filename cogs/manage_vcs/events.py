@@ -1,4 +1,8 @@
 import logging
+from cogs.control_vc.member_actions.handler.mute_deafen import (
+    note_external_server_mute,
+    sync_sanctions_for_voice_state,
+)
 from cogs.manage_vcs.create import create_on_join
 from cogs.manage_vcs.delete import delete_on_leave
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
@@ -7,10 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_voice_state_update(bot, member, before, after):
-    # Filter out normal updates when not switching channels
-    if before is not None and after is not None:
-        if before.channel == after.channel:
-            return
+    # Same channel: only a moderator (or this bot) changing server mute/deafen matters.
+    if before is not None and after is not None and before.channel == after.channel:
+        if before.mute != after.mute or before.deaf != after.deaf:
+            await note_external_server_mute(bot, member, after)
+        return
+
+    await sync_sanctions_for_voice_state(bot, member, before, after)
 
     if after.channel:  # If a user joined a channel
         creator_channel_ids = bot.repos.creator_channels.get_ids()

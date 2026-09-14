@@ -30,7 +30,8 @@ class UserLimitModal(discord.ui.Modal):
             )
             embed.set_footer(text="This message will disappear in 15 seconds.")
             try:
-                await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+                reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+                await reply.delete(delay=15)
             except (discord.NotFound, discord.HTTPException):
                 pass
             return
@@ -51,6 +52,7 @@ class UserLimitModal(discord.ui.Modal):
         )
         embed.set_footer(text="This message will disappear in 15 seconds.")
         try:
-            await interaction.followup.send(embed=embed, ephemeral=True, delete_after=15)
+            reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+            await reply.delete(delay=15)
         except (discord.NotFound, discord.HTTPException):
             pass

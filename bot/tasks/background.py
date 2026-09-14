@@ -2,6 +2,7 @@ import logging
 import random
 import discord
 import asyncio
+from cogs.control_vc.member_actions.handler.mute_deafen import clear_orphaned_sanctions
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 from api.stats import stats
 
@@ -121,6 +122,10 @@ async def clear_empty_temp_channels(bot):
                         logger.warning(
                             f"Failed to delete empty temp channel {channel.id} in guild '{channel.guild.name}': {e}"
                         )
+
+            # If someone mutes a user and that user never joins a vc. this clears their sanctions
+            # Otherwise sanctions for past temp channels are only cleared upon the user joining any vc
+            await clear_orphaned_sanctions(bot)
 
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")
