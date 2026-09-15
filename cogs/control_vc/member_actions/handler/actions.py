@@ -5,8 +5,15 @@ from cogs.control_vc.owner import claim_or_verify_owner
 
 logger = logging.getLogger("cogs.control_vc.member_actions.handler")
 
+
+# Cant apply to self, bot or moderators
 _PUNITIVE = {Action.BAN, Action.MUTE, Action.DEAFEN}
 _VOICE = {Action.MUTE, Action.UNMUTE, Action.DEAFEN, Action.UNDEAFEN}
+_MODERATOR_PERMS = [
+    "manage_messages",
+    "manage_channels",
+    "administrator"
+]
 
 _RESPONSES = {
     Action.BAN: {
@@ -87,20 +94,29 @@ async def _resolve_channel(bot, user):
 def _valid_targets(bot, channel, action, targets):
     info = bot.repos.temp_channels.get_info(channel.id)
     owner_id = info.owner_id if info else None
-    valid = []
+    valid_targets = []
 
     for target in targets:
+        # not None
         if not target:
             continue
+        # Not a role if voice action
         if action in _VOICE:
             if not isinstance(target, discord.Member) or target.id == bot.user.id:
                 continue
+        # Prevent punitive action to self or bot or moderators
         if action in _PUNITIVE and isinstance(target, discord.Member):
             if target.id == owner_id or target.id == bot.user.id:
                 continue
-        valid.append(target)
 
-    return valid
+            target_permissions = channel.permissions_for(target)
+            is_moderator = any(getattr(target_permissions, perm, False) for perm in _MODERATOR_PERMS)
+            if is_moderator:
+                continue
+
+        valid_targets.append(target)
+
+    return valid_targets
 
 
 async def handle_action(bot, interaction, actions, targets, channel=None):
