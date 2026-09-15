@@ -104,11 +104,18 @@ def _valid_targets(bot, channel, action, targets):
         if action in _VOICE:
             if not isinstance(target, discord.Member) or target.id == bot.user.id:
                 continue
-        # Prevent punitive action to self or bot or moderators
+        # Prevent punitive action to self or bot or member moderators
         if action in _PUNITIVE and isinstance(target, discord.Member):
             if target.id == owner_id or target.id == bot.user.id:
                 continue
 
+            target_permissions = channel.permissions_for(target)
+            is_moderator = any(getattr(target_permissions, perm, False) for perm in _MODERATOR_PERMS)
+            if is_moderator:
+                continue
+
+        # Prevent punitive action to moderator roles
+        if action in _PUNITIVE and isinstance(target, discord.Role):
             target_permissions = channel.permissions_for(target)
             is_moderator = any(getattr(target_permissions, perm, False) for perm in _MODERATOR_PERMS)
             if is_moderator:
