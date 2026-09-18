@@ -9,6 +9,7 @@ defaults = {
     "profanity_filter": "alert & block",
     "enabled_log_events": ["channel_create", "channel_rename", "channel_remove", "profanity_block"],
     "control_options": ["dropdown", "labels"],
+    "owner_role_id": None
 }
 
 
@@ -55,7 +56,8 @@ class GuildSettingsRepository:  # bot.repos.guild_settings
             dm_owner_bool,
             profanity_filter,
             enabled_log_events_json,
-            control_options_json
+            control_options_json,
+            owner_role_id
         ) = row
 
         enabled_controls = json.loads(enabled_controls_json) if enabled_controls_json else {}
@@ -70,19 +72,21 @@ class GuildSettingsRepository:  # bot.repos.guild_settings
             "dm_owner_bool": bool(dm_owner_bool),
             "profanity_filter": profanity_filter,
             "enabled_log_events": list(enabled_log_events),
-            "control_options": list(control_options)
+            "control_options": list(control_options),
+            "owner_role_id": int(owner_role_id)
         }
 
     def edit(
             self,
             guild_id: int,
-            logs_channel_id: int = None,
-            enabled_controls: list = None,
-            mention_owner: bool = None,
-            dm_owner: bool = None,
-            profanity_filter: str = None,
-            enabled_log_events: list = None,
-            control_options: list = None,
+            logs_channel_id: int | None= None,
+            enabled_controls: list | None = None,
+            mention_owner: bool | None = None,
+            dm_owner: bool | None = None,
+            profanity_filter: str | None = None,
+            enabled_log_events: list | None = None,
+            control_options: list | None = None,
+            owner_role_id: int | None = None
         ):
         # Check if the server has an entry
         self.db.cursor.execute("""
@@ -126,6 +130,10 @@ class GuildSettingsRepository:  # bot.repos.guild_settings
         if control_options is not None:
             fields.append("control_options = ?")
             values.append(json.dumps(control_options))
+
+        if owner_role_id is not None:
+            fields.append("owner_role_id = ?")
+            values.append(owner_role_id)
 
         if not fields:
             # Nothing to update
@@ -197,10 +205,11 @@ class GuildSettingsRepository:  # bot.repos.guild_settings
         profanity_filter = defaults["profanity_filter"]
         enabled_log_events_json = json.dumps(defaults["enabled_log_events"])
         control_options_json = json.dumps(defaults["control_options"])
+        owner_role_id = defaults["owner_role_id"]
 
         self.db.cursor.execute("""
             INSERT OR REPLACE INTO guild_settings
-            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options)
+            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json))
+        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json, owner_role_id))
         self.db.connection.commit()
