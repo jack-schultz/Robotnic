@@ -289,7 +289,8 @@ async def create_on_join(member, before, after, bot):
     # 6. Add channel to DB
     # 7. Rename and send control message (slow; user is already in the channel)
     # 8. Send DM to Owner
-    # 9. Send Logs
+    # 9. Give Owner set guild Owner Role
+    # 10. Send Logs
 
     #  ========== 1. Get settings from DB ==========
     # SETTINGS needed from db for naming scheme
@@ -359,5 +360,7 @@ async def create_on_join(member, before, after, bot):
     # 8. ======== Send DM to Owner ==========
     await dm_user_on_create(bot, new_temp_channel, member, control_view)
 
-    # 9. ======== Send Logs ==========
+    # 9. ========  =========
+
+    # 10. ======== Send Logs ==========
     await send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
