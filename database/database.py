@@ -40,6 +40,7 @@ class Database:
                 "enabled_controls": "TEXT",
                 "control_options": "TEXT",
                 "enabled_log_events": "TEXT",
+                "owner_role_id": "INTEGER",
             },
             "user_notifications": {
                 "user_id": "INTEGER",
