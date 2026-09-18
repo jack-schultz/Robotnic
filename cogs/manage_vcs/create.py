@@ -7,6 +7,7 @@ from cogs.manage_vcs.child_settings import (
     get_child_overwrites,
 )
 from cogs.manage_vcs.create_name import create_temp_channel_name
+from cogs.manage_vcs.give_owner_role import give_owner_role
 from cogs.manage_vcs.notifications import dm_user_on_create, send_temp_channel_create_logs
 
 logger = logging.getLogger(__name__)
@@ -272,6 +273,7 @@ async def _finalize_temp_channel(
             f"Error sending control message for temp channel {temp_channel.id} "
             f"in guild '{guild_name}', handled. {e}"
         )
+        raise
         return None
 
 
@@ -360,7 +362,8 @@ async def create_on_join(member, before, after, bot):
     # 8. ======== Send DM to Owner ==========
     await dm_user_on_create(bot, new_temp_channel, member, control_view)
 
-    # 9. ========  =========
+    # 9. ======== Give Owner set guild Owner Role =========
+    await give_owner_role(bot, member)
 
     # 10. ======== Send Logs ==========
     await send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)

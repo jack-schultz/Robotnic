@@ -38,7 +38,7 @@ class GuildSettingsRepository:  # bot.repos.guild_settings
 
     def get(self, guild_id):
         self.db.cursor.execute("""
-            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options
+            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id
             FROM guild_settings
             WHERE guild_id = ?
         """, (guild_id,))
