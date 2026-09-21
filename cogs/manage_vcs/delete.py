@@ -1,5 +1,6 @@
 import logging
 import discord
+from cogs.manage_vcs.give_owner_role import remove_owner_role
 from cogs.manage_vcs.notifications import send_temp_channel_remove_logs
 
 logger = logging.getLogger(__name__)
@@ -37,5 +38,7 @@ async def delete_on_leave(member, before, after, bot):
     except Exception as e:
         logger.error(f"Unknown error removing temp channel in guild '{guild_name}'. {e}")
         return
+
+    await remove_owner_role(bot, member)
 
     await send_temp_channel_remove_logs(bot, old_temp_channel, member, guild_name)
