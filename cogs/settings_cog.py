@@ -105,6 +105,14 @@ class SettingsMenuCog(commands.Cog):
         self.bot.repos.guild_settings.edit(ctx.guild_id, owner_role_id=owner_role.id)
         await ctx.respond(f"Owner role set to `{owner_role.name} ({owner_role.id})`")
 
+    @owner.command(name="role-clear", description="Set a role given to owners of a Temp Channel")
+    async def role_clear(
+        self,
+        ctx: discord.ApplicationContext,
+    ):
+        self.bot.repos.guild_settings.edit(ctx.guild_id, owner_role_id=0)
+        await ctx.respond(f"Owner role has been cleared.")
+
     @owner.command(name="role-get", description="Get the currently selected role given to owners of Temp Channels")
     async def role_get(
         self,
@@ -116,7 +124,7 @@ class SettingsMenuCog(commands.Cog):
             return
 
         owner_role_id = settings["owner_role_id"]
-        if owner_role_id is None:
+        if owner_role_id is None or owner_role_id == 0:
             await ctx.respond(f"Owner role is not set.")
             return
 
