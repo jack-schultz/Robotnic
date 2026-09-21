@@ -1,4 +1,6 @@
 import discord
+
+from cogs.manage_vcs.owner_role import give_owner_role, remove_owner_role
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 
 
@@ -52,6 +54,7 @@ class GiveOwnershipView(discord.ui.View):
                     embed.set_footer(text="This message will disappear in 20 seconds.")
                     await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=20)
 
+                    await remove_owner_role(self.bot, interaction.user)
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, None)
 
                     await self.bot.EmbedUpdateScheduler.schedule(self.channel)
@@ -66,6 +69,8 @@ class GiveOwnershipView(discord.ui.View):
                     )
 
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, selected_member.id)
+                    await give_owner_role(self.bot, selected_member)
+                    await remove_owner_role(self.bot, interaction.user)
                     await update_channel_name_and_control_msg(self.bot, [self.channel.id])
 
                     embed = discord.Embed(
