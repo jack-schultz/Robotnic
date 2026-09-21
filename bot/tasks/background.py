@@ -3,6 +3,7 @@ import random
 import discord
 import asyncio
 from cogs.control_vc.member_actions.handler.mute_deafen import clear_orphaned_sanctions
+from cogs.manage_vcs.owner_role import remove_owner_role
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 from api.stats import stats
 
@@ -18,7 +19,12 @@ async def create_tasks(bot):
     tasks = []
 
     # These are the functions in this file that will run periodically in bot.loop
-    functions = [update_temp_channel_names, update_presence, clear_empty_temp_channels]
+    functions = [
+        update_temp_channel_names,
+        update_presence,
+        clear_empty_temp_channels,
+        clear_stale_owner_roles,
+    ]
     for func in functions:
         tasks.append(bot.loop.create_task(func(bot)))
 
@@ -126,6 +132,40 @@ async def clear_empty_temp_channels(bot):
             # If someone mutes a user and that user never joins a vc. this clears their sanctions
             # Otherwise sanctions for past temp channels are only cleared upon the user joining any vc
             await clear_orphaned_sanctions(bot)
+
+        except Exception as e:
+            logger.error(f"Error in {__name__} task: {e}")
+
+        await asyncio.sleep(300)  # 5 minutes (300 seconds)
+
+
+async def clear_stale_owner_roles(bot):
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        try:
+            logger.debug("Clearing stale owner roles...")
+
+            for guild in bot.guilds:
+                settings = bot.repos.guild_settings.get(guild.id)
+                if settings is None:
+                    continue
+
+                owner_role_id = settings["owner_role_id"]
+                if not owner_role_id:
+                    continue
+
+                owner_role = guild.get_role(owner_role_id)
+                if owner_role is None:
+                    continue
+
+                if not guild.chunked:
+                    logger.debug(f"Fetching all members for guild {guild.name} to populate cache")
+                    await guild.chunk()
+
+                db_owners = set(bot.repos.temp_channels.get_owner_ids(guild.id))
+                for member in owner_role.members:
+                    if member.id not in db_owners:
+                        await remove_owner_role(bot, member)
 
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")
