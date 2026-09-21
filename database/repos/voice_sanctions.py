@@ -1,11 +1,10 @@
-class VoiceSanctionsRepository:  # bot.repos.voice_sanctions
+from base_repo import BaseRepo
+
+
+class VoiceSanctionsRepository(BaseRepo):  # bot.repos.voice_sanctions
     # Not a channel. Holds the server mute/deafen from before the bot changed it,
     # so leaving a temp channel can restore a moderator's mute.
     DISCORD_RESET = 0
-
-    def __init__(self, db, repos):
-        self.db = db
-        self.repos = repos
 
     def get(self, guild_id, channel_id, user_id):
         self.db.cursor.execute("""

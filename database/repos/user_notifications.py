@@ -1,3 +1,5 @@
+from base_repo import BaseRepo
+
 # When these bools are set to true, it means the user has been notified about the related thing
 # A row not existing means that user has not been notified of anything
 defaults = {
@@ -7,11 +9,7 @@ defaults = {
 }
 
 
-class UserNotificationsRepository:  # bot.repos.guild_settings
-    def __init__(self, db, repos):
-        self.db = db
-        self.repos = repos
-
+class UserNotificationsRepository(BaseRepo):  # bot.repos.guild_settings
     def get_dm_owner_controls(self, user_id: int):
         self.db.cursor.execute("""
             SELECT dm_owner_controls
