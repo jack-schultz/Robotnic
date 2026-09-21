@@ -1,9 +1,7 @@
+from base_repo import BaseRepo
 
-class CreatorChannelsRepository:  # bot.repos.creator_channels
-    def __init__(self, db, repos):
-        self.db = db
-        self.repos = repos
 
+class CreatorChannelsRepository(BaseRepo):  # bot.repos.creator_channels
     def get_ids(self, guild_id: int = None, child_category_id: int = None):
         """
         Returns a list of channel_id values from creator_channels.

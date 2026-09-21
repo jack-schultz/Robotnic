@@ -1,8 +1,7 @@
-class PlaceholdersRepository:  # bot.repos.placeholders
-    def __init__(self, db, repos):
-        self.db = db
-        self.repos = repos
+from base_repo import BaseRepo
 
+
+class PlaceholdersRepository(BaseRepo):  # bot.repos.placeholders
     def add(self, guild_id: int, placeholder: str, replace_text: str, role_id: int = None):
         # Strip and add {}
         placeholder = placeholder.strip("{}")

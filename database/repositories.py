@@ -1,16 +1,16 @@
-from database.creator_channels_repo import CreatorChannelsRepository
-from database.guild_settings_repo import GuildSettingsRepository
-from database.placeholders_repo import PlaceholdersRepository
-from database.temp_channels_repo import TempChannelsRepository
-from database.user_notifications_repo import UserNotificationsRepository
-from database.voice_sanctions_repo import VoiceSanctionsRepository
+from repos.creator_channels import CreatorChannelsRepository
+from repos.guild_settings import GuildSettingsRepository
+from repos.placeholders import PlaceholdersRepository
+from repos.temp_channels import TempChannelsRepository
+from repos.user_notifications import UserNotificationsRepository
+from repos.voice_sanctions import VoiceSanctionsRepository
 
 
 class Repositories:
     def __init__(self, database):
-        self.guild_settings = GuildSettingsRepository(database, repos=self)
-        self.creator_channels = CreatorChannelsRepository(database, repos=self)
-        self.temp_channels = TempChannelsRepository(database, repos=self)
-        self.user_notifications = UserNotificationsRepository(database, repos=self)
-        self.voice_sanctions = VoiceSanctionsRepository(database, repos=self)
-        self.placeholders = PlaceholdersRepository(database, repos=self)
+        self.guild_settings = GuildSettingsRepository(database)
+        self.creator_channels = CreatorChannelsRepository(database)
+        self.temp_channels = TempChannelsRepository(database)
+        self.user_notifications = UserNotificationsRepository(database)
+        self.voice_sanctions = VoiceSanctionsRepository(database)
+        self.placeholders = PlaceholdersRepository(database)

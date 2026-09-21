@@ -1,9 +1,7 @@
+from base_repo import BaseRepo
 
-class TempChannelsRepository:  # bot.repos.temp_channels
-    def __init__(self, db, repos):
-        self.db = db
-        self.repos = repos
 
+class TempChannelsRepository(BaseRepo):  # bot.repos.temp_channels
     def set_owner_id(self, channel_id, owner_id):
         self.db.cursor.execute("""UPDATE temp_channels SET owner_id = ? WHERE channel_id = ?""", (owner_id, channel_id,))
         self.db.connection.commit()
