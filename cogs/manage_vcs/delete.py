@@ -1,6 +1,6 @@
 import logging
 import discord
-from cogs.manage_vcs.give_owner_role import remove_owner_role
+from cogs.manage_vcs.owner_role import remove_owner_role
 from cogs.manage_vcs.notifications import send_temp_channel_remove_logs
 
 logger = logging.getLogger(__name__)
