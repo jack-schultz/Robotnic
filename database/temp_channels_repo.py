@@ -144,6 +144,22 @@ class TempChannelsRepository:  # bot.repos.temp_channels
         rows = self.db.cursor.fetchall()
         return [row[0] for row in rows]
 
+    def get_owner_ids(self, guild_id: int | None = None):
+        """
+        Returns a list of distinct non-null owner_id values from temp_channels.
+        """
+        if guild_id:
+            self.db.cursor.execute(
+                "SELECT DISTINCT owner_id FROM temp_channels WHERE owner_id IS NOT NULL AND guild_id = ?",
+                (guild_id,)
+            )
+        else:
+            self.db.cursor.execute(
+                "SELECT DISTINCT owner_id FROM temp_channels WHERE owner_id IS NOT NULL"
+            )
+        rows = self.db.cursor.fetchall()
+        return [row[0] for row in rows]
+
     def get_counts(self, creator_id):
         """
         Returns a list of all number values from all temp channels of a creator.
