@@ -1,4 +1,4 @@
-from base_repo import BaseRepo
+from database.repos.base_repo import BaseRepo
 
 # When these bools are set to true, it means the user has been notified about the related thing
 # A row not existing means that user has not been notified of anything

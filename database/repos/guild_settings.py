@@ -1,5 +1,5 @@
 import json
-from base_repo import BaseRepo
+from database.repos.base_repo import BaseRepo
 
 defaults = {
     "guild_id": None,

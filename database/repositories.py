@@ -1,9 +1,9 @@
-from repos.creator_channels import CreatorChannelsRepository
-from repos.guild_settings import GuildSettingsRepository
-from repos.placeholders import PlaceholdersRepository
-from repos.temp_channels import TempChannelsRepository
-from repos.user_notifications import UserNotificationsRepository
-from repos.voice_sanctions import VoiceSanctionsRepository
+from database.repos.creator_channels import CreatorChannelsRepository
+from database.repos.guild_settings import GuildSettingsRepository
+from database.repos.placeholders import PlaceholdersRepository
+from database.repos.temp_channels import TempChannelsRepository
+from database.repos.user_notifications import UserNotificationsRepository
+from database.repos.voice_sanctions import VoiceSanctionsRepository
 
 
 class Repositories:
