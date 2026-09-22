@@ -1,4 +1,4 @@
-from base_repo import BaseRepo
+from database.repos.base_repo import BaseRepo
 
 
 class TempChannelsRepository(BaseRepo):  # bot.repos.temp_channels

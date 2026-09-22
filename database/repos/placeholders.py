@@ -1,4 +1,4 @@
-from base_repo import BaseRepo
+from database.repos.base_repo import BaseRepo
 
 
 class PlaceholdersRepository(BaseRepo):  # bot.repos.placeholders
