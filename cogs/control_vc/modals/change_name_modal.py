@@ -14,10 +14,16 @@ async def check_profanity(session, text: str) -> dict | None:
             json={"message": text},
             timeout=3,
         )
-        return response.json()
+        data = response.json()
     except Exception as e:
         logger.warning(f"Profanity API failed, skipping check. {e}")
         return None
+
+    # The API sometimes answers with JSON null instead of an object
+    if not isinstance(data, dict):
+        logger.warning(f"Profanity API returned {type(data).__name__}, skipping check.")
+        return None
+    return data
 
 
 class ChangeNameModal(discord.ui.Modal):
@@ -48,7 +54,7 @@ class ChangeNameModal(discord.ui.Modal):
         if profanity_check_setting is not None:
             profanity_check = await check_profanity(requests, channel_name)
 
-            if profanity_check["isProfanity"]:
+            if profanity_check is not None and profanity_check.get("isProfanity"):
                 embed = discord.Embed(
                     title="TempChannel Blocked Rename",
                     description="",
@@ -64,7 +70,7 @@ class ChangeNameModal(discord.ui.Modal):
                                 value=f"`{channel_name}`",
                                 inline=False)
                 embed.add_field(name="Flagged for",
-                                value=f"`{profanity_check["flaggedFor"]}`",
+                                value=f"`{profanity_check.get("flaggedFor")}`",
                                 inline=False)
                 embed.timestamp = datetime.datetime.now()
                 embed.set_footer(text="Toggle with /settings")
