@@ -41,6 +41,7 @@ class Database:
                 "control_options": "TEXT",
                 "enabled_log_events": "TEXT",
                 "owner_role_id": "INTEGER",
+                "owner_prefix": "TEXT",
             },
             "user_notifications": {
                 "user_id": "INTEGER",

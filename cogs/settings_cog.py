@@ -135,6 +135,45 @@ class SettingsMenuCog(commands.Cog):
 
         await ctx.respond(f"Owner role set to `{owner_role.name} ({owner_role.id})`")
 
+    @owner.command(name="prefix-set", description="Set a prefix given to owners of a Temp Channel")
+    async def role_set(
+        self,
+        ctx: discord.ApplicationContext,
+        owner_prefix: discord.Option(
+            str,
+            description="Role given to VC Owners",
+        ),
+    ):
+        self.bot.repos.guild_settings.edit(ctx.guild_id, owner_prefix=owner_prefix)
+        await ctx.respond(f"Owner prefix set to `{owner_prefix}`")
+
+    @owner.command(name="prefix-clear", description="Set a prefix given to owners of a Temp Channel")
+    async def prefix_clear(
+        self,
+        ctx: discord.ApplicationContext,
+    ):
+        self.bot.repos.guild_settings.edit(ctx.guild_id, owner_prefix=0)
+        await ctx.respond(f"Owner prefix has been cleared.")
+
+    @owner.command(name="prefix-get", description="Get the currently selected prefix given to owners of Temp Channels")
+    async def prefix_get(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+
+        settings = self.bot.repos.guild_settings.get(ctx.guild_id)
+        if settings is None:
+            await ctx.respond(f"Owner prefix could not be retrieved.")
+            return
+
+        owner_prefix = settings["owner_prefix"]
+        print(owner_prefix, type(owner_prefix))
+        if owner_prefix is None:
+            await ctx.respond(f"Owner prefix is not set.")
+            return
+
+        await ctx.respond(f"Owner prefix set to `{owner_prefix}`")
+
     placeholder = settings.create_subgroup(
         "placeholder",
         "Manage custom channel name placeholders",
