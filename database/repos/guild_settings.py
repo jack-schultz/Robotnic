@@ -10,14 +10,15 @@ defaults = {
     "profanity_filter": "alert & block",
     "enabled_log_events": ["channel_create", "channel_rename", "channel_remove", "profanity_block"],
     "control_options": ["dropdown", "labels"],
-    "owner_role_id": None
+    "owner_role_id": None,
+    "owner_prefix": None
 }
 
 
 class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
     def get(self, guild_id):
         self.db.cursor.execute("""
-            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id
+            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix
             FROM guild_settings
             WHERE guild_id = ?
         """, (guild_id,))
@@ -36,7 +37,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             profanity_filter,
             enabled_log_events_json,
             control_options_json,
-            owner_role_id
+            owner_role_id,
+            owner_prefix
         ) = row
 
         enabled_controls = json.loads(enabled_controls_json) if enabled_controls_json else {}
@@ -52,7 +54,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             "profanity_filter": profanity_filter,
             "enabled_log_events": list(enabled_log_events),
             "control_options": list(control_options),
-            "owner_role_id": int(owner_role_id)
+            "owner_role_id": int(owner_role_id),
+            "owner_prefix": owner_prefix  # str | None
         }
 
     def edit(
@@ -65,7 +68,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             profanity_filter: str | None = None,
             enabled_log_events: list | None = None,
             control_options: list | None = None,
-            owner_role_id: int | None = None
+            owner_role_id: int | None = None,
+            owner_prefix: str | int | None = None
         ):
         # Check if the server has an entry
         self.db.cursor.execute("""
@@ -113,6 +117,14 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
         if owner_role_id is not None:
             fields.append("owner_role_id = ?")
             values.append(owner_role_id)
+
+        if owner_prefix is not None:
+            fields.append("owner_prefix = ?")
+            print(owner_prefix, type(owner_prefix))
+            if owner_prefix not in (0, "0", "None", "none"):
+                values.append(owner_prefix)
+            else:
+                values.append(None)
 
         if not fields:
             # Nothing to update
