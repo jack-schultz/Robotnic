@@ -6,18 +6,27 @@ logger = logging.getLogger(__name__)
 NICK_MAX_LENGTH = 32
 
 
-def _get_owner_prefix(bot, member):
-    settings = bot.repos.guild_settings.get(member.guild.id)
+def strip_owner_prefix(bot, guild_id, name):
+    """Return name with the guild owner prefix removed, if present."""
+    if not name:
+        return name
+
+    owner_prefix = _get_owner_prefix(bot, guild_id)
+    if owner_prefix and name.startswith(owner_prefix):
+        return name[len(owner_prefix):] or name
+
+    return name
+
+
+def _get_owner_prefix(bot, guild_id):
+    settings = bot.repos.guild_settings.get(guild_id)
     if settings is None:
-        logger.debug(
-            f"Skipping owner prefix for {member} in guild '{member.guild.name}': no guild settings."
-        )
         return None
 
     owner_prefix = settings["owner_prefix"]
     if not owner_prefix:
         logger.debug(
-            f"Skipping owner prefix for {member} in guild '{member.guild.name}': owner prefix not configured."
+            f"Skipping owner prefix in guild '{guild_id}': owner prefix not configured."
         )
         return None
 
@@ -71,7 +80,7 @@ async def give_owner_prefix(bot, member):
     if member is None:
         return
 
-    owner_prefix = _get_owner_prefix(bot, member)
+    owner_prefix = _get_owner_prefix(bot, member.guild.id)
     if owner_prefix is None:
         return
 
@@ -106,7 +115,7 @@ async def remove_owner_prefix(bot, member):
         )
         return
 
-    owner_prefix = _get_owner_prefix(bot, member)
+    owner_prefix = _get_owner_prefix(bot, member.guild.id)
     if owner_prefix is None:
         return
 

@@ -120,7 +120,6 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
 
         if owner_prefix is not None:
             fields.append("owner_prefix = ?")
-            print(owner_prefix, type(owner_prefix))
             if owner_prefix not in (0, "0", "None", "none"):
                 values.append(owner_prefix)
             else:
