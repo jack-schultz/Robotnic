@@ -88,7 +88,7 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
     except Exception as e:
         logger.warning("Erred finding channel control message", exc_info=True)
 
-    if len(control_message.embeds) < 2:
+    if len(getattr(control_message, "embeds", [])) < 2:
         logger.warning(
             f"Control message for temp channel {channel.id} in guild '{guild_name}' "
             f"has fewer than 2 embeds, skipping info embed update"
