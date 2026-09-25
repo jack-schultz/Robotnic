@@ -1,6 +1,7 @@
 import logging
 import discord
 from cogs.manage_vcs.owner_role import remove_owner_role
+from cogs.manage_vcs.owner_prefix import remove_owner_prefix
 from cogs.manage_vcs.notifications import send_temp_channel_remove_logs
 
 logger = logging.getLogger(__name__)
@@ -40,5 +41,6 @@ async def delete_on_leave(member, before, after, bot):
         return
 
     await remove_owner_role(bot, member)
+    await remove_owner_prefix(bot, member)
 
     await send_temp_channel_remove_logs(bot, old_temp_channel, member, guild_name)
