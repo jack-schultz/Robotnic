@@ -10,6 +10,8 @@ from cogs.control_vc.modals.user_limit_modal import UserLimitModal
 from cogs.control_vc.modals.change_name_modal import ChangeNameModal
 from cogs.control_vc.views.give_ownership import GiveOwnershipView
 from cogs.control_vc.member_actions.views import BanUserView, DeafenUserView, MuteUserView
+from cogs.manage_vcs.owner_role import remove_owner_role
+from cogs.manage_vcs.owner_prefix import remove_owner_prefix
 
 logger = logging.getLogger(__name__)
 
@@ -444,6 +446,8 @@ class ControlView(View):
 
             if deleted:
                 self.bot.repos.temp_channels.remove(interaction.channel.id)
+                await remove_owner_role(self.bot, interaction.user)
+                await remove_owner_prefix(self.bot, interaction.user)
                 logger.debug(
                     f"Deleted temp channel {interaction.channel.id} via control message confirmation "
                     f"in guild '{interaction.guild.name}'"

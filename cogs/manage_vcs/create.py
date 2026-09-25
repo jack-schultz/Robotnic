@@ -8,6 +8,7 @@ from cogs.manage_vcs.child_settings import (
 )
 from cogs.manage_vcs.create_name import create_temp_channel_name
 from cogs.manage_vcs.owner_role import give_owner_role
+from cogs.manage_vcs.owner_prefix import give_owner_prefix
 from cogs.manage_vcs.notifications import dm_user_on_create, send_temp_channel_create_logs
 
 logger = logging.getLogger(__name__)
@@ -292,7 +293,8 @@ async def create_on_join(member, before, after, bot):
     # 7. Rename and send control message (slow; user is already in the channel)
     # 8. Send DM to Owner
     # 9. Give Owner set guild Owner Role
-    # 10. Send Logs
+    # 10. Apply Owner Prefix
+    # 11. Send Logs
 
     #  ========== 1. Get settings from DB ==========
     # SETTINGS needed from db for naming scheme
@@ -365,5 +367,8 @@ async def create_on_join(member, before, after, bot):
     # 9. ======== Give Owner set guild Owner Role =========
     await give_owner_role(bot, member)
 
-    # 10. ======== Send Logs ==========
+    # 10. ======== Apply Owner Prefix =========
+    await give_owner_prefix(bot, member)
+
+    # 11. ======== Send Logs ==========
     await send_temp_channel_create_logs(bot, new_temp_channel, member, guild_name)
