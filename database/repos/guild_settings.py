@@ -54,7 +54,7 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             "profanity_filter": profanity_filter,
             "enabled_log_events": list(enabled_log_events),
             "control_options": list(control_options),
-            "owner_role_id": int(owner_role_id),
+            "owner_role_id": owner_role_id,
             "owner_prefix": owner_prefix  # str | None
         }
 
