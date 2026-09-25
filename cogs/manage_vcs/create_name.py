@@ -1,5 +1,6 @@
 import logging
 import discord
+from cogs.manage_vcs.owner_prefix import strip_owner_prefix
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
     if "{user}" in str(new_channel_name):
         if owner:
             member_name = owner.nick if owner.nick else owner.display_name
+            member_name = strip_owner_prefix(bot, temp_channel.guild.id, member_name)
         else:
             member_name = "Public"
             logger.debug(

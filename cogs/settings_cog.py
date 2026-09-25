@@ -167,7 +167,6 @@ class SettingsMenuCog(commands.Cog):
             return
 
         owner_prefix = settings["owner_prefix"]
-        print(owner_prefix, type(owner_prefix))
         if owner_prefix is None:
             await ctx.respond(f"Owner prefix is not set.")
             return
