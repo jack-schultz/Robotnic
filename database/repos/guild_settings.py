@@ -196,10 +196,11 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
         enabled_log_events_json = json.dumps(defaults["enabled_log_events"])
         control_options_json = json.dumps(defaults["control_options"])
         owner_role_id = defaults["owner_role_id"]
+        owner_prefix = defaults["owner_prefix"]
 
         self.db.cursor.execute("""
             INSERT OR REPLACE INTO guild_settings
-            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json, owner_role_id))
+            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json, owner_role_id, owner_prefix))
         self.db.connection.commit()
