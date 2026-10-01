@@ -20,8 +20,21 @@ HIDE_PERMS = {
 
 
 async def _update_overwrites(bot, channel, new_overwrite):
-    creator_id = bot.repos.temp_channels.get_info(channel.id).creator_id
-    default_role_id = bot.repos.creator_channels.get_info(creator_id).default_role_id
+    channel_info = bot.repos.temp_channels.get_info(channel.id)
+    if channel_info is None:
+        logger.debug(
+            f"Skipping overwrite update for channel {channel.id} in guild '{channel.guild.name}': no temp channel row"
+        )
+        return False
+
+    creator_info = bot.repos.creator_channels.get_info(channel_info.creator_id)
+    if creator_info is None:
+        logger.debug(
+            f"Skipping overwrite update for channel {channel.id} in guild '{channel.guild.name}': creator channel {channel_info.creator_id} is missing"
+        )
+        return False
+
+    default_role_id = creator_info.default_role_id
     if default_role_id is None:
         default_role = channel.guild.default_role
     else:
@@ -30,6 +43,17 @@ async def _update_overwrites(bot, channel, new_overwrite):
     overwrites = channel.overwrites
     overwrites[default_role] = new_overwrite
     await channel.edit(overwrites=overwrites)
+    return True
+
+
+async def _notify_missing_overwrite_permission(interaction):
+    try:
+        await interaction.followup.send(
+            "Sorry {interaction.user.mention}, I do not have permission to change this channel's access. I need Manage Roles, and my highest role must be above the roles on this channel.",
+            ephemeral=True,
+        )
+    except (discord.NotFound, discord.HTTPException):
+        pass
 
 
 async def channel_action(bot, interaction, new_state):
