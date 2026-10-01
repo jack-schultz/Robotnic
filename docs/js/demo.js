@@ -1064,70 +1064,10 @@
         });
     }
 
-    function initActivity() {
-        const steps = [
-            { name: "General", status: "is not playing a game", action: "Start game" },
-            { name: "Valorant", status: "is playing Valorant", action: "Switch game" },
-            { name: "Minecraft", status: "is playing Minecraft", action: "Stop playing" },
-        ];
-        let index = 0;
-        const button = $("activity-next");
-        function paint() {
-            const step = steps[index];
-            $("activity-channel").textContent = step.name;
-            $("activity-status").textContent = step.status;
-            button.textContent = step.action;
-        }
-        button.addEventListener("click", function () {
-            index = (index + 1) % steps.length;
-            paint();
-        });
-        paint();
-    }
-
-    function initCleanup() {
-        const cleanup = { members: ["TestUser", "Casey"] };
-        function paint() {
-            const list = $("cleanup-members");
-            const channel = $("cleanup-channel");
-            const done = $("cleanup-done");
-            const again = $("cleanup-reset");
-            list.replaceChildren();
-            if (!cleanup.members.length) {
-                channel.classList.add("is-hidden");
-                done.classList.remove("is-hidden");
-                again.classList.remove("is-hidden");
-                return;
-            }
-            channel.classList.remove("is-hidden");
-            done.classList.add("is-hidden");
-            again.classList.add("is-hidden");
-            $("cleanup-note").textContent = cleanup.members.length === 1
-                ? "One person is still here, so the channel stays."
-                : "Leave removes someone. The channel deletes when the last person goes.";
-            cleanup.members.forEach(function (name) {
-                list.append(el("li", { class: "flex items-center justify-between gap-3 py-1" }, [
-                    el("span", { class: "text-[#dbdee1] text-sm", text: name }),
-                    dcBtn("Leave", "secondary", function () {
-                        cleanup.members = cleanup.members.filter(function (member) { return member !== name; });
-                        paint();
-                    }),
-                ]));
-            });
-        }
-        $("cleanup-reset").addEventListener("click", function () {
-            cleanup.members = ["TestUser", "Casey"];
-            paint();
-        });
-        paint();
-    }
-
     function init() {
         seed();
         bindMain();
         initHubs();
-        initActivity();
-        initCleanup();
         render();
         $("voice-list").addEventListener("scroll", placeCreatorBubbles);
         window.addEventListener("resize", placeCreatorBubbles);
