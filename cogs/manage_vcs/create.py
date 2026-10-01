@@ -269,12 +269,18 @@ async def _finalize_temp_channel(
             member, creator_channel, category, overwrites, guild_name, discord_error
         )
         return None
+    except discord.NotFound:
+        if bot.repos.temp_channels.get_info(temp_channel.id) is not None:
+            bot.repos.temp_channels.remove(temp_channel.id)
+        logger.debug(
+            f"Temp channel {temp_channel.id} in guild '{guild_name}' was deleted before the control message could be sent"
+        )
+        return None
     except Exception as e:
         logger.warning(
             f"Error sending control message for temp channel {temp_channel.id} "
             f"in guild '{guild_name}', handled. {e}"
         )
-        raise
         return None
 
 

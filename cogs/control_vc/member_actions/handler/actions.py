@@ -165,6 +165,13 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
             voice_touched.extend(applied)
         else:
             applied = await _apply_access(bot, channel, action, targets)
+            if applied is None:
+                await _reply_error(
+                    interaction,
+                    f"Sorry {user.mention}, I do not have permission to change this channel's access. "
+                    "I need Manage Roles, and my highest role must be above the roles on this channel.",
+                )
+                return
         affected.extend(applied)
 
     for member in _unique(voice_touched):
