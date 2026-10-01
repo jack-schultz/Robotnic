@@ -160,61 +160,62 @@
 
     <section id="demo" class="max-w-6xl mx-auto px-5 pt-14">
         <h2 class="text-2xl font-semibold text-white">Try the control panel</h2>
-        <p class="mt-2 text-[#b5bac1] max-w-2xl">This is a mock, not a recording. Click <strong class="text-white font-medium">Create</strong> in the sidebar. TestUser gets a channel named from <code>{user}'s Room</code>, and the same buttons the bot posts in Discord show up in the chat.</p>
+        <p class="mt-2 text-[#b5bac1] max-w-2xl">This is a mock, not a recording. Four people are already in voice. You are not connected yet. Act as one of them, then use their panel or join another creator channel.</p>
         <ul class="mt-3 text-sm text-[#949ba4] list-disc pl-5 space-y-1 max-w-2xl">
-            <li>Rename the channel. Submitting <code>badword</code> is blocked.</li>
-            <li>Lock or hide it, then use Join as Casey.</li>
-            <li>Ban, mute, transfer ownership, clear the chat, or delete the channel.</li>
+            <li>The labels on the left are each creator channel’s template, limit, and access.</li>
+            <li>Act as Alex to control Alex’s Room. Submitting <code>badword</code> is blocked.</li>
+            <li>Leave, then join Private. New rooms from that hub start locked.</li>
         </ul>
         <noscript><p class="mt-3 text-sm text-[#faa61a]">The interactive demo needs JavaScript.</p></noscript>
 
-        <div class="mt-5 border border-black/60 rounded-md overflow-hidden bg-[#313338]">
-            <div class="flex flex-col md:flex-row md:h-[620px]">
-                <div class="hidden sm:flex w-[72px] shrink-0 bg-[#1e1f22] flex-col items-center py-3 gap-2" aria-hidden="true">
-                    <div class="w-12 h-12 rounded-2xl bg-[#5865f2] text-white font-semibold flex items-center justify-center">R</div>
+        <div class="mt-5 flex flex-col lg:flex-row lg:items-stretch gap-4">
+        <aside class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-x-4 gap-y-3 lg:w-56 shrink-0 lg:self-start" aria-label="Creator channel settings">
+            <div>
+                <p class="text-sm font-semibold text-white">Hangout</p>
+                <p class="text-xs text-[#b5bac1] mt-1 lg:whitespace-nowrap"><span class="text-[#949ba4]">Template</span> <code>{user}'s Room</code></p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Limit</span> Unlimited</p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Access</span> Public</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-white">Gaming</p>
+                <p class="text-xs text-[#b5bac1] mt-1 lg:whitespace-nowrap"><span class="text-[#949ba4]">Template</span> <code>{activity} Lobby</code></p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Limit</span> 5</p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Access</span> Public</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-white">Study</p>
+                <p class="text-xs text-[#b5bac1] mt-1 lg:whitespace-nowrap"><span class="text-[#949ba4]">Template</span> <code>Study with {user}</code></p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Limit</span> 4</p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Access</span> Public</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-white">Private</p>
+                <p class="text-xs text-[#b5bac1] mt-1 lg:whitespace-nowrap"><span class="text-[#949ba4]">Template</span> <code>{user}'s Room</code></p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Limit</span> 2</p>
+                <p class="text-xs text-[#b5bac1]"><span class="text-[#949ba4]">Access</span> Locked for @everyone</p>
+            </div>
+        </aside>
+        <div class="min-w-0 flex-1 border border-black/60 rounded-md overflow-hidden bg-[#313338]">
+            <div class="flex flex-col md:flex-row md:h-[400px]">
+                <div class="md:w-52 shrink-0 bg-[#2b2d31] flex flex-col border-b md:border-b-0 md:border-r border-black/40 max-h-44 md:max-h-none">
+                    <div class="h-10 px-3 flex items-center border-b border-black/40 text-white text-sm font-semibold shrink-0">Example Server</div>
+                    <div id="voice-list" class="discord-scroll overflow-y-auto px-2 py-2 flex-1"></div>
                 </div>
-                <div class="md:w-60 shrink-0 bg-[#2b2d31] flex flex-col border-b md:border-b-0 md:border-r border-black/40 max-h-64 md:max-h-none">
-                    <div class="h-12 px-4 flex items-center border-b border-black/40 text-white font-semibold shrink-0">Example Server</div>
-                    <div class="discord-scroll overflow-y-auto px-2 py-2 flex-1">
-                        <p class="px-2 mt-2 mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#949ba4]">Text Channels</p>
-                        <button type="button" class="chan is-selected" id="ch-general">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14M10 4l-2 16M16 4l-2 16"/></svg>
-                            <span>general</span>
-                        </button>
-                        <p class="px-2 mt-4 mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#949ba4]">Voice Channels</p>
-                        <button type="button" class="chan" id="ch-create">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z"/></svg>
-                            <span>Create</span>
-                            <span id="create-hint" class="ml-auto text-[11px]">Click</span>
-                        </button>
-                        <div id="room-block" class="is-hidden mt-0.5">
-                            <button type="button" class="chan" id="ch-room">
-                                <span id="room-icon" class="shrink-0 flex">
-                                    <svg id="icon-public" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z"/></svg>
-                                    <svg id="icon-lock" class="is-hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1zm2 0h6V7a3 3 0 0 0-6 0v3z"/></svg>
-                                    <svg id="icon-hide" class="is-hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10 10 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-3.2 3.7"/><path d="M6.1 6.1C3.5 8 2 12 2 12s4 6 10 6c1.3 0 2.5-.3 3.6-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
-                                </span>
-                                <span id="room-name" class="truncate min-w-0">TestUser's Room</span>
-                                <span id="room-count" class="ml-auto shrink-0 text-xs tabular-nums"></span>
-                            </button>
-                            <ul id="room-members" class="mt-0.5 space-y-0.5"></ul>
-                        </div>
-                    </div>
-                </div>
-                <div id="chat-pane" class="flex-1 min-w-0 flex flex-col min-h-[440px] bg-[#313338]">
+                <div id="chat-pane" class="flex-1 min-w-0 flex flex-col min-h-[240px] bg-[#313338]">
                     <div class="h-12 px-4 flex items-center gap-2 border-b border-black/40 shrink-0">
-                        <span id="header-hash" class="text-[#949ba4]">#</span>
-                        <h3 id="header-title" class="text-white font-semibold truncate min-w-0">general</h3>
+                        <span id="header-hash" class="is-hidden text-[#949ba4]">#</span>
+                        <h3 id="header-title" class="text-white font-semibold truncate min-w-0">Not connected</h3>
                         <span id="header-topic" class="hidden sm:block text-sm text-[#949ba4] truncate"></span>
                     </div>
-                    <div id="chat-scroll" class="discord-scroll flex-1 overflow-y-auto px-4 py-4">
-                        <div id="view-general">
-                            <p class="text-white font-semibold text-lg"># general</p>
-                            <p class="mt-2 text-[#b5bac1] max-w-lg">This text channel is only here so the sidebar looks like a server. The voice channel <strong class="text-white font-medium">Create</strong> is the creator hub. Click it.</p>
+                    <div id="chat-scroll" class="discord-scroll flex-1 overflow-y-auto px-4 py-3">
+                        <div id="view-offline">
+                            <p class="text-white font-semibold">Not connected</p>
+                            <p class="mt-2 text-sm text-[#b5bac1] max-w-md">Alex, Blake, Casey, and Drew are already in voice. Choose <strong class="text-white font-medium">Act as</strong> below to use a channel as that person.</p>
                         </div>
-                        <div id="view-create" class="is-hidden">
-                            <p class="text-white font-semibold text-lg">Create</p>
-                            <p id="create-copy" class="mt-2 text-[#b5bac1] max-w-lg">Join this channel to create a voice channel.</p>
+                        <div id="view-creator" class="is-hidden">
+                            <p id="creator-title" class="text-white font-semibold">Hangout</p>
+                            <p id="creator-copy" class="mt-2 text-sm text-[#b5bac1] max-w-md"></p>
+                            <button type="button" class="dc-btn dc-btn--primary mt-3" id="creator-join">Join channel</button>
                         </div>
                         <div id="view-room" class="is-hidden">
                             <div class="flex gap-3 max-w-3xl">
@@ -224,9 +225,6 @@
                                         <span class="text-white font-medium">Robotnic</span>
                                         <span class="text-[10px] leading-none font-medium bg-[#5865f2] text-white px-1 py-0.5 rounded-sm">BOT</span>
                                         <span id="msg-time" class="text-xs text-[#949ba4]"></span>
-                                    </div>
-                                    <div class="mt-2 max-w-[432px] bg-[#2b2d31] border-l-4 border-[#2ecc71] rounded-r px-3 py-2">
-                                        <p class="text-sm text-[#dbdee1]">This is a <a class="embed-link" href="https://wikipedia.org/wiki/Free_and_open-source_software" target="_blank" rel="noopener noreferrer">FOSS</a> project. You can contribute <a class="embed-link" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">here</a> or support the dev <a class="embed-link" href="https://ko-fi.com/jackschultzdev/" target="_blank" rel="noopener noreferrer">here</a>.</p>
                                     </div>
                                     <div class="mt-2 max-w-[432px] bg-[#2b2d31] border-l-4 border-[#3498db] rounded-r px-3 py-2">
                                         <p id="panel-title" class="text-white font-semibold break-words">TestUser's Room</p>
@@ -244,7 +242,6 @@
                                                 <p id="panel-access" class="text-sm text-[#dbdee1]"></p>
                                             </div>
                                         </div>
-                                        <p class="text-[11px] text-[#949ba4] mt-2">Channel Name will update as quickly as Discord Allows.</p>
                                     </div>
                                     <div class="mt-2 space-y-2" aria-label="Channel controls">
                                         <div class="flex flex-wrap gap-2">
@@ -268,7 +265,7 @@
                                         </div>
                                     </div>
                                     <p id="owner-mention" class="is-hidden text-sm text-[#dbdee1] mt-3">
-                                        <span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@TestUser</span>, this is <em>your</em> vc. Use the message above to control it.
+                                        <span id="mention-name" class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5"></span>, this is <em>your</em> vc. Use the message above to control it.
                                     </p>
                                     <div id="system-notes" class="mt-2 space-y-1"></div>
                                     <div id="claim-banner" class="is-hidden mt-3 max-w-[432px] bg-[#2b2d31] border border-white/10 rounded px-3 py-3">
@@ -279,32 +276,35 @@
                             </div>
                         </div>
                     </div>
-                    <div class="px-4 pb-4 shrink-0">
-                        <div id="composer" class="h-11 rounded bg-[#383a40] px-4 flex items-center text-sm text-[#6d6f78]">Message #general</div>
+                    <div class="px-3 pb-3 shrink-0">
+                        <div id="composer" class="h-9 rounded bg-[#383a40] px-3 flex items-center text-sm text-[#6d6f78]">You are not connected</div>
                     </div>
                 </div>
             </div>
             <div class="border-t border-black/50 bg-[#111214] px-3 py-2 flex flex-wrap items-center gap-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wide text-[#949ba4] mr-1">Demo</span>
-                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" id="join-casey" disabled>Join as Casey</button>
-                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" id="leave-test" disabled>TestUser leaves</button>
-                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" id="leave-casey" disabled>Casey leaves</button>
+                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" data-actor="Alex" aria-pressed="false">Act as Alex</button>
+                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" data-actor="Blake" aria-pressed="false">Act as Blake</button>
+                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" data-actor="Casey" aria-pressed="false">Act as Casey</button>
+                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" data-actor="Drew" aria-pressed="false">Act as Drew</button>
+                <button type="button" class="dc-btn dc-btn--secondary dc-btn--small" id="leave-voice" disabled>Leave</button>
                 <button type="button" class="dc-btn dc-btn--secondary dc-btn--small md:ml-auto" id="reset-demo">Reset</button>
                 <p id="demo-status" class="is-hidden basis-full text-sm text-[#faa61a]" aria-live="polite"></p>
             </div>
         </div>
-
-        <div class="mt-3 border border-white/10 bg-[#111214]">
-            <div class="px-4 py-2 border-b border-white/10 flex items-baseline justify-between gap-3">
-                <h3 class="text-sm font-semibold text-white">Staff log</h3>
-                <span class="text-xs text-[#949ba4]">#mod-log</span>
-            </div>
-            <div id="log-scroll" class="discord-scroll max-h-36 overflow-y-auto px-4 py-2">
-                <p id="log-empty" class="text-sm text-[#949ba4]">Nothing yet. Click Create.</p>
-                <ol id="log-list" class="space-y-1"></ol>
+        <div class="relative h-80 w-full lg:h-auto lg:w-72 xl:w-80 shrink-0">
+            <div id="staff-logs" class="absolute inset-0 border border-black/60 rounded-md overflow-hidden bg-[#313338] flex flex-col min-h-0">
+                <div class="h-10 px-3 flex items-center gap-2 border-b border-black/40 shrink-0">
+                    <span class="text-[#949ba4]">#</span>
+                    <h3 class="text-white text-sm font-semibold">staff-logs</h3>
+                </div>
+                <div id="log-scroll" class="discord-scroll flex-1 overflow-y-auto min-h-0 px-2 py-2">
+                    <p id="log-empty" class="px-1 text-sm text-[#949ba4]">Creates, renames, removals, and blocked names show up here.</p>
+                    <div id="log-list" class="space-y-3"></div>
+                </div>
             </div>
         </div>
-        <p class="mt-3 text-sm text-[#949ba4] max-w-2xl">Servers can show these as icon buttons, icon buttons with labels, or dropdowns, and can turn each action off. This mock uses icons with labels.</p>
+        </div>
+        <p class="mt-3 text-sm text-[#949ba4] max-w-2xl">Servers can show these as icon buttons, icon buttons with labels, or dropdowns, and can turn each action off. This mock uses icons with labels. The staff-logs channel uses the same embeds the bot posts.</p>
     </section>
 
     <section id="features" class="max-w-6xl mx-auto px-5 pt-16 space-y-12">
