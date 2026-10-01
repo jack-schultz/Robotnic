@@ -37,15 +37,16 @@ class ChannelInfoEmbed(discord.Embed):
         # title input incase it was just changed and propagated to channel yet
         self.title = title
         if not self.title:
-            is_renamed = temp_channel_info.is_renamed
-            if is_renamed:
+            if temp_channel_info is not None and temp_channel_info.is_renamed:
                 self.title = f"{temp_channel.name}"
-            else:
+            elif temp_channel_info is not None:
                 self.title = create_temp_channel_name(bot, temp_channel)
+            else:
+                self.title = temp_channel.name
 
         self.footer = discord.EmbedFooter("Channel Name will update as quickly as Discord Allows.")
 
-        owner_id = temp_channel_info.owner_id
+        owner_id = temp_channel_info.owner_id if temp_channel_info is not None else None
         if owner_id:
             if owner_id is not None:
                 owner = f"<@{owner_id}>"
@@ -68,7 +69,7 @@ class ChannelInfoEmbed(discord.Embed):
 
         control_options = bot.repos.guild_settings.get(temp_channel.guild.id)["control_options"]
         if "state_changeable" in control_options:
-            channel_state_id = temp_channel_info.channel_state
+            channel_state_id = temp_channel_info.channel_state if temp_channel_info is not None else None
             if channel_state_id == ChannelState.PUBLIC.value:
                 channel_state = "🌐 Public"
             elif channel_state_id == ChannelState.LOCKED.value:
