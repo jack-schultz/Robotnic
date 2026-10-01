@@ -16,6 +16,7 @@ class TempChannelsRepository(BaseRepo):  # bot.repos.temp_channels
 
     def change_state(self, channel_id, state_value):
         self.db.cursor.execute("""UPDATE temp_channels SET channel_state = ? WHERE channel_id = ?""", (state_value, channel_id,))
+        self.db.connection.commit()
 
     def get_info(self, channel_id):
         self.db.cursor.execute("""
