@@ -33,29 +33,31 @@ async def _update_overwrites(bot, channel, new_overwrite):
 
 
 async def channel_action(bot, interaction, new_state):
-    # Hidden
+    channel = interaction.channel
     if new_state == ChannelState.HIDDEN.value:
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to hidden in guild '{interaction.guild.name}'"
-        )
-        bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.HIDDEN.value)
+        state_name = "hidden"
         new_overwrite = discord.PermissionOverwrite(**HIDE_PERMS)
-        await _update_overwrites(bot, interaction.channel, new_overwrite)
-
-    # Locked
     elif new_state == ChannelState.LOCKED.value:
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to locked in guild '{interaction.guild.name}'"
-        )
-        bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.LOCKED.value)
+        state_name = "locked"
         new_overwrite = discord.PermissionOverwrite(**LOCK_PERMS)
-        await _update_overwrites(bot, interaction.channel, new_overwrite)
-
-    # Public
     else:
-        logger.debug(
-            f"Setting temp channel {interaction.channel.id} to public in guild '{interaction.guild.name}'"
-        )
-        bot.repos.temp_channels.change_state(interaction.channel.id, ChannelState.PUBLIC.value)
+        state_name = "public"
         new_overwrite = discord.PermissionOverwrite(**PUBLIC_PERMS)
-        await _update_overwrites(bot, interaction.channel, new_overwrite)
+
+    logger.debug(
+        f"Setting temp channel {channel.id} to {state_name} in guild '{interaction.guild.name}'"
+    )
+
+    try:
+        updated = await _update_overwrites(bot, channel, new_overwrite)
+    except discord.Forbidden as e:
+        logger.warning(
+            f"Missing permission to change access for temp channel {channel.id} in guild '{interaction.guild.name}': {e}"
+        )
+        await _notify_missing_overwrite_permission(interaction)
+        return
+
+    if not updated:
+        return
+
+    bot.repos.temp_channels.change_state(channel.id, new_state)

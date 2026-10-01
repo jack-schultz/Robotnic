@@ -17,15 +17,21 @@ async def _apply_overwrites(channel, targets, perms):
     # set_permissions is one request per target
     # Discord rate-limits 10 every 10 seconds.
     # so bulk edit if more than 10.
-    if len(targets) > 10:
-        overwrites = channel.overwrites
-        overwrite = discord.PermissionOverwrite(**perms)
-        for target in targets:
-            overwrites[target] = overwrite
-        await channel.edit(overwrites=overwrites)
-    else:
-        for target in targets:
-            await channel.set_permissions(target, **perms)
+    try:
+        if len(targets) > 10:
+            overwrites = channel.overwrites
+            overwrite = discord.PermissionOverwrite(**perms)
+            for target in targets:
+                overwrites[target] = overwrite
+            await channel.edit(overwrites=overwrites)
+        else:
+            for target in targets:
+                await channel.set_permissions(target, **perms)
+    except discord.Forbidden as e:
+        logger.warning(
+            f"Missing permission to edit overwrites for temp channel {channel.id} in guild '{channel.guild.name}': {e}"
+        )
+        return None
 
     return targets
 
@@ -34,6 +40,8 @@ async def _apply_access(bot, channel, action, targets):
     valid = _valid_targets(bot, channel, action, targets)
     perms = BAN_PERMS if action == Action.BAN else ALLOW_PERMS
     affected = await _apply_overwrites(channel, valid, perms)
+    if affected is None:
+        return None
 
     if action == Action.BAN:
         connected = set(channel.members)

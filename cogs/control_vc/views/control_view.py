@@ -76,10 +76,17 @@ class ControlView(View):
         self._add_dropdown_items(ALL_CONTROLS, channel_state, row=4)
 
     def create_items(self, channel):
+        info = self.bot.repos.temp_channels.get_info(channel.id)
+        if info is None:
+            logger.debug(
+                f"Skipping control view items for channel {channel.id} in guild '{channel.guild.name}': no temp channel row"
+            )
+            return
+
         guild_settings = self.bot.repos.guild_settings.get(channel.guild.id)
         control_options = guild_settings["control_options"]
         enabled_controls = list(guild_settings["enabled_controls"])
-        channel_state = self.bot.repos.temp_channels.get_info(channel.id).channel_state
+        channel_state = info.channel_state
 
         if not enabled_controls:
             self.add_item(
@@ -342,6 +349,14 @@ class ControlView(View):
 
     async def _recreate_items(self, interaction):
         channel = interaction.channel
+        if channel is None or self.bot.repos.temp_channels.get_info(channel.id) is None:
+            channel_id = getattr(channel, "id", None)
+            guild_name = channel.guild.name if channel is not None else "unknown"
+            logger.debug(
+                f"Skipping control view rebuild for channel {channel_id} in guild '{guild_name}': no temp channel row"
+            )
+            return
+
         new_view = ControlView.for_channel(self.bot, channel)
         try:
             await interaction.message.edit(view=new_view, embeds=interaction.message.embeds)

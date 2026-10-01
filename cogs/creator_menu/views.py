@@ -74,7 +74,14 @@ class CreateView(View):
             return await interaction.response.send_message(f"This is not your menu!", ephemeral=True)
 
         modal = EditModal(self, creator_id=interaction.data["values"][0])
-        await interaction.response.send_modal(modal)
+        try:
+            await interaction.response.send_modal(modal)
+        except discord.NotFound:
+            guild_name = interaction.guild.name if interaction.guild else "unknown"
+            logger.warning(
+                f"Creator menu interaction expired before the edit modal could be sent in guild '{guild_name}'"
+            )
+            return None
         await self.update()  # If modal isn't submitted the dropdown won't be already used/selected
         return None
 

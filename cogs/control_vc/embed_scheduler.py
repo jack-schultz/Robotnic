@@ -29,35 +29,42 @@ class EmbedUpdateScheduler:
     async def _worker(self, channel_id):
         try:
             while channel_id in self.pending:
-                await asyncio.sleep(self.debounce_seconds)
+                try:
+                    await asyncio.sleep(self.debounce_seconds)
 
-                kwargs = self.pending.pop(channel_id, None)
-                if kwargs is None:
-                    break
-
-                channel = self.bot.get_channel(channel_id)
-                if channel is None:
-                    if self.bot.repos.temp_channels.get_info(channel_id) is not None:
-                        logger.debug(
-                            f"Removing stale temp channel {channel_id} during embed update (channel gone)"
-                        )
-                        self.bot.repos.temp_channels.remove(channel_id)
-                    break
-
-                async with self.semaphore:
-                    while True:
-                        result = await edit_info_embed(self.bot, channel, **kwargs)
-                        if result == "edited":
-                            break
-                        if result == "skipped":
-                            break
-                        if result == "not_found":
-                            break
-                        if result == "rate_limited":
-                            continue
+                    kwargs = self.pending.pop(channel_id, None)
+                    if kwargs is None:
                         break
 
-                if channel_id not in self.pending:
+                    channel = self.bot.get_channel(channel_id)
+                    if channel is None:
+                        if self.bot.repos.temp_channels.get_info(channel_id) is not None:
+                            logger.debug(
+                                f"Removing stale temp channel {channel_id} during embed update (channel gone)"
+                            )
+                            self.bot.repos.temp_channels.remove(channel_id)
+                        break
+
+                    async with self.semaphore:
+                        while True:
+                            result = await edit_info_embed(self.bot, channel, **kwargs)
+                            if result == "edited":
+                                break
+                            if result == "skipped":
+                                break
+                            if result == "not_found":
+                                break
+                            if result == "rate_limited":
+                                continue
+                            break
+
+                    if channel_id not in self.pending:
+                        break
+                except Exception:
+                    logger.warning(
+                        f"Failed to update info embed for temp channel {channel_id}",
+                        exc_info=True,
+                    )
                     break
         finally:
             self.workers.pop(channel_id, None)
@@ -80,13 +87,22 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
         messages = channel.history(limit=1, oldest_first=True)
         async for message in messages:
             control_message = message
-        if control_message is None:
-            logger.debug(
-                f"No control message found for temp channel {channel.id} in guild '{guild_name}'"
-            )
-            return "not_found"
-    except Exception as e:
+    except discord.NotFound:
+        logger.debug(
+            f"Control message or channel gone for temp channel {channel.id} in guild '{guild_name}'"
+        )
+        if bot.repos.temp_channels.get_info(channel.id) is not None:
+            bot.repos.temp_channels.remove(channel.id)
+        return "not_found"
+    except Exception:
         logger.warning("Erred finding channel control message", exc_info=True)
+        return "error"
+
+    if control_message is None:
+        logger.debug(
+            f"No control message found for temp channel {channel.id} in guild '{guild_name}'"
+        )
+        return "not_found"
 
     if len(getattr(control_message, "embeds", [])) < 2:
         logger.warning(
@@ -94,6 +110,12 @@ async def edit_info_embed(bot, channel, title=None, user_limit=None):
             f"has fewer than 2 embeds, skipping info embed update"
         )
         return "error"
+
+    if bot.repos.temp_channels.get_info(channel.id) is None:
+        logger.debug(
+            f"Skipping info embed update for temp channel {channel.id} in guild '{guild_name}': no database row"
+        )
+        return "not_found"
 
     new_embed = ChannelInfoEmbed(bot, channel, title, user_limit)
     if _info_embed_signature(control_message.embeds[1]) == _info_embed_signature(new_embed):
