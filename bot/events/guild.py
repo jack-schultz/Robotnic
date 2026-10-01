@@ -1,6 +1,14 @@
 import discord
 
 
+def _add_joined_date(embed, guild):
+    me = guild.me
+    if me is None or me.joined_at is None:
+        return
+    unix_time = int(me.joined_at.timestamp())
+    embed.add_field(name="Joined Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+
+
 async def on_guild_join(bot, guild):
     # This event is triggered when the bot joins a new guild
     for channel in guild.text_channels:
@@ -45,8 +53,7 @@ async def on_guild_join(bot, guild):
     embed.add_field(name="Region/Locale", value=str(guild.preferred_locale), inline=True)
     unix_time = int(guild.created_at.timestamp())
     embed.add_field(name="Creation Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
-    unix_time = int(guild.get_member(bot.user.id).joined_at.timestamp())
-    embed.add_field(name="Joined Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+    _add_joined_date(embed, guild)
     await bot.BotLogService.send(event="guild_join", message=f"", embed=embed)
 
 
@@ -65,6 +72,5 @@ async def on_guild_remove(bot, guild):
     embed.add_field(name="Region/Locale", value=str(guild.preferred_locale), inline=True)
     unix_time = int(guild.created_at.timestamp())
     embed.add_field(name="Creation Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
-    unix_time = int(guild.get_member(bot.user.id).joined_at.timestamp())
-    embed.add_field(name="Joined Date", value=f"<t:{unix_time}:f>\n<t:{unix_time}:R>", inline=True)
+    _add_joined_date(embed, guild)
     await bot.BotLogService.send(event="guild_leave", message=f"", embed=embed)
