@@ -116,7 +116,19 @@
     }
 
     function canControl(room) {
-        return Boolean(room && state.actor && room.owner === state.actor && room.members.indexOf(state.actor) !== -1);
+        return Boolean(room && state.actor && room.members.indexOf(state.actor) !== -1 && (!room.owner || room.owner === state.actor));
+    }
+
+    function takeControl(room) {
+        if (!canControl(room)) return false;
+        if (!room.owner) {
+            room.owner = state.actor;
+            room.mention = true;
+            room.mentionFading = false;
+            watchMention(room.id);
+            render();
+        }
+        return true;
     }
 
     function logEvent(entry) {
@@ -141,8 +153,8 @@
 
     function seed() {
         clearTimers();
-        state.actor = null;
-        state.view = { type: "offline" };
+        state.actor = "Alex";
+        state.view = { type: "room", id: "r1" };
         state.log = [];
         state.status = "";
         state.nextId = 4;
@@ -448,24 +460,14 @@
         if (state.view.type === "room" && !roomById(state.view.id)) state.view = { type: "offline" };
         renderVoice();
         const room = currentRoom();
-        const creator = state.view.type === "creator" ? creatorById(state.view.id) : null;
         $("view-offline").classList.toggle("is-hidden", state.view.type !== "offline");
-        $("view-creator").classList.toggle("is-hidden", state.view.type !== "creator");
         $("view-room").classList.toggle("is-hidden", state.view.type !== "room");
         $("header-hash").classList.add("is-hidden");
 
         if (state.view.type === "offline") {
             $("header-title").textContent = "Not connected";
-            $("header-topic").textContent = state.actor ? "Acting as " + state.actor : "";
-            $("composer").textContent = state.actor ? state.actor + " is not in a voice channel" : "You are not connected";
-        } else if (creator) {
-            $("header-title").textContent = creator.name;
-            $("header-topic").textContent = "Creator channel";
-            $("composer").textContent = "Join " + creator.name + " to create a channel";
-            $("creator-title").textContent = creator.name;
-            const limitLabel = creator.limit === 0 ? "no user limit" : "a limit of " + creator.limit;
-            const accessLabel = creator.access === "lock" ? " New rooms start locked for @everyone." : "";
-            $("creator-copy").textContent = "Joining creates a channel from " + creator.template + " with " + limitLabel + " and moves you into it." + accessLabel;
+            $("header-topic").textContent = "Acting as " + state.actor;
+            $("composer").textContent = state.actor + " is not in a voice channel";
         } else if (room) {
             const name = channelName(room);
             $("header-title").textContent = name;
@@ -526,7 +528,6 @@
             logRemove(room, name, label);
             return "deleted";
         }
-        room.notes.push(name + " left the channel.");
         return "stayed";
     }
 
@@ -548,12 +549,6 @@
 
     function joinCreator(creatorId) {
         const creator = creatorById(creatorId);
-        if (!state.actor) {
-            state.view = { type: "creator", id: creatorId };
-            state.status = "You're not connected. Act as a user, then join " + creator.name + ".";
-            render();
-            return;
-        }
         const previous = roomContaining(state.actor);
         if (previous) removeMember(previous, state.actor);
         const existing = state.rooms.filter(function (room) { return room.creatorId === creatorId; });
@@ -601,7 +596,7 @@
             return;
         }
         if (room.members.indexOf(state.actor) !== -1) {
-            state.status = canControl(room) ? "" : (room.owner ? "Only " + room.owner + " can change this channel." : "This channel has no owner. Claim it to use the panel.");
+            state.status = canControl(room) ? "" : "Only " + room.owner + " can change this channel.";
             render();
             return;
         }
@@ -625,9 +620,8 @@
         const live = roomById(id);
         if (!live) return;
         live.members.push(state.actor);
-        live.notes.push(state.actor + " joined the channel.");
         state.view = { type: "room", id: id };
-        state.status = canControl(live) ? "" : (live.owner ? "Only " + live.owner + " can change this channel." : "This channel has no owner. Claim it to use the panel.");
+        state.status = canControl(live) ? "" : "Only " + live.owner + " can change this channel.";
         render();
     }
 
@@ -636,7 +630,7 @@
         const room = roomContaining(name);
         if (room) {
             state.view = { type: "room", id: room.id };
-            state.status = room.owner === name ? "" : (room.owner ? "Only " + room.owner + " can change this channel." : "This channel has no owner. Claim it to use the panel.");
+            state.status = !room.owner || room.owner === name ? "" : "Only " + room.owner + " can change this channel.";
         } else {
             state.view = { type: "offline" };
             state.status = name + " is not in a voice channel. Join a creator channel.";
@@ -701,7 +695,7 @@
 
     function openRename() {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         const template = creatorById(room.creatorId).template;
         openModal(function (card) {
             const input = el("input", {
@@ -777,7 +771,7 @@
 
     function openLimit() {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         openModal(function (card) {
             const input = el("input", {
                 class: "field-input",
@@ -823,7 +817,7 @@
 
     function openBan() {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         openModal(function (card) {
             modalTitle(card, "Ban / Allow");
             const names = room.members.filter(function (name) { return name !== state.actor; });
@@ -873,7 +867,7 @@
 
     function openMemberAction(kind) {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         const label = kind === "mute" ? "Mute" : "Deafen";
         openModal(function (card) {
             modalTitle(card, label + " / " + (kind === "mute" ? "Unmute" : "Undeafen"));
@@ -901,7 +895,7 @@
 
     function openGive() {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         openModal(function (card) {
             modalTitle(card, "Give ownership");
             const targets = room.members.filter(function (name) { return name !== room.owner; });
@@ -923,7 +917,7 @@
                 actions.append(dcBtn("Release ownership", "secondary", function () {
                     room.owner = null;
                     room.notes.push("Ownership released. Anyone in the channel can claim it.");
-                    state.status = "This channel has no owner. Claim it to use the panel.";
+                    state.status = "";
                     closeModal();
                     render();
                 }));
@@ -935,9 +929,7 @@
 
     function claim() {
         const room = currentRoom();
-        if (!room || room.owner || !state.actor || room.members.indexOf(state.actor) === -1) return;
-        room.owner = state.actor;
-        room.notes.push(state.actor + " claimed the channel.");
+        if (!takeControl(room)) return;
         state.status = "";
         closeModal();
         render();
@@ -945,7 +937,7 @@
 
     function openDelete() {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         const name = channelName(room);
         openModal(function (card) {
             modalTitle(card, "Delete channel");
@@ -966,7 +958,7 @@
 
     function setAccess(access) {
         const room = currentRoom();
-        if (!canControl(room)) return;
+        if (!takeControl(room)) return;
         room.access = access;
         state.status = "";
         render();
@@ -984,16 +976,8 @@
             if (!button) return;
             const kind = button.getAttribute("data-kind");
             const id = button.getAttribute("data-id");
-            if (kind === "creator") {
-                state.view = { type: "creator", id: id };
-                state.status = "";
-                render();
-            } else {
-                openRoom(id);
-            }
-        });
-        $("creator-join").addEventListener("click", function () {
-            if (state.view.type === "creator") joinCreator(state.view.id);
+            if (kind === "creator") joinCreator(id);
+            else openRoom(id);
         });
         document.querySelectorAll("[data-actor]").forEach(function (button) {
             button.addEventListener("click", function () {
@@ -1010,7 +994,7 @@
         $("ctrl-ban").addEventListener("click", openBan);
         $("ctrl-clear").addEventListener("click", function () {
             const room = currentRoom();
-            if (!canControl(room)) return;
+            if (!takeControl(room)) return;
             room.notes = [];
             room.mention = false;
             room.mentionFading = false;
@@ -1064,9 +1048,54 @@
         });
     }
 
+    function bindLabels() {
+        const row = $("mock-row");
+        const button = $("labels-toggle");
+        if (!row || !button) return;
+
+        function setOpen(open) {
+            row.dataset.open = open ? "true" : "false";
+            button.setAttribute("aria-expanded", open ? "true" : "false");
+            button.setAttribute("aria-label", open ? "Collapse creator labels" : "Expand creator labels");
+            placeCreatorBubbles();
+        }
+
+        button.addEventListener("click", function () {
+            setOpen(row.dataset.open === "false");
+        });
+        setOpen(row.dataset.open !== "false");
+    }
+
+    function bindLogs() {
+        const column = $("logs-column");
+        const button = $("logs-toggle");
+        if (!column || !button) return;
+        const skinny = window.matchMedia("(max-width: 1023px)");
+        let userSet = false;
+
+        function setOpen(open) {
+            column.dataset.open = open ? "true" : "false";
+            button.setAttribute("aria-expanded", open ? "true" : "false");
+            button.setAttribute("aria-label", open ? "Collapse staff logs" : "Expand staff logs");
+        }
+
+        function applyDefault() {
+            if (!userSet) setOpen(!skinny.matches);
+        }
+
+        button.addEventListener("click", function () {
+            userSet = true;
+            setOpen(column.dataset.open !== "true");
+        });
+        skinny.addEventListener("change", applyDefault);
+        applyDefault();
+    }
+
     function init() {
         seed();
         bindMain();
+        bindLabels();
+        bindLogs();
         initHubs();
         render();
         $("voice-list").addEventListener("scroll", placeCreatorBubbles);
