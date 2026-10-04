@@ -151,6 +151,27 @@
         button.classList.add("dc-btn--" + variant);
     }
 
+    function starterRoom(id, creatorId, members, owner, limit, stamp) {
+        return {
+            id: id,
+            discordId: "85349087975361700" + id.charAt(1),
+            creatorId: creatorId,
+            count: 1,
+            customName: null,
+            limit: limit,
+            access: "public",
+            members: members,
+            owner: owner,
+            muted: {},
+            deafened: {},
+            banned: [],
+            notes: [],
+            mention: false,
+            mentionFading: false,
+            stamp: stamp,
+        };
+    }
+
     function seed() {
         clearTimers();
         state.actor = "Alex";
@@ -159,60 +180,9 @@
         state.status = "";
         state.nextId = 4;
         state.rooms = [
-            {
-                id: "r1",
-                discordId: "853490879753617001",
-                creatorId: "hangout",
-                count: 1,
-                customName: null,
-                limit: 0,
-                access: "public",
-                members: ["Alex", "Blake"],
-                owner: "Alex",
-                muted: {},
-                deafened: {},
-                banned: [],
-                notes: [],
-                mention: false,
-                mentionFading: false,
-                stamp: "Today at 9:02 PM",
-            },
-            {
-                id: "r2",
-                discordId: "853490879753617002",
-                creatorId: "gaming",
-                count: 1,
-                customName: null,
-                limit: 5,
-                access: "public",
-                members: ["Casey"],
-                owner: "Casey",
-                muted: {},
-                deafened: {},
-                banned: [],
-                notes: [],
-                mention: false,
-                mentionFading: false,
-                stamp: "Today at 9:04 PM",
-            },
-            {
-                id: "r3",
-                discordId: "853490879753617003",
-                creatorId: "study",
-                count: 1,
-                customName: null,
-                limit: 4,
-                access: "public",
-                members: ["Drew"],
-                owner: "Drew",
-                muted: {},
-                deafened: {},
-                banned: [],
-                notes: [],
-                mention: false,
-                mentionFading: false,
-                stamp: "Today at 9:06 PM",
-            },
+            starterRoom("r1", "hangout", ["Alex", "Blake"], "Alex", 0, "Today at 9:02 PM"),
+            starterRoom("r2", "gaming", ["Casey"], "Casey", 5, "Today at 9:04 PM"),
+            starterRoom("r3", "study", ["Drew"], "Drew", 4, "Today at 9:06 PM"),
         ];
     }
 
@@ -831,6 +801,19 @@
         });
     }
 
+    function personRow(name, button, options) {
+        const opts = options || {};
+        const label = opts.note
+            ? el("div", {}, [
+                el("p", { class: "text-white", text: name }),
+                el("p", { class: "text-xs text-[#949ba4]", text: opts.note }),
+            ])
+            : el("span", { class: "text-white", text: name });
+        return el("div", {
+            class: "flex items-center justify-between gap-3 py-2" + (opts.border ? " border-b border-white/10" : ""),
+        }, [label, button]);
+    }
+
     function openBan() {
         const room = currentRoom();
         if (!takeControl(room)) return;
@@ -845,37 +828,31 @@
             }
             names.forEach(function (name) {
                 const banned = room.banned.indexOf(name) !== -1;
-                card.append(el("div", { class: "flex items-center justify-between gap-3 py-2 border-b border-white/10" }, [
-                    el("div", {}, [
-                        el("p", { class: "text-white", text: name }),
-                        el("p", { class: "text-xs text-[#949ba4]", text: banned ? "Banned" : "In the channel" }),
-                    ]),
-                    banned
-                        ? dcBtn("Allow", "success", function () {
-                            room.banned = room.banned.filter(function (item) { return item !== name; });
-                            room.notes.push(name + " is allowed in this channel again.");
-                            state.status = "";
-                            closeModal();
-                            render();
-                        })
-                        : dcBtn("Ban", "danger", function () {
-                            room.members = room.members.filter(function (item) { return item !== name; });
-                            delete room.muted[name];
-                            delete room.deafened[name];
-                            if (room.banned.indexOf(name) === -1) room.banned.push(name);
-                            if (room.owner === name) room.owner = null;
-                            room.notes.push(name + " was banned and disconnected.");
-                            state.status = "";
-                            if (!room.members.length) {
-                                const label = channelName(room);
-                                state.rooms = state.rooms.filter(function (item) { return item.id !== room.id; });
-                                state.view = { type: "offline" };
-                                logRemove(room, name, label);
-                            }
-                            closeModal();
-                            render();
-                        }),
-                ]));
+                card.append(personRow(name, banned
+                    ? dcBtn("Allow", "success", function () {
+                        room.banned = room.banned.filter(function (item) { return item !== name; });
+                        room.notes.push(name + " is allowed in this channel again.");
+                        state.status = "";
+                        closeModal();
+                        render();
+                    })
+                    : dcBtn("Ban", "danger", function () {
+                        room.members = room.members.filter(function (item) { return item !== name; });
+                        delete room.muted[name];
+                        delete room.deafened[name];
+                        if (room.banned.indexOf(name) === -1) room.banned.push(name);
+                        if (room.owner === name) room.owner = null;
+                        room.notes.push(name + " was banned and disconnected.");
+                        state.status = "";
+                        if (!room.members.length) {
+                            const label = channelName(room);
+                            state.rooms = state.rooms.filter(function (item) { return item.id !== room.id; });
+                            state.view = { type: "offline" };
+                            logRemove(room, name, label);
+                        }
+                        closeModal();
+                        render();
+                    }), { note: banned ? "Banned" : "In the channel", border: true }));
             });
             card.append(el("div", { class: "mt-4 flex justify-end" }, [dcBtn("Close", "secondary", closeModal)]));
         });
@@ -895,16 +872,13 @@
             }
             others.forEach(function (name) {
                 const active = kind === "mute" ? Boolean(room.muted[name]) : Boolean(room.deafened[name]);
-                card.append(el("div", { class: "flex items-center justify-between gap-3 py-2" }, [
-                    el("span", { class: "text-white", text: name }),
-                    dcBtn(active ? (kind === "mute" ? "Unmute" : "Undeafen") : label, "secondary", function () {
-                        if (kind === "mute") room.muted[name] = !room.muted[name];
-                        else room.deafened[name] = !room.deafened[name];
-                        state.status = "";
-                        closeModal();
-                        render();
-                    }),
-                ]));
+                card.append(personRow(name, dcBtn(active ? (kind === "mute" ? "Unmute" : "Undeafen") : label, "secondary", function () {
+                    if (kind === "mute") room.muted[name] = !room.muted[name];
+                    else room.deafened[name] = !room.deafened[name];
+                    state.status = "";
+                    closeModal();
+                    render();
+                })));
             });
         });
     }
@@ -917,16 +891,13 @@
             const targets = room.members.filter(function (name) { return name !== room.owner; });
             if (!targets.length) card.append(el("p", { class: "text-sm text-[#b5bac1]", text: "No one else is in this channel." }));
             targets.forEach(function (name) {
-                card.append(el("div", { class: "flex items-center justify-between gap-3 py-2 border-b border-white/10" }, [
-                    el("span", { class: "text-white", text: name }),
-                    dcBtn("Give", "success", function () {
-                        room.owner = name;
-                        room.notes.push("Ownership given to " + name + ".");
-                        state.status = "Only " + name + " can change this channel.";
-                        closeModal();
-                        render();
-                    }),
-                ]));
+                card.append(personRow(name, dcBtn("Give", "success", function () {
+                    room.owner = name;
+                    room.notes.push("Ownership given to " + name + ".");
+                    state.status = "Only " + name + " can change this channel.";
+                    closeModal();
+                    render();
+                }), { border: true }));
             });
             const actions = el("div", { class: "mt-4 flex flex-wrap justify-end gap-2" });
             if (room.owner) {
