@@ -222,6 +222,11 @@
         return ICON_SPEAKER;
     }
 
+    function seenAccess(room) {
+        if (state.actor && room.banned.indexOf(state.actor) !== -1) return "lock";
+        return room.access;
+    }
+
     function parkBubbles() {
         const host = $("creator-bubbles");
         document.querySelectorAll(".creator-bubble").forEach(function (bubble) {
@@ -233,13 +238,14 @@
         const host = $("creator-bubbles");
         const wide = window.matchMedia("(min-width: 768px)").matches;
         if (!wide) {
+            host.style.width = "";
             CREATORS.forEach(function (creator) {
                 const button = document.querySelector('#voice-list button[data-kind="creator"][data-id="' + creator.id + '"]');
                 const bubble = document.querySelector('.creator-bubble[data-creator="' + creator.id + '"]');
                 if (!button || !bubble) return;
                 let slot = button.closest(".creator-slot");
                 if (!slot) {
-                    slot = el("div", { class: "creator-slot flex items-center gap-1.5" });
+                    slot = el("div", { class: "creator-slot flex items-start gap-1.5" });
                     button.replaceWith(slot);
                     slot.append(button);
                 }
@@ -257,6 +263,15 @@
             const button = slot.querySelector("button");
             if (button) slot.replaceWith(button);
         });
+
+        let widest = 0;
+        document.querySelectorAll(".creator-bubble").forEach(function (bubble) {
+            bubble.classList.remove("is-inline");
+            widest = Math.max(widest, bubble.offsetWidth);
+        });
+        if ($("mock-row").dataset.open !== "false") {
+            host.style.width = widest ? (widest + 8) + "px" : "";
+        }
 
         const hostRect = host.getBoundingClientRect();
         const listRect = $("voice-list").getBoundingClientRect();
@@ -309,7 +324,7 @@
                     "data-id": room.id,
                 });
                 const roomIcon = el("span", { class: "shrink-0 flex" });
-                roomIcon.innerHTML = iconFor(room.access);
+                roomIcon.innerHTML = iconFor(seenAccess(room));
                 const count = room.members.length;
                 roomButton.append(
                     roomIcon,
@@ -470,19 +485,20 @@
             $("composer").textContent = state.actor + " is not in a voice channel";
         } else if (room) {
             const name = channelName(room);
+            const access = seenAccess(room);
             $("header-title").textContent = name;
-            $("header-topic").textContent = room.access === "lock"
+            $("header-topic").textContent = access === "lock"
                 ? "Locked for the target role"
-                : room.access === "hide"
+                : access === "hide"
                     ? "Hidden from the target role"
                     : "Voice channel";
             $("composer").textContent = "Message " + name;
             $("panel-title").textContent = name;
             $("panel-owner").textContent = room.owner ? "@" + room.owner : "None, available to claim";
             $("panel-limit").textContent = room.limit === 0 ? "♾️ Unlimited" : String(room.limit);
-            $("panel-access").textContent = room.access === "lock"
+            $("panel-access").textContent = access === "lock"
                 ? "🔒 Locked"
-                : room.access === "hide"
+                : access === "hide"
                     ? "🙈 Hidden"
                     : "🌐 Public";
             $("msg-time").textContent = room.stamp;
@@ -492,12 +508,12 @@
             const claimable = !room.owner && state.actor && room.members.indexOf(state.actor) !== -1;
             $("claim-banner").classList.toggle("is-hidden", !claimable);
             const allowed = canControl(room);
-            setVariant($("ctrl-public"), room.access === "public" ? "success" : "primary");
-            setVariant($("ctrl-lock"), room.access === "lock" ? "success" : "primary");
-            setVariant($("ctrl-hide"), room.access === "hide" ? "success" : "primary");
-            $("ctrl-public").setAttribute("aria-pressed", room.access === "public" ? "true" : "false");
-            $("ctrl-lock").setAttribute("aria-pressed", room.access === "lock" ? "true" : "false");
-            $("ctrl-hide").setAttribute("aria-pressed", room.access === "hide" ? "true" : "false");
+            setVariant($("ctrl-public"), access === "public" ? "success" : "primary");
+            setVariant($("ctrl-lock"), access === "lock" ? "success" : "primary");
+            setVariant($("ctrl-hide"), access === "hide" ? "success" : "primary");
+            $("ctrl-public").setAttribute("aria-pressed", access === "public" ? "true" : "false");
+            $("ctrl-lock").setAttribute("aria-pressed", access === "lock" ? "true" : "false");
+            $("ctrl-hide").setAttribute("aria-pressed", access === "hide" ? "true" : "false");
             CONTROL_IDS.forEach(function (id) {
                 $(id).disabled = !allowed;
             });
@@ -1005,7 +1021,6 @@
         $("ctrl-public").addEventListener("click", function () { setAccess("public"); });
         $("ctrl-lock").addEventListener("click", function () { setAccess("lock"); });
         $("ctrl-hide").addEventListener("click", function () { setAccess("hide"); });
-        $("ctrl-claim").addEventListener("click", claim);
         $("modal").addEventListener("click", function (event) {
             if (event.target.id === "modal") closeModal();
         });
@@ -1053,11 +1068,19 @@
         const button = $("labels-toggle");
         if (!row || !button) return;
 
+        const wide = window.matchMedia("(min-width: 768px)");
+
         function setOpen(open) {
             row.dataset.open = open ? "true" : "false";
             button.setAttribute("aria-expanded", open ? "true" : "false");
             button.setAttribute("aria-label", open ? "Collapse creator labels" : "Expand creator labels");
+            const host = $("creator-bubbles");
             placeCreatorBubbles();
+            if (host && wide.matches && !open) host.style.width = "0px";
+            document.querySelectorAll(".creator-bubble").forEach(function (bubble) {
+                if (open) bubble.removeAttribute("aria-hidden");
+                else bubble.setAttribute("aria-hidden", "true");
+            });
         }
 
         button.addEventListener("click", function () {
@@ -1071,21 +1094,56 @@
         const button = $("logs-toggle");
         if (!column || !button) return;
         const skinny = window.matchMedia("(max-width: 1023px)");
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
         let userSet = false;
+        let onEnd = null;
+        let timer = 0;
 
-        function setOpen(open) {
+        function stopMotion() {
+            clearTimeout(timer);
+            if (onEnd) {
+                column.removeEventListener("transitionend", onEnd);
+                onEnd = null;
+            }
+        }
+
+        function finishRail() {
+            if (column.dataset.open === "false" && !skinny.matches) column.classList.add("is-rail");
+        }
+
+        function setOpen(open, animate) {
+            stopMotion();
+            const motion = animate && !reduce.matches;
             column.dataset.open = open ? "true" : "false";
             button.setAttribute("aria-expanded", open ? "true" : "false");
             button.setAttribute("aria-label", open ? "Collapse staff logs" : "Expand staff logs");
+            const scroll = $("log-scroll");
+            if (scroll) scroll.setAttribute("aria-hidden", open ? "false" : "true");
+            if (open || skinny.matches || !motion) {
+                column.classList.toggle("is-rail", !open && !skinny.matches);
+                return;
+            }
+            column.classList.remove("is-rail");
+            onEnd = function (event) {
+                if (event.target !== column) return;
+                if (event.propertyName !== "width" && event.propertyName !== "max-width") return;
+                stopMotion();
+                finishRail();
+            };
+            column.addEventListener("transitionend", onEnd);
+            timer = setTimeout(function () {
+                stopMotion();
+                finishRail();
+            }, 400);
         }
 
         function applyDefault() {
-            if (!userSet) setOpen(!skinny.matches);
+            if (!userSet) setOpen(false, false);
         }
 
         button.addEventListener("click", function () {
             userSet = true;
-            setOpen(column.dataset.open !== "true");
+            setOpen(column.dataset.open !== "true", true);
         });
         skinny.addEventListener("change", applyDefault);
         applyDefault();
@@ -1100,6 +1158,11 @@
         render();
         $("voice-list").addEventListener("scroll", placeCreatorBubbles);
         window.addEventListener("resize", placeCreatorBubbles);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeCreatorBubbles);
+        requestAnimationFrame(function () {
+            const host = $("creator-bubbles");
+            if (host) host.classList.add("is-ready");
+        });
     }
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

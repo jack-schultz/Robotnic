@@ -107,6 +107,8 @@
         .dc-btn--danger:disabled:hover { background: #da373c; }
         .is-hidden { display: none !important; }
         .logs-label-hide { display: none; }
+        .logs-label-rail { display: none; width: 8px; height: 8px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
+        #logs-column { transition: height 0.28s ease; }
         #logs-column[data-open="true"] { height: 20rem; align-self: stretch; }
         #logs-column[data-open="true"] #staff-logs { height: 100%; }
         #logs-column[data-open="true"] #logs-bar { border-bottom: 1px solid rgba(0, 0, 0, 0.4); }
@@ -114,17 +116,78 @@
         #logs-column[data-open="true"] .logs-label-show { display: none; }
         #logs-column[data-open="true"] .logs-label-hide { display: inline; }
         #logs-column[data-open="false"] { height: 2.5rem; align-self: flex-start; }
-        #logs-column[data-open="false"] #staff-logs { position: relative; inset: auto; height: 2.5rem; }
+        #logs-column[data-open="false"] #staff-logs { position: relative; inset: auto; height: 100%; }
         #logs-column[data-open="false"] #logs-bar { border-bottom: 0; }
-        #logs-column[data-open="false"] #log-scroll { display: none; }
+        #logs-column[data-open="false"] #log-scroll { display: block; }
         #logs-column[data-open="false"] .logs-label-show { display: inline; }
         #logs-column[data-open="false"] .logs-label-hide { display: none; }
         @media (min-width: 1024px) {
-            #logs-column:not([data-open="false"]) #logs-bar { border-bottom: 1px solid rgba(0, 0, 0, 0.4); }
-            #logs-column:not([data-open="false"]) .logs-label-show { display: none; }
-            #logs-column:not([data-open="false"]) .logs-label-hide { display: inline; }
+            #logs-column {
+                width: 18rem;
+                min-width: 18rem;
+                max-width: 18rem;
+                transition: width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease;
+            }
+            #logs-column:not(.is-rail) #logs-bar { border-bottom: 1px solid rgba(0, 0, 0, 0.4); }
+            #logs-column:not(.is-rail) .logs-label-show,
+            #logs-column:not(.is-rail) .logs-label-rail { display: none; }
+            #logs-column:not(.is-rail) .logs-label-hide { display: inline; }
             #logs-column[data-open="true"] { height: auto; }
-            #logs-column[data-open="true"] #staff-logs { position: absolute; inset: 0; height: auto; }
+            #logs-column:not(.is-rail) #staff-logs {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                right: 0;
+                left: auto;
+                width: 18rem;
+                height: auto;
+            }
+            #logs-column[data-open="false"] {
+                width: 2.5rem;
+                min-width: 2.5rem;
+                max-width: 2.5rem;
+                height: auto;
+                align-self: stretch;
+            }
+            #logs-column.is-rail #staff-logs {
+                position: absolute;
+                inset: 0;
+                width: auto;
+                height: auto;
+            }
+            #logs-column.is-rail #log-scroll { display: none; }
+            #logs-column.is-rail #logs-bar {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                width: 100%;
+                height: 100%;
+                padding: 8px 0;
+                border-bottom: 0;
+            }
+            #logs-column.is-rail #logs-bar > span { display: none; }
+            #logs-column.is-rail #logs-bar h3 {
+                writing-mode: vertical-lr;
+                padding: 0;
+            }
+            #logs-column.is-rail #logs-toggle {
+                order: -1;
+                margin-left: 0;
+                width: 28px;
+                padding: 0;
+            }
+            #logs-column.is-rail .logs-label-show,
+            #logs-column.is-rail .logs-label-hide { display: none; }
+            #logs-column.is-rail .logs-label-rail { display: block; }
+        }
+        @media (min-width: 1280px) {
+            #logs-column:not([data-open="false"]) {
+                width: 20rem;
+                min-width: 20rem;
+                max-width: 20rem;
+            }
+            #logs-column:not(.is-rail) #staff-logs { width: 20rem; }
         }
         #owner-mention { transition: opacity 0.3s linear; }
         #owner-mention.is-fading { opacity: 0; }
@@ -175,10 +238,14 @@
         .nav-btn--tip:hover { background: #c73686; }
         .nav-btn--code { background: #3a3d44; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 1px 2px rgba(0, 0, 0, 0.4); }
         .nav-btn--code:hover { background: #4e5058; }
+        .nav-btn--star { background: #f5c518; color: #1e1f22; }
+        .nav-btn--star:hover { background: #e0b400; }
+        .nav-btn--contribute { background: #0e7490; }
+        .nav-btn--contribute:hover { background: #0a5c72; }
         .creator-bubble {
             position: absolute;
-            left: 0;
-            right: 2px;
+            right: 8px;
+            width: max-content;
             z-index: 2;
             pointer-events: none;
             visibility: hidden;
@@ -186,11 +253,14 @@
         .creator-bubble.is-placed { visibility: visible; }
         .creator-bubble.is-offscreen { visibility: hidden; }
         .creator-bubble__body {
+            width: max-content;
             background: #111214;
             border-radius: 12px;
             padding: 8px 10px;
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
         }
+        .creator-bubble dt,
+        .creator-bubble dd { white-space: nowrap; }
         .creator-bubble code { background: #2b2d31; }
         .creator-bubble__tail {
             position: absolute;
@@ -207,22 +277,53 @@
             left: auto;
             right: auto;
             top: auto !important;
+            width: auto;
             flex: 1;
             min-width: 0;
         }
+        .creator-bubble.is-inline .creator-bubble__body {
+            width: auto;
+            padding: 4px 6px;
+            border-radius: 8px;
+        }
+        .creator-bubble.is-inline dl {
+            column-gap: 6px;
+            row-gap: 0;
+            line-height: 1.15;
+        }
+        .creator-bubble.is-inline dt,
+        .creator-bubble.is-inline dd { white-space: nowrap; }
         .creator-bubble.is-inline .creator-bubble__tail {
             right: auto;
             left: -5px;
             top: 50% !important;
             box-shadow: -1px 1px 0 rgba(255, 255, 255, 0.08);
         }
-        .creator-slot > .chan { width: auto; flex: none; max-width: 42%; }
+        .creator-slot { transition: gap 0.28s ease; }
+        .creator-slot > .chan { width: auto; flex: none; max-width: 46%; transition: max-width 0.28s ease; }
+        .creator-bubble.is-inline { max-width: 100%; transition: opacity 0.22s ease, flex-grow 0.28s ease, flex-basis 0.28s ease, max-width 0.28s ease; }
         .labels-label-show { display: none; }
+        #creator-bubbles { overflow: hidden; }
+        #creator-bubbles.is-ready { transition: width 0.28s ease, opacity 0.22s ease, margin-right 0.28s ease; }
         #mock-row[data-open="false"] .labels-label-show { display: inline; }
         #mock-row[data-open="false"] .labels-label-hide { display: none; }
-        #mock-row[data-open="false"] #creator-bubbles { display: none !important; }
-        #mock-row[data-open="false"] .creator-bubble { display: none !important; }
-        #mock-row[data-open="false"] .creator-slot > .chan { max-width: none; flex: 1; width: 100%; }
+        #mock-row[data-open="false"] #creator-bubbles { opacity: 0; margin-right: -0.5rem; pointer-events: none; }
+        #mock-row[data-open="false"] .creator-bubble.is-inline {
+            opacity: 0;
+            flex: 0 0 0px;
+            max-width: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        #mock-row[data-open="false"] .creator-slot { gap: 0; }
+        #mock-row[data-open="false"] .creator-slot > .chan { max-width: 100%; flex: 1; width: 100%; }
+        @media (prefers-reduced-motion: reduce) {
+            #logs-column,
+            #creator-bubbles,
+            .creator-bubble.is-inline,
+            .creator-slot,
+            .creator-slot > .chan { transition: none; }
+        }
     </style>
 </head>
 <body class="bg-[#1e1f22] text-[#dbdee1] antialiased min-h-screen flex flex-col">
@@ -248,8 +349,8 @@
             <a class="nav-btn nav-btn--large nav-btn--add" href="https://discord.com/oauth2/authorize?client_id=853490879753617458" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/></svg>Add the bot</a>
             <a class="nav-btn nav-btn--large nav-btn--support" href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.1.1 0 0 0-.1.05c-.18.33-.39.76-.53 1.09a16.1 16.1 0 0 0-4.74 0c-.14-.34-.35-.76-.54-1.09a.1.1 0 0 0-.1-.05c-1.5.26-2.93.71-4.27 1.33a.09.09 0 0 0-.04.03C2.24 9.12 1.5 12.8 1.87 16.44c0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.04 0 .07-.01.09-.04.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.03.03.03.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.02.03.06.04.09.04 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.28-.73-7.93-3.1-11.18a.06.06 0 0 0-.03-.03zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/></svg>Join the support server</a>
             <a class="nav-btn nav-btn--large nav-btn--tip" href="https://ko-fi.com/jackschultzdev/" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z"/></svg>Tip the developer</a>
-            <a class="nav-btn nav-btn--large nav-btn--code" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></svg>Star the repo</a>
-            <a class="nav-btn nav-btn--large nav-btn--code" href="https://github.com/jack-schultz/Robotnic/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3a3 3 0 1 0 1 5.83V15a3 3 0 1 0 2 0v-2.17A3 3 0 0 0 9 10h6a1 1 0 0 1 1 1v.17a3 3 0 1 0 2 0V11a3 3 0 0 0-3-3H9a1 1 0 0 1-1-1V8.83A3 3 0 0 0 6 3z"/></svg>Contribute</a>
+            <a class="nav-btn nav-btn--large nav-btn--star" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></svg>Star the repo</a>
+            <a class="nav-btn nav-btn--large nav-btn--contribute" href="https://github.com/jack-schultz/Robotnic/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3a3 3 0 1 0 1 5.83V15a3 3 0 1 0 2 0v-2.17A3 3 0 0 0 9 10h6a1 1 0 0 1 1 1v.17a3 3 0 1 0 2 0V11a3 3 0 0 0-3-3H9a1 1 0 0 1-1-1V8.83A3 3 0 0 0 6 3z"/></svg>Contribute</a>
         </div>
     </section>
 
@@ -260,10 +361,10 @@
 
         <div class="mt-5 flex flex-col lg:flex-row lg:items-stretch gap-4">
         <div id="mock-row" data-open="true" class="flex flex-col md:flex-row md:items-stretch gap-2 min-w-0 flex-1">
-        <div id="creator-bubbles" class="relative hidden md:block md:w-60 shrink-0" aria-label="Creator channel settings">
+        <div id="creator-bubbles" class="relative hidden md:block shrink-0" aria-label="Creator channel settings">
             <div class="creator-bubble" data-creator="hangout" role="note" aria-label="Hangout">
                 <div class="creator-bubble__body">
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-xs leading-snug">
+                    <dl class="grid grid-cols-[auto_auto] gap-x-2 gap-y-0.5 text-xs leading-snug">
                         <dt class="text-[#949ba4]">Template</dt><dd class="text-[#dbdee1]"><code>{user}'s Room</code></dd>
                         <dt class="text-[#949ba4]">Limit</dt><dd class="text-[#dbdee1]">Unlimited</dd>
                         <dt class="text-[#949ba4]">Access</dt><dd class="text-[#dbdee1]">Public</dd>
@@ -273,7 +374,7 @@
             </div>
             <div class="creator-bubble" data-creator="gaming" role="note" aria-label="Gaming">
                 <div class="creator-bubble__body">
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-xs leading-snug">
+                    <dl class="grid grid-cols-[auto_auto] gap-x-2 gap-y-0.5 text-xs leading-snug">
                         <dt class="text-[#949ba4]">Template</dt><dd class="text-[#dbdee1]"><code>{activity} Lobby</code></dd>
                         <dt class="text-[#949ba4]">Limit</dt><dd class="text-[#dbdee1]">5</dd>
                         <dt class="text-[#949ba4]">Access</dt><dd class="text-[#dbdee1]">Public</dd>
@@ -283,7 +384,7 @@
             </div>
             <div class="creator-bubble" data-creator="study" role="note" aria-label="Study">
                 <div class="creator-bubble__body">
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-xs leading-snug">
+                    <dl class="grid grid-cols-[auto_auto] gap-x-2 gap-y-0.5 text-xs leading-snug">
                         <dt class="text-[#949ba4]">Template</dt><dd class="text-[#dbdee1]"><code>Study with {user}</code></dd>
                         <dt class="text-[#949ba4]">Limit</dt><dd class="text-[#dbdee1]">4</dd>
                         <dt class="text-[#949ba4]">Access</dt><dd class="text-[#dbdee1]">Public</dd>
@@ -293,7 +394,7 @@
             </div>
             <div class="creator-bubble" data-creator="private" role="note" aria-label="Private">
                 <div class="creator-bubble__body">
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-xs leading-snug">
+                    <dl class="grid grid-cols-[auto_auto] gap-x-2 gap-y-0.5 text-xs leading-snug">
                         <dt class="text-[#949ba4]">Template</dt><dd class="text-[#dbdee1]"><code>{user}'s Room</code></dd>
                         <dt class="text-[#949ba4]">Limit</dt><dd class="text-[#dbdee1]">2</dd>
                         <dt class="text-[#949ba4]">Access</dt><dd class="text-[#dbdee1]">Locked for @everyone</dd>
@@ -378,7 +479,6 @@
                                     <div id="system-notes" class="mt-2 space-y-1"></div>
                                     <div id="claim-banner" class="is-hidden mt-3 max-w-[432px] bg-[#2b2d31] border border-white/10 rounded px-3 py-3">
                                         <p class="text-sm text-[#dbdee1]">No owner. Anyone in the channel can use the controls. The first action claims it.</p>
-                                        <button type="button" class="dc-btn dc-btn--success mt-2" id="ctrl-claim">Claim</button>
                                     </div>
                                 </div>
                             </div>
@@ -400,24 +500,25 @@
             </div>
         </div>
         </div>
-        <div id="logs-column" class="relative h-10 w-full shrink-0 overflow-hidden lg:h-auto lg:w-72 xl:w-80">
+        <div id="logs-column" data-open="false" class="is-rail relative h-10 w-full shrink-0 overflow-hidden lg:h-auto lg:w-72 xl:w-80">
             <div id="staff-logs" class="border border-black/60 rounded-md overflow-hidden bg-[#313338] flex flex-col h-10 min-h-0 lg:absolute lg:inset-0 lg:h-auto">
                 <div id="logs-bar" class="h-10 px-2 flex items-center gap-2 shrink-0">
                     <span class="text-[#949ba4] pl-1">#</span>
                     <h3 class="text-white text-sm font-semibold">staff-logs</h3>
-                    <button type="button" id="logs-toggle" class="dc-btn dc-btn--secondary dc-btn--small ml-auto" aria-expanded="false" aria-controls="log-scroll">
+                    <button type="button" id="logs-toggle" class="dc-btn dc-btn--secondary dc-btn--small ml-auto" aria-expanded="false" aria-controls="log-scroll" aria-label="Expand staff logs">
                         <span class="logs-label-show">Show</span>
                         <span class="logs-label-hide">Hide</span>
+                        <span class="logs-label-rail" aria-hidden="true"></span>
                     </button>
                 </div>
-                <div id="log-scroll" class="discord-scroll hidden lg:block flex-1 overflow-y-auto min-h-0 px-2 py-2">
+                <div id="log-scroll" class="discord-scroll hidden lg:block flex-1 overflow-y-auto min-h-0 px-2 py-2" aria-hidden="true">
                     <p id="log-empty" class="px-1 text-sm text-[#949ba4]">Creates, renames, removals, and blocked names show up here.</p>
                     <div id="log-list" class="space-y-3"></div>
                 </div>
             </div>
         </div>
         </div>
-        <p class="mt-3 text-sm text-[#949ba4] max-w-2xl">Servers can show these as icon buttons, icon buttons with labels, or dropdowns, and can turn each action off. This mock uses icons with labels. The staff-logs channel uses the same embeds the bot posts.</p>
+        <p class="mt-3 text-sm text-[#949ba4] max-w-2xl">The interface can be configured one of 3 ways; icon buttons with labels (As show above), icon only buttons, or dropdown menu (default). Each action can be enabled or disabled by server admins.</p>
     </section>
 
     <section id="included" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
@@ -425,15 +526,15 @@
         <p class="mt-2 text-[#b5bac1] max-w-2xl">The public bot is free. These are the features other voice bots put behind a paywall. You can also run Robotnic yourself.</p>
         <div class="mt-5 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)] gap-6 items-start">
             <ul class="rounded-xl border border-white/10 bg-[#313338] shadow-[0_1px_3px_rgba(0,0,0,0.35)] divide-y divide-white/10 overflow-hidden">
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Unlimited creator channels</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Per-action owner controls</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Activity-based names</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Lock and hide for a chosen role</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Ban and allow users or roles</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Profanity filter on renames</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Audit log</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>SQLite, settings survive restarts</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
-                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>No external setup website</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Unlimited creator channels</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Per-action owner controls</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Activity-based names</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Lock and hide for a chosen role</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Ban and allow users or roles</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Profanity filter on renames</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>Audit log</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>SQLite, settings survive restarts</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
+                <li class="flex items-center justify-between gap-4 px-4 py-3"><span>No external setup website</span><span class="text-[#23a559] text-sm font-medium shrink-0">Included free</span></li>
             </ul>
             <aside class="rounded-xl border border-white/10 bg-[#313338] shadow-[0_1px_3px_rgba(0,0,0,0.35)] p-5">
                 <h3 class="text-white font-semibold">Self-host</h3>
@@ -476,8 +577,8 @@
                 <a class="nav-btn nav-btn--large nav-btn--add" href="https://discord.com/oauth2/authorize?client_id=853490879753617458" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/></svg>Add the bot</a>
                 <a class="nav-btn nav-btn--large nav-btn--support" href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.1.1 0 0 0-.1.05c-.18.33-.39.76-.53 1.09a16.1 16.1 0 0 0-4.74 0c-.14-.34-.35-.76-.54-1.09a.1.1 0 0 0-.1-.05c-1.5.26-2.93.71-4.27 1.33a.09.09 0 0 0-.04.03C2.24 9.12 1.5 12.8 1.87 16.44c0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.04 0 .07-.01.09-.04.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.03.03.03.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.02.03.06.04.09.04 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.28-.73-7.93-3.1-11.18a.06.06 0 0 0-.03-.03zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/></svg>Join the support server</a>
                 <a class="nav-btn nav-btn--large nav-btn--tip" href="https://ko-fi.com/jackschultzdev/" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z"/></svg>Tip the developer</a>
-                <a class="nav-btn nav-btn--large nav-btn--code" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></svg>Star the repo</a>
-                <a class="nav-btn nav-btn--large nav-btn--code" href="https://github.com/jack-schultz/Robotnic/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3a3 3 0 1 0 1 5.83V15a3 3 0 1 0 2 0v-2.17A3 3 0 0 0 9 10h6a1 1 0 0 1 1 1v.17a3 3 0 1 0 2 0V11a3 3 0 0 0-3-3H9a1 1 0 0 1-1-1V8.83A3 3 0 0 0 6 3z"/></svg>Contribute</a>
+                <a class="nav-btn nav-btn--large nav-btn--star" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></svg>Star the repo</a>
+                <a class="nav-btn nav-btn--large nav-btn--contribute" href="https://github.com/jack-schultz/Robotnic/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3a3 3 0 1 0 1 5.83V15a3 3 0 1 0 2 0v-2.17A3 3 0 0 0 9 10h6a1 1 0 0 1 1 1v.17a3 3 0 1 0 2 0V11a3 3 0 0 0-3-3H9a1 1 0 0 1-1-1V8.83A3 3 0 0 0 6 3z"/></svg>Contribute</a>
             </div>
     </section>
     </div>
