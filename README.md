@@ -193,7 +193,7 @@ Below is the default `settings.json` with a table to explain.
 | `api.port` | Port for the FastAPI stats server (`GET /stats`, `GET /`). |
 | `status.text` | Playing status; supports `{server_count}`, `{member_count}`, `{creator_count}`, `{temp_channel_count}`. |
 
-Please make sure you have **message**, **member**, and **presence (activity)** intents enabled in the Discord Developer Portal for your bot.
+Please make sure you have **member** and **presence (activity)** intents enabled in the Discord Developer Portal for your bot.
 
 ## Contributing
 

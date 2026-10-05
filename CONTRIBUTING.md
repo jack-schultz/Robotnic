@@ -22,7 +22,7 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 - **Python 3.13.9**
 - A Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
-- Required intents enabled: **message**, **member**, and **presence (activity)**
+- Required intents enabled: **member** and **presence (activity)**
 
 ### Install
 

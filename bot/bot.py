@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 class Bot(discord.AutoShardedBot):
     def __init__(self, token, topgg_token, settings):
         intents = discord.Intents.default()
-        intents.message_content = True
         intents.presences = True
         intents.members = True
         super().__init__(intents=intents)

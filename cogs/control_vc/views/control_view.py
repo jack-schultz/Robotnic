@@ -1,5 +1,4 @@
 import logging
-import asyncio
 import discord
 from discord.ui import View
 from cogs.control_vc.channel_actions.visibility import channel_action
@@ -19,6 +18,73 @@ ALL_CONTROLS = ("rename", "limit", "clear", "ban", "mute", "deafen", "give", "de
 STATE_ACTIONS = frozenset({"public", "lock", "hide"})
 SELECT_CUSTOM_IDS = frozenset({"action_select", "state_select"})
 _MODAL_ACTIONS = frozenset({"rename", "limit"})
+
+
+class ConfirmDeleteView(View):
+    def __init__(self, bot, interaction: discord.Interaction):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.source = interaction
+        yes = discord.ui.Button(label="Yes", style=discord.ButtonStyle.danger)
+        yes.callback = self.confirm
+        self.add_item(yes)
+
+    async def confirm(self, interaction: discord.Interaction):
+        self.stop()
+        await interaction.response.defer(ephemeral=True)
+
+        deleted = False
+        try:
+            await interaction.channel.delete()
+            deleted = True
+        except discord.NotFound:
+            deleted = True
+        except discord.Forbidden as e:
+            logger.debug(
+                f"Permission error removing temp channel {interaction.channel.id} "
+                f"in guild '{interaction.guild.name}', notifying user of missing permissions. {e}"
+            )
+            try:
+                await interaction.followup.send(
+                    f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.",
+                    ephemeral=True,
+                )
+            except (discord.NotFound, discord.HTTPException):
+                pass
+            return
+        except Exception as e:
+            logger.error(
+                f"Unknown error removing temp channel {interaction.channel.id} "
+                f"in guild '{interaction.guild.name}': {e}"
+            )
+            return
+
+        if deleted:
+            self.bot.repos.temp_channels.remove(interaction.channel.id)
+            await remove_owner_role(self.bot, interaction.user)
+            await remove_owner_prefix(self.bot, interaction.user)
+            logger.debug(
+                f"Deleted temp channel {interaction.channel.id} via control message confirmation "
+                f"in guild '{interaction.guild.name}'"
+            )
+
+    async def on_timeout(self):
+        interaction = self.source
+        logger.debug(
+            f"Channel deletion confirmation timed out for temp channel {interaction.channel.id} "
+            f"in guild '{interaction.guild.name}', handled."
+        )
+        try:
+            embed = discord.Embed(
+                title="Channel Deletion Timed Out",
+                description="Channel deletion timed out. No action was taken.",
+                color=discord.Color.red(),
+            )
+            embed.set_footer(text="This message will disappear in 15 seconds.")
+            reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+            await reply.delete(delay=15)
+        except (discord.NotFound, discord.HTTPException):
+            pass
 
 
 class ControlView(View):
@@ -417,72 +483,13 @@ class ControlView(View):
     async def delete_callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="Channel Deletion Confirmation",
-            description="Are you sure you want to delete this channel? Reply with 'yes' within 60 seconds to confirm.",
+            description="Are you sure you want to delete this channel? Press Yes within 60 seconds to confirm.",
             color=discord.Color.orange(),
         )
         embed.set_footer(text="Awaiting your response...")
-        reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
+        view = ConfirmDeleteView(self.bot, interaction)
+        reply = await interaction.followup.send(embed=embed, view=view, ephemeral=True, wait=True)
         await reply.delete(delay=60)
-
-        def check(message: discord.Message):
-            return (
-                message.author == interaction.user
-                and message.channel == interaction.channel
-                and message.content.lower() == "yes"
-            )
-
-        try:
-            await self.bot.wait_for("message", check=check, timeout=60)
-            deleted = False
-            try:
-                await interaction.channel.delete()
-                deleted = True
-            except discord.NotFound:
-                deleted = True
-            except discord.Forbidden as e:
-                logger.debug(
-                    f"Permission error removing temp channel {interaction.channel.id} "
-                    f"in guild '{interaction.guild.name}', notifying user of missing permissions. {e}"
-                )
-                try:
-                    await interaction.followup.send(
-                        f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.",
-                        ephemeral=True,
-                    )
-                except (discord.NotFound, discord.HTTPException):
-                    pass
-                return
-            except Exception as e:
-                logger.error(
-                    f"Unknown error removing temp channel {interaction.channel.id} "
-                    f"in guild '{interaction.guild.name}': {e}"
-                )
-                return
-
-            if deleted:
-                self.bot.repos.temp_channels.remove(interaction.channel.id)
-                await remove_owner_role(self.bot, interaction.user)
-                await remove_owner_prefix(self.bot, interaction.user)
-                logger.debug(
-                    f"Deleted temp channel {interaction.channel.id} via control message confirmation "
-                    f"in guild '{interaction.guild.name}'"
-                )
-        except asyncio.TimeoutError:
-            logger.debug(
-                f"Channel deletion confirmation timed out for temp channel {interaction.channel.id} "
-                f"in guild '{interaction.guild.name}', handled."
-            )
-            try:
-                embed = discord.Embed(
-                    title="Channel Deletion Timed Out",
-                    description="Channel deletion timed out. No action was taken.",
-                    color=discord.Color.red(),
-                )
-                embed.set_footer(text="This message will disappear in 15 seconds.")
-                reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
-                await reply.delete(delay=15)
-            except (discord.NotFound, discord.HTTPException):
-                pass
 
     async def give_callback(self, interaction: discord.Interaction):
         await GiveOwnershipView(self.bot, interaction.channel).send_initial_message(interaction)
