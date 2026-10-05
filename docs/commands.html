@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotnic – Commands</title>
+    <meta name="description" content="Slash commands and user apps for Robotnic, the Discord bot for temporary voice channels. Who can run each command and how to use it.">
+    <link rel="canonical" href="https://jackschultz.dev/robotnic/commands.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Robotnic – Commands">
+    <meta property="og:description" content="How to set up creator channels and server settings with Robotnic slash commands.">
+    <meta property="og:url" content="https://jackschultz.dev/robotnic/commands.html">
+    <meta property="og:site_name" content="Robotnic">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Robotnic – Commands">
+    <meta name="twitter:description" content="Slash commands and user apps for the Robotnic Discord bot.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="scss/main.css">
+    <style>
+        code {
+            background: #111214;
+            color: #f2f3f5;
+        }
+    </style>
+</head>
+<body class="bg-[#1e1f22] text-[#dbdee1] antialiased min-h-screen flex flex-col">
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="absolute h-0 w-0 overflow-hidden" focusable="false">
+    <symbol id="icon-add" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="icon-support" viewBox="0 0 24 24"><path fill="currentColor" d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.1.1 0 0 0-.1.05c-.18.33-.39.76-.53 1.09a16.1 16.1 0 0 0-4.74 0c-.14-.34-.35-.76-.54-1.09a.1.1 0 0 0-.1-.05c-1.5.26-2.93.71-4.27 1.33a.09.09 0 0 0-.04.03C2.24 9.12 1.5 12.8 1.87 16.44c0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.04 0 .07-.01.09-.04.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.03.03.03.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.02.03.06.04.09.04 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.28-.73-7.93-3.1-11.18a.06.06 0 0 0-.03-.03zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/></symbol>
+    <symbol id="icon-tip" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z"/></symbol>
+    <symbol id="icon-github" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></symbol>
+    <symbol id="icon-commands" viewBox="0 0 24 24"><path fill="currentColor" d="M4 6.5A1.5 1.5 0 0 1 5.5 5h1A1.5 1.5 0 0 1 8 6.5v1A1.5 1.5 0 0 1 6.5 9h-1A1.5 1.5 0 0 1 4 7.5v-1zm0 5A1.5 1.5 0 0 1 5.5 10h1A1.5 1.5 0 0 1 8 11.5v1A1.5 1.5 0 0 1 6.5 14h-1A1.5 1.5 0 0 1 4 12.5v-1zm0 5A1.5 1.5 0 0 1 5.5 15h1A1.5 1.5 0 0 1 8 16.5v1A1.5 1.5 0 0 1 6.5 19h-1A1.5 1.5 0 0 1 4 17.5v-1zM10 6h10v2H10V6zm0 5h10v2H10v-2zm0 5h10v2H10v-2z"/></symbol>
+</svg>
+<header class="sticky top-0 z-40 bg-[#111214] border-b border-white/10">
+    <nav class="max-w-6xl mx-auto px-5 py-3 sm:h-16 sm:py-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" aria-label="Primary">
+        <a href="index.html" class="text-white font-bold tracking-tight text-lg">Robotnic</a>
+        <ul class="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto">
+            <li><a class="nav-btn nav-btn--add" href="https://discord.com/oauth2/authorize?client_id=853490879753617458" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#icon-add"/></svg>Add the bot</a></li>
+            <li><a class="nav-btn nav-btn--support" href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#icon-support"/></svg>Support Server</a></li>
+            <li><a class="nav-btn nav-btn--tip" href="https://ko-fi.com/jackschultzdev/" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#icon-tip"/></svg>Tip the Developer</a></li>
+            <li><a class="nav-btn nav-btn--commands" href="commands.html" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#icon-commands"/></svg>Commands</a></li>
+            <li><a class="nav-btn nav-btn--code" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#icon-github"/></svg>GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="flex-1">
+    <div class="max-w-6xl mx-auto px-5 py-8 sm:py-12 flex flex-col gap-7">
+        <section class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-white">Commands</h1>
+            <p class="mt-3 text-[#b5bac1] max-w-3xl">Members control a temporary voice channel from the panel posted in that channel. Slash commands are for creating creator channels and changing server settings. Type <code class="text-[#dbdee1]">/</code> in Discord and start with the command name.</p>
+            <nav class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="On this page">
+                <a class="quiet-link" href="#getting-started">Getting started</a>
+                <a class="quiet-link" href="#server-settings">Server settings</a>
+                <a class="quiet-link" href="#channel-owners">Channel owners</a>
+                <a class="quiet-link" href="#placeholders">Placeholders</a>
+                <a class="quiet-link" href="#general">General</a>
+                <a class="quiet-link" href="#user-apps">User apps</a>
+            </nav>
+        </section>
+
+        <section id="getting-started" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">Getting started</h2>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/setup</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Opens the creator menu. Use the green Make new Creator button to add a hub, or the dropdown to edit one that already exists. Each creator has its own name template, user limit, category, permission inheritance, and the role that lock and hide apply to. Built-in name tokens are <code>{user}</code>, <code>{activity}</code>, and <code>{count}</code>.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="server-settings" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">Server settings</h2>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings controls</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Opens a form for which owner actions appear on the in-channel panel, and whether that panel uses labeled buttons, icon-only buttons, or a dropdown. Submit the form or the change is discarded.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings logging</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Opens a form to pick a log channel and which events to record there. Deselect an event to leave it out. Submit the form or the change is discarded.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings profanity_filter</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Sets how channel names are checked. The <code>mode</code> option is <code>off</code>, <code>alert</code> (log only), or <code>alert &amp; block</code> (log and reject the name).</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="channel-owners" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">Channel owners</h2>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner dm-on-create</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Turns DMs to new channel owners on or off. Pass <code>enabled</code> as true or false.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner role-set</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Sets the role given to whoever owns a temporary channel. Pass <code>owner_role</code>. The bot needs permission to assign that role.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner role-get</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Shows the owner role currently configured for this server, or that none is set.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner role-clear</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Stops assigning an owner role. Existing assignments are left as they are.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner prefix-set</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Sets a nickname prefix applied while someone owns a temporary channel. Pass <code>owner_prefix</code>. The bot needs Manage Nicknames, and it cannot rename the server owner or members above its highest role.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner prefix-get</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Shows the owner nickname prefix currently configured for this server, or that none is set.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings owner prefix-clear</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Stops applying an owner nickname prefix.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="placeholders" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">Custom name placeholders</h2>
+            <p class="mt-2 text-[#b5bac1] max-w-3xl">In a creator name template, a token such as <code class="text-[#dbdee1]">{region}</code> is replaced only when the channel owner has the role you attached to that token. If they do not, the token is removed. The same token can map to different text for different roles.</p>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings placeholder add</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Opens a form with the placeholder token, the replacement text, and the role required for that replacement. Submit the form or the entry is not saved.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings placeholder list</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Lists every custom placeholder on this server, including the replacement text and the role that triggers it. Only you see the reply.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/settings placeholder remove</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Removes one entry. The <code>entry</code> option autocompletes from placeholders already saved on this server.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="general" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">General</h2>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/help</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Everyone</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Posts a short command list in Discord, with buttons for support and the website.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/donate</code> <code>/support</code> <code>/website</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Everyone</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">The same reply: how to support the public bot, with links to donate and get help. <code>/support</code> and <code>/website</code> are aliases of <code>/donate</code>.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="font-mono text-white"><code>/ping</code></h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Manage Channels</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Replies with the bot’s current latency.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="user-apps" class="rounded-2xl border border-white/10 bg-[#2b2d31] shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+            <h2 class="text-2xl font-semibold text-white">User apps (right click menu)</h2>
+            <p class="mt-2 text-[#b5bac1] max-w-3xl">Right-click a member, then open Apps. These are the same ban, allow, mute, and deafen actions as the in-channel panel. They apply to the temporary channel you own, or the one you can claim if it has no owner.</p>
+            <div class="mt-5 flex flex-col gap-3">
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-white font-semibold">Ban User from VC</h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Channel owner</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Blocks that member from your temporary channel and disconnects them if they are in it.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-white font-semibold">Allow User to VC</h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Channel owner</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Grants that member access to your temporary channel.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-white font-semibold">Mute User</h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Channel owner</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Server-mutes that member in your temporary channel.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-white font-semibold">Deafen User</h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Channel owner</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Server-deafens that member in your temporary channel.</p>
+                </article>
+                <article class="rounded-xl border border-white/10 bg-[#313338] px-4 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-white font-semibold">Unmute &amp; Undeafen User</h3>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Channel owner</span>
+                    </div>
+                    <p class="mt-2 text-sm text-[#b5bac1]">Clears both server mute and server deafen for that member. Discord allows five user apps, so unmute and undeafen share this one.</p>
+                </article>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="bg-[#111214] border-t border-white/10">
+    <div class="max-w-6xl mx-auto px-5 py-8 text-center">
+        <p class="text-white font-bold">Robotnic</p>
+        <div class="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+            <a class="text-[#b5bac1] hover:text-white" href="https://ko-fi.com/jackschultzdev/" target="_blank" rel="noopener noreferrer">Donate</a>
+            <a class="text-[#b5bac1] hover:text-white" href="https://jackschultz.dev/contact.html">Contact Developer</a>
+            <a class="text-[#b5bac1] hover:text-white" href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+        <div class="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+            <a class="text-[#b5bac1] hover:text-white" href="commands.html">Commands</a>
+            <a class="text-[#b5bac1] hover:text-white" href="privacy.html">Privacy Policy</a>
+            <a class="text-[#b5bac1] hover:text-white" href="tos.html">Terms of Service</a>
+        </div>
+        <p class="mt-4 text-sm text-[#949ba4]">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>. <a class="quiet-link" href="https://jackschultz.dev/projects.html">Other projects</a>.</p>
+    </div>
+</footer>
+</body>
+</html>

@@ -653,6 +653,14 @@ code {
   background: #4e5058;
 }
 
+.nav-btn--commands {
+  background: #2b6cb0;
+}
+
+.nav-btn--commands:hover {
+  background: #245a94;
+}
+
 .nav-btn--star {
   background: #f5c518;
   color: #1e1f22;
