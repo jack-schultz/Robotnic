@@ -1,4 +1,5 @@
 import logging
+from config.i18n import t
 from cogs.manage_vcs.owner_role import remove_owner_role, give_owner_role
 from cogs.manage_vcs.owner_prefix import remove_owner_prefix, give_owner_prefix
 
@@ -6,12 +7,13 @@ logger = logging.getLogger(__name__)
 
 
 async def claim_or_verify_owner(bot, channel, member):
+    lang = bot.repos.guild_settings.get_language(channel.guild.id)
     if member not in channel.members:
         logger.debug(
             f"User '{member}' interacted with control that they are not connected to "
             f"in guild '{channel.guild.name}'."
         )
-        return False, f"You are not connected to this voice channel {member.mention}!"
+        return False, t("control.not_connected", lang, mention=member.mention)
 
     connected_user_ids = [member.id for member in channel.members]
     owner_id = bot.repos.temp_channels.get_info(channel.id).owner_id
@@ -36,7 +38,7 @@ async def claim_or_verify_owner(bot, channel, member):
             f"User '{member}' interacted with control that they don't own "
             f"in guild '{channel.guild.name}'."
         )
-        return False, f"You do not own this temporary channel {member.mention}!"
+        return False, t("control.not_owner", lang, mention=member.mention)
 
     return True, None
 

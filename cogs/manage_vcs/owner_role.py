@@ -1,12 +1,13 @@
 import logging
 import discord
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
 
-async def _remove_role(member, owner_role):
+async def _remove_role(member, owner_role, lang):
     try:
-        await member.remove_roles(owner_role, reason="Owner role assignment")
+        await member.remove_roles(owner_role, reason=t("owner.role_reason", lang))
         logger.debug(
             f"Assigned owner role `{owner_role.name}` to {member} in guild '{member.guild.name}'"
         )
@@ -20,9 +21,9 @@ async def _remove_role(member, owner_role):
         )
 
 
-async def _give_role(member, owner_role):
+async def _give_role(member, owner_role, lang):
     try:
-        await member.add_roles(owner_role, reason="Owner role assignment")
+        await member.add_roles(owner_role, reason=t("owner.role_reason", lang))
         logger.debug(
             f"Assigned owner role `{owner_role.name}` to {member} in guild '{member.guild.name}'"
         )
@@ -91,7 +92,7 @@ async def give_owner_role(bot, member):
         return
 
     await _check_permissions(member, owner_role)
-    await _give_role(member, owner_role)
+    await _give_role(member, owner_role, bot.repos.guild_settings.get_language(member.guild.id))
 
 
 async def remove_owner_role(bot, member):
@@ -100,4 +101,4 @@ async def remove_owner_role(bot, member):
         return
 
     await _check_permissions(member, owner_role)
-    await _remove_role(member, owner_role)
+    await _remove_role(member, owner_role, bot.repos.guild_settings.get_language(member.guild.id))

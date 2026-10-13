@@ -3,6 +3,7 @@ import discord
 from cogs.manage_vcs.owner_role import remove_owner_role
 from cogs.manage_vcs.owner_prefix import remove_owner_prefix
 from cogs.manage_vcs.notifications import send_temp_channel_remove_logs
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ async def delete_on_leave(member, before, after, bot):
             f"Permission error removing temp channel {old_temp_channel.id} in guild '{guild_name}', "
             f"notifying user of missing permissions. {e}"
         )
-        await old_temp_channel.send(f"Sorry {member.mention}, I do not have permission to delete this channel.", delete_after=300)
+        lang = bot.repos.guild_settings.get_language(member.guild.id)
+        await old_temp_channel.send(t("common.no_permission_delete", lang, mention=member.mention), delete_after=300)
         return
 
     except Exception as e:

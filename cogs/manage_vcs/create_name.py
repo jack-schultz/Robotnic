@@ -1,6 +1,7 @@
 import logging
 import discord
 from cogs.manage_vcs.owner_prefix import strip_owner_prefix
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
     # Uses guild.get_member rather than bot.get_member to access nicknames
     owner = temp_channel.guild.get_member(db_temp_channel_info.owner_id) if db_temp_channel_info.owner_id else None
     guild_name = temp_channel.guild.name
+    lang = bot.repos.guild_settings.get_language(temp_channel.guild.id)
 
     new_channel_name = db_creator_channel_info.child_name
     if "{user}" in str(new_channel_name):
@@ -26,7 +28,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
             member_name = owner.nick if owner.nick else owner.display_name
             member_name = strip_owner_prefix(bot, temp_channel.guild.id, member_name)
         else:
-            member_name = "Public"
+            member_name = t("temp_channel.default_user", lang)
             logger.debug(
                 f"Owner not found for temp channel {temp_channel.id} in guild '{guild_name}', using 'Public' for {{user}} placeholder."
             )
@@ -41,7 +43,7 @@ def create_temp_channel_name(bot, temp_channel, db_temp_channel_info=None, db_cr
                         activities.append(activity.name)
 
         if len(activities) <= 0:
-            activities.append("General")
+            activities.append(t("temp_channel.default_activity", lang))
         activities.sort(key=len)
         activity_text = ", ".join(activities)
         logger.debug(

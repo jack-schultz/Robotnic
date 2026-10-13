@@ -1,4 +1,5 @@
 import json
+from config.i18n import DEFAULT_LANGUAGE, language_from_discord_locale
 from database.repos.base_repo import BaseRepo
 
 defaults = {
@@ -11,14 +12,23 @@ defaults = {
     "enabled_log_events": ["channel_create", "channel_rename", "channel_remove", "profanity_block"],
     "control_options": ["dropdown", "labels"],
     "owner_role_id": None,
-    "owner_prefix": None
+    "owner_prefix": None,
+    "language": None  # None until set with /settings language, the guild's Discord locale is used instead
 }
 
 
 class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
+    # Set by the bot, returns a guild's Discord preferred_locale (or None) from its guild_id
+    guild_locale_lookup = None
+
+    def _guild_default_language(self, guild_id):
+        if guild_id is None or self.guild_locale_lookup is None:
+            return DEFAULT_LANGUAGE
+        return language_from_discord_locale(self.guild_locale_lookup(guild_id))
+
     def get(self, guild_id):
         self.db.cursor.execute("""
-            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix
+            SELECT logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix, language
             FROM guild_settings
             WHERE guild_id = ?
         """, (guild_id,))
@@ -27,7 +37,7 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
         if row is None:
             # return Default settings, keys matching database
             defaults["guild_id"] = guild_id
-            return defaults
+            return {**defaults, "language": self._guild_default_language(guild_id)}
 
         (
             logs_channel_id,
@@ -38,7 +48,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             enabled_log_events_json,
             control_options_json,
             owner_role_id,
-            owner_prefix
+            owner_prefix,
+            language
         ) = row
 
         enabled_controls = json.loads(enabled_controls_json) if enabled_controls_json else {}
@@ -55,7 +66,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             "enabled_log_events": list(enabled_log_events),
             "control_options": list(control_options),
             "owner_role_id": owner_role_id,
-            "owner_prefix": owner_prefix  # str | None
+            "owner_prefix": owner_prefix,  # str | None
+            "language": language or self._guild_default_language(guild_id)
         }
 
     def edit(
@@ -69,7 +81,8 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             enabled_log_events: list | None = None,
             control_options: list | None = None,
             owner_role_id: int | None = None,
-            owner_prefix: str | int | None = None
+            owner_prefix: str | int | None = None,
+            language: str | None = None
         ):
         # Check if the server has an entry
         self.db.cursor.execute("""
@@ -125,6 +138,10 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             else:
                 values.append(None)
 
+        if language is not None:
+            fields.append("language = ?")
+            values.append(language)
+
         if not fields:
             # Nothing to update
             return False
@@ -165,6 +182,22 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
             "logs_channel_id": logs_channel_id,
         }
 
+    def get_language(self, guild_id) -> str:
+        if guild_id is None:
+            return DEFAULT_LANGUAGE
+
+        self.db.cursor.execute("""
+            SELECT language
+            FROM guild_settings
+            WHERE guild_id = ?
+        """, (guild_id,))
+        row = self.db.cursor.fetchone()
+
+        if row is None or row[0] is None:
+            return self._guild_default_language(guild_id)
+
+        return row[0]
+
     def get_profanity_filter(self, guild_id):
         self.db.cursor.execute("""
                             SELECT profanity_filter
@@ -197,10 +230,11 @@ class GuildSettingsRepository(BaseRepo):  # bot.repos.guild_settings
         control_options_json = json.dumps(defaults["control_options"])
         owner_role_id = defaults["owner_role_id"]
         owner_prefix = defaults["owner_prefix"]
+        language = defaults["language"]
 
         self.db.cursor.execute("""
             INSERT OR REPLACE INTO guild_settings
-            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json, owner_role_id, owner_prefix))
+            (guild_id, logs_channel_id, enabled_controls, mention_owner_bool, dm_owner_bool, profanity_filter, enabled_log_events, control_options, owner_role_id, owner_prefix, language)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (guild_id, logs_channel_id, enabled_controls_json, bool(mention_owner_bool), bool(dm_owner_bool), profanity_filter, enabled_log_events_json, control_options_json, owner_role_id, owner_prefix, language))
         self.db.connection.commit()

@@ -1,15 +1,17 @@
 import discord
+from config.i18n import t
 
 
 class EditModal(discord.ui.DesignerModal):
     def __init__(self, view, creator_id):
-        super().__init__(title="Example Modal")
+        self.lang = view.lang
+        super().__init__(title=t("creator_menu.modal.title", self.lang))
         self.view = view
         self.creator_id = creator_id
         creator_info = self.view.bot.repos.creator_channels.get_info(self.creator_id)
 
         self.child_name_label = discord.ui.Label(
-            "Child Name, use: {user} {activity} {count}",
+            t("creator_menu.modal.child_name", self.lang),
             discord.ui.TextInput(
                 placeholder=f"{creator_info.child_name}",
                 required=False,
@@ -19,7 +21,7 @@ class EditModal(discord.ui.DesignerModal):
         self.add_item(self.child_name_label)
 
         self.user_limit_label = discord.ui.Label(
-            "User Limit (0 = Unlimited)",
+            t("creator_menu.modal.user_limit", self.lang),
             discord.ui.TextInput(
                 placeholder=f"{creator_info.user_limit}",
                 required=False,
@@ -29,12 +31,12 @@ class EditModal(discord.ui.DesignerModal):
         self.add_item(self.user_limit_label)
 
         self.child_overwrites_label = discord.ui.Label(
-            "Permission Handling",
+            t("creator_menu.modal.permissions", self.lang),
             discord.ui.Select(
                 options=[
-                    discord.SelectOption(value="1", label="Copy Creator Channel", default=True if creator_info.child_overwrites == 1 else False),
-                    discord.SelectOption(value="2", label="Copy Child's Category", default=True if creator_info.child_overwrites == 2 else False),
-                    discord.SelectOption(value="0", label="No Permissions", default=True if creator_info.child_overwrites == 0 else False),
+                    discord.SelectOption(value="1", label=t("creator_menu.modal.copy_creator_channel", self.lang), default=True if creator_info.child_overwrites == 1 else False),
+                    discord.SelectOption(value="2", label=t("creator_menu.modal.copy_child_category", self.lang), default=True if creator_info.child_overwrites == 2 else False),
+                    discord.SelectOption(value="0", label=t("creator_menu.modal.no_permissions", self.lang), default=True if creator_info.child_overwrites == 0 else False),
                 ],
                 min_values=1,
                 max_values=1,
@@ -45,27 +47,27 @@ class EditModal(discord.ui.DesignerModal):
 
         category = self.view.bot.get_channel(creator_info.child_category_id)
         self.category_label = discord.ui.Label(
-            "Optional: Set a Category",
+            t("creator_menu.modal.category", self.lang),
             discord.ui.ChannelSelect(
                 channel_types=[discord.ChannelType.category],
                 min_values=0,
                 max_values=1,
                 required=False,
                 default_values=[category] if category else None,
-                placeholder="Default: Same as Creator"
+                placeholder=t("creator_menu.modal.category_placeholder", self.lang)
             ),
         )
         self.add_item(self.category_label)
 
         default_role = self.view.author.guild.get_role(creator_info.default_role_id)
         self.default_role_label = discord.ui.Label(
-            "Role edited when Locked or Hidden",
+            t("creator_menu.modal.default_role", self.lang),
             discord.ui.RoleSelect(
                 min_values=1,
                 max_values=1,
                 required=False,
                 default_values=[default_role] if default_role else None,
-                placeholder="No selection = @everyone"
+                placeholder=t("creator_menu.modal.default_role_placeholder", self.lang)
             ),
         )
         self.add_item(self.default_role_label)
@@ -87,7 +89,7 @@ class EditModal(discord.ui.DesignerModal):
             # Validate Child name length
             child_name = child_name.strip()
             if len(child_name) > 100:
-                errors.append("Child name must be under 100 characters.")
+                errors.append(t("creator_menu.modal.error_child_name_length", self.lang))
         else:
             child_name = creator_info.child_name
 
@@ -95,9 +97,9 @@ class EditModal(discord.ui.DesignerModal):
             try:
                 user_limit = int(user_limit)
                 if not (0 <= user_limit <= 99):
-                    errors.append("User limit must be an integer between `0` and `99` inclusive.")
+                    errors.append(t("creator_menu.modal.error_user_limit_range", self.lang))
             except ValueError:
-                errors.append("User limit must be an integer.")
+                errors.append(t("creator_menu.modal.error_user_limit_integer", self.lang))
         else:
             user_limit = creator_info.user_limit
 
@@ -109,7 +111,7 @@ class EditModal(discord.ui.DesignerModal):
 
         if errors:
             await interaction.response.send_message(
-                f"Invalid input:\n" + "\n".join(f"- {error}" for error in errors),
+                t("creator_menu.modal.invalid_input", self.lang) + "\n" + "\n".join(f"- {error}" for error in errors),
                 ephemeral=True
             )
             await self.view.update()
@@ -125,10 +127,10 @@ class EditModal(discord.ui.DesignerModal):
         )
 
         embed = discord.Embed(
-            title="Updated!",
+            title=t("creator_menu.modal.updated", self.lang),
             description=f"",
             color=discord.Color.green()
         )
-        embed.set_footer(text="This message will disappear in 10 seconds.")
+        embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=10))
         await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=10)
         await self.view.update()

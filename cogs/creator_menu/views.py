@@ -3,6 +3,7 @@ import discord
 from discord.ui import View, Select, Button, Modal, InputText
 from cogs.creator_menu.embeds import ListCreatorsEmbed, OptionsEmbed
 from cogs.creator_menu.modals import EditModal
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class CreateView(View):
         self.bot = bot
         self.message = None
         self.author = ctx.author
+        self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
 
         self.create_items(ctx.guild)
 
@@ -33,15 +35,15 @@ class CreateView(View):
         for i, channel_id in enumerate(creator_channel_ids):
             channel = self.bot.get_channel(channel_id)
             if channel:
-                options.append(discord.SelectOption(label=f"Edit #{i+1}. {channel.name}", value=f"{channel.id}"))
+                options.append(discord.SelectOption(label=t("creator_menu.select.edit_option", self.lang, number=i+1, channel=channel.name), value=f"{channel.id}"))
 
         # If the dropdown has no options, add a placeholder one and disable it showing only the placeholder text
         is_disabled = False
-        placeholder = "Select a Creator to edit"
+        placeholder = t("creator_menu.select.placeholder", self.lang)
         if len(options) == 0:
             is_disabled = True
             options.append(discord.SelectOption(label="Option 1", value="1"),)
-            placeholder = "Make a new creator below"
+            placeholder = t("creator_menu.select.empty_placeholder", self.lang)
 
         select = Select(placeholder=placeholder, options=options, disabled=is_disabled)
         select.callback = self.select_callback
@@ -49,11 +51,11 @@ class CreateView(View):
             self.add_item(select)
 
         # New Creator button
-        creator_button = Button(label=f"Make new Creator", style=discord.ButtonStyle.success)  # primary, danger
+        creator_button = Button(label=t("creator_menu.button.new_creator", self.lang), style=discord.ButtonStyle.success)  # primary, danger
         creator_button.callback = self.creator_button_callback
         self.add_item(creator_button)
 
-        options_button = Button(label=f"Explain the options", style=discord.ButtonStyle.primary)  # primary, danger
+        options_button = Button(label=t("creator_menu.button.explain_options", self.lang), style=discord.ButtonStyle.primary)  # primary, danger
         options_button.callback = self.options_button_callback
         self.add_item(options_button)
 
@@ -71,7 +73,7 @@ class CreateView(View):
     # Dropdown callback
     async def select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.author.id:
-            return await interaction.response.send_message(f"This is not your menu!", ephemeral=True)
+            return await interaction.response.send_message(t("common.not_your_menu", self.lang), ephemeral=True)
 
         modal = EditModal(self, creator_id=interaction.data["values"][0])
         try:
@@ -88,26 +90,26 @@ class CreateView(View):
     # Button callback
     async def creator_button_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.author.id:
-            return await interaction.response.send_message(f"This is not your menu!", ephemeral=True)
+            return await interaction.response.send_message(t("common.not_your_menu", self.lang), ephemeral=True)
 
-        new_creator_channel = await interaction.guild.create_voice_channel("➕ Create Channel")
-        self.bot.repos.creator_channels.add(new_creator_channel.guild.id, new_creator_channel.id, "{user}'s Room", 0, 0, 1, interaction.guild.default_role.id)
+        new_creator_channel = await interaction.guild.create_voice_channel(t("creator_menu.new_creator.channel_name", self.lang))
+        self.bot.repos.creator_channels.add(new_creator_channel.guild.id, new_creator_channel.id, t("creator_menu.new_creator.child_name", self.lang), 0, 0, 1, interaction.guild.default_role.id)
 
         embeds = [discord.Embed(), discord.Embed()]
-        embeds[0].title = f"Created {new_creator_channel.mention}! Join to see how it works."
+        embeds[0].title = t("creator_menu.new_creator.created", self.lang, channel=new_creator_channel.mention)
         embeds[1].color = discord.Color.green()
-        embeds[1].title = "For Best Results:"
-        embeds[1].add_field(name="", value="**Move the channel** to your desired location and **change its name** if you wish to distinguish it from other Creator Channels.", inline=True)
-        embeds[1].add_field(name="", value="If you wish to edit the **name scheme** of temp channels, please **select a Creator Channel to edit above**", inline=True)
-        embeds[1].footer = discord.EmbedFooter("This message will disappear in 60 seconds")
+        embeds[1].title = t("creator_menu.new_creator.best_results", self.lang)
+        embeds[1].add_field(name="", value=t("creator_menu.new_creator.tip_move", self.lang), inline=True)
+        embeds[1].add_field(name="", value=t("creator_menu.new_creator.tip_edit", self.lang), inline=True)
+        embeds[1].footer = discord.EmbedFooter(t("common.disappear_seconds", self.lang, seconds=60))
         await interaction.response.send_message(f"", embeds=embeds, ephemeral=True, delete_after=60)
         await self.update()
 
-        await self.bot.BotLogService.send(event="creator_create", message=f"Creator Channel was made in `{interaction.guild.name}` by `{interaction.user}`")
+        await self.bot.BotLogService.send(event="creator_create", message=t("bot_log.creator_created", guild=interaction.guild.name, user=interaction.user))
         return None
 
     async def options_button_callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"", embed=OptionsEmbed(), ephemeral=True, delete_after=60)
+        await interaction.response.send_message(f"", embed=OptionsEmbed(self.lang), ephemeral=True, delete_after=60)
         await self.update()
         return None
 

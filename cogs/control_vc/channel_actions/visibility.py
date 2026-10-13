@@ -1,6 +1,7 @@
 import discord
 import logging
 from cogs.control_vc.enums import ChannelState
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +47,11 @@ async def _update_overwrites(bot, channel, new_overwrite):
     return True
 
 
-async def _notify_missing_overwrite_permission(interaction):
+async def _notify_missing_overwrite_permission(bot, interaction):
+    lang = bot.repos.guild_settings.get_language(interaction.guild.id)
     try:
         await interaction.followup.send(
-            "Sorry {interaction.user.mention}, I do not have permission to change this channel's access. I need Manage Roles, and my highest role must be above the roles on this channel.",
+            t("common.no_permission_access", lang, mention=interaction.user.mention),
             ephemeral=True,
         )
     except (discord.NotFound, discord.HTTPException):
@@ -78,7 +80,7 @@ async def channel_action(bot, interaction, new_state):
         logger.warning(
             f"Missing permission to change access for temp channel {channel.id} in guild '{interaction.guild.name}': {e}"
         )
-        await _notify_missing_overwrite_permission(interaction)
+        await _notify_missing_overwrite_permission(bot, interaction)
         return
 
     if not updated:

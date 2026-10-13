@@ -27,6 +27,8 @@ class Bot(discord.AutoShardedBot):
 
         self.db = Database()
         self.repos = Repositories(self.db)
+        # This function is passed to the repo to allow lookup of guild object from guild_id without passing bot to the repos
+        self.repos.guild_settings.guild_locale_lookup = self._guild_locale
         self.TempChannelRenamer = TempChannelRenamer(self)
         self.EmbedUpdateScheduler = EmbedUpdateScheduler(self)
 
@@ -37,6 +39,11 @@ class Bot(discord.AutoShardedBot):
         self.GuildLogService = None
 
         self.topgg_client = DBLClient(self, topgg_token) if topgg_token else None
+
+    # Servers without a language set use their Discord locale (Server Settings -> Community -> Server Primary Language)
+    def _guild_locale(self, guild_id):
+        guild = self.get_guild(guild_id)
+        return guild.preferred_locale if guild else None
 
     # Load all cogs from /cogs
     def _load_cogs(self):

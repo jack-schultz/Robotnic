@@ -1,15 +1,17 @@
 import discord
+from config.i18n import t
 
 
 class UserLimitModal(discord.ui.Modal):
     def __init__(self, bot, channel):
-        super().__init__(title="Edit Your Channel")
+        self.lang = bot.repos.guild_settings.get_language(channel.guild.id)
+        super().__init__(title=t("control.limit.modal_title", self.lang))
         self.bot = bot
         self.channel = channel
 
         # Define the text inputs
         self.user_limit = discord.ui.InputText(
-            label="User Limit (Unlimited = 0)",
+            label=t("control.limit.label", self.lang),
             placeholder=f"{channel.user_limit}",
             required=False,
             max_length=2
@@ -24,11 +26,11 @@ class UserLimitModal(discord.ui.Modal):
 
         if not user_limit.isnumeric():
             embed = discord.Embed(
-                title="Invalid Input",
-                description="User limit must be a number.",
+                title=t("control.limit.invalid_title", self.lang),
+                description=t("control.limit.invalid_description", self.lang),
                 color=discord.Color.red()
             )
-            embed.set_footer(text="This message will disappear in 15 seconds.")
+            embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=15))
             try:
                 reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
                 await reply.delete(delay=15)
@@ -46,11 +48,11 @@ class UserLimitModal(discord.ui.Modal):
             await self.bot.EmbedUpdateScheduler.schedule(self.channel, user_limit=user_limit)
 
         embed = discord.Embed(
-            title="Changes Saved",
-            description=f"Channel limit changed to {user_limit}",
+            title=t("common.changes_saved", self.lang),
+            description=t("control.limit.saved_description", self.lang, limit=user_limit),
             color=discord.Color.blue()
         )
-        embed.set_footer(text="This message will disappear in 15 seconds.")
+        embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=15))
         try:
             reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
             await reply.delete(delay=15)

@@ -1,6 +1,7 @@
 import discord
 from cogs.control_vc.enums import ChannelState
 from cogs.manage_vcs.create_name import create_temp_channel_name
+from config.i18n import t
 
 
 class ControlIconsEmbed(discord.Embed):
@@ -11,19 +12,13 @@ class ControlIconsEmbed(discord.Embed):
             color=0x00ff00
         )
 
-        self.add_field(name="🏷️ Rename", value="", inline=True)
-        self.add_field(name="🚧 Limit", value="", inline=True)
-        self.add_field(name="🎁 Give", value="", inline=True)
-        self.add_field(name="🧽 Clear", value="", inline=True)
-        self.add_field(name="🔨 Ban/Allow", value="", inline=True)
-        self.add_field(name="🔇 Mute", value="", inline=True)
-        self.add_field(name="🔕 Deafen", value="", inline=True)
-        self.add_field(name="🗑️ Delete", value="", inline=True)
+        lang = bot.repos.guild_settings.get_language(channel.guild.id)
+        for control in ("rename", "limit", "give", "clear", "ban", "mute", "deafen", "delete"):
+            self.add_field(name=t(f"control.icons.{control}", lang), value="", inline=True)
         control_options = bot.repos.guild_settings.get(channel.guild.id)["control_options"]
         if "state_changeable" in control_options:
-            self.add_field(name="🌐 Public", value="", inline=True)
-            self.add_field(name="🙈 Hide", value="", inline=True)
-            self.add_field(name="🔒 Lock", value="", inline=True)
+            for control in ("public", "hide", "lock"):
+                self.add_field(name=t(f"control.icons.{control}", lang), value="", inline=True)
 
 
 class ChannelInfoEmbed(discord.Embed):
@@ -32,6 +27,7 @@ class ChannelInfoEmbed(discord.Embed):
             color=discord.Color.blue()
         )
 
+        lang = bot.repos.guild_settings.get_language(temp_channel.guild.id)
         temp_channel_info = bot.repos.temp_channels.get_info(temp_channel.id)
 
         # title input incase it was just changed and propagated to channel yet
@@ -44,23 +40,23 @@ class ChannelInfoEmbed(discord.Embed):
             else:
                 self.title = temp_channel.name
 
-        self.footer = discord.EmbedFooter("Channel Name will update as quickly as Discord Allows.")
+        self.footer = discord.EmbedFooter(t("control.info.footer", lang))
 
         owner_id = temp_channel_info.owner_id if temp_channel_info is not None else None
         if owner_id:
             if owner_id is not None:
                 owner = f"<@{owner_id}>"
             else:
-                owner = "None, available to claim"
+                owner = t("control.info.no_owner", lang)
         else:
-            owner = "None, available to claim"
-        self.add_field(name="Owner", value=f"{owner}", inline=True)
+            owner = t("control.info.no_owner", lang)
+        self.add_field(name=t("control.info.owner", lang), value=f"{owner}", inline=True)
 
         if not user_limit:
             user_limit = temp_channel.user_limit
         if user_limit == 0:
-            user_limit = "♾️ Unlimited"
-        self.add_field(name="User Limit", value=f"{user_limit}", inline=True)
+            user_limit = t("control.info.unlimited", lang)
+        self.add_field(name=t("control.info.user_limit", lang), value=f"{user_limit}", inline=True)
 
         # region = temp_channel.rtc_region
         # if region is None:
@@ -71,11 +67,11 @@ class ChannelInfoEmbed(discord.Embed):
         if "state_changeable" in control_options:
             channel_state_id = temp_channel_info.channel_state if temp_channel_info is not None else None
             if channel_state_id == ChannelState.PUBLIC.value:
-                channel_state = "🌐 Public"
+                channel_state = t("control.info.public", lang)
             elif channel_state_id == ChannelState.LOCKED.value:
-                channel_state = "🔒 Locked"
+                channel_state = t("control.info.locked", lang)
             elif channel_state_id == ChannelState.HIDDEN.value:
-                channel_state = "🙈 Hidden"
+                channel_state = t("control.info.hidden", lang)
             else:
-                channel_state = "None"
-            self.add_field(name="Access", value=f"{channel_state}", inline=True)
+                channel_state = t("common.none", lang)
+            self.add_field(name=t("control.info.access", lang), value=f"{channel_state}", inline=True)

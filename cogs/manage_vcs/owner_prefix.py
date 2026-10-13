@@ -1,5 +1,6 @@
 import logging
 import discord
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,8 @@ async def give_owner_prefix(bot, member):
     if new_nick == current_nick:
         return
 
-    await _set_nick(member, new_nick, "Owner prefix assignment")
+    lang = bot.repos.guild_settings.get_language(member.guild.id)
+    await _set_nick(member, new_nick, t("owner.prefix_assign_reason", lang))
 
 
 async def remove_owner_prefix(bot, member):
@@ -127,4 +129,5 @@ async def remove_owner_prefix(bot, member):
         return
 
     new_nick = current_nick[len(owner_prefix):] or None
-    await _set_nick(member, new_nick, "Owner prefix removal")
+    lang = bot.repos.guild_settings.get_language(member.guild.id)
+    await _set_nick(member, new_nick, t("owner.prefix_remove_reason", lang))

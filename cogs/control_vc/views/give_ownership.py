@@ -1,8 +1,8 @@
 import discord
-
 from cogs.manage_vcs.owner_role import give_owner_role, remove_owner_role
 from cogs.manage_vcs.owner_prefix import give_owner_prefix, remove_owner_prefix
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
+from config.i18n import t
 
 
 class GiveOwnershipView(discord.ui.View):
@@ -11,6 +11,8 @@ class GiveOwnershipView(discord.ui.View):
         self.bot = bot
         self.channel = channel
         self.message = None
+        lang = bot.repos.guild_settings.get_language(channel.guild.id)
+        self.lang = lang
 
         class SelectUserMenu(discord.ui.Select):
             def __init__(self, bot, channel):
@@ -22,7 +24,7 @@ class GiveOwnershipView(discord.ui.View):
                 options = []
                 options.append(
                     discord.SelectOption(
-                        label=f"Noone (allows anyone to claim)",
+                        label=t("control.give.noone", lang),
                         description=f"",
                         value=f"None",
                         emoji="❌"
@@ -40,7 +42,7 @@ class GiveOwnershipView(discord.ui.View):
                         )
                     )
 
-                super().__init__(placeholder="Select user to transfer ownership to", options=options, min_values=1, max_values=1)
+                super().__init__(placeholder=t("control.give.placeholder", lang), options=options, min_values=1, max_values=1)
 
             async def callback(self, interaction: discord.Interaction):
                 owner_perms = {'connect': True, 'view_channel': True}
@@ -48,11 +50,11 @@ class GiveOwnershipView(discord.ui.View):
                     selected_member = None
 
                     embed = discord.Embed(
-                        title="Channel available to Claim!",
-                        description=f"Ownership of your channel has been removed.",
+                        title=t("control.give.released_title", lang),
+                        description=t("control.give.released_description", lang),
                         color=0x00ff00
                     )
-                    embed.set_footer(text="This message will disappear in 20 seconds.")
+                    embed.set_footer(text=t("common.disappear_seconds", lang, seconds=20))
                     await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=20)
 
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, None)
@@ -78,28 +80,28 @@ class GiveOwnershipView(discord.ui.View):
                     await update_channel_name_and_control_msg(self.bot, [self.channel.id])
 
                     embed = discord.Embed(
-                        title="Transferred!",
-                        description=f"Ownership of your channel was successfully transferred to {selected_member.mention}.",
+                        title=t("control.give.transferred_title", lang),
+                        description=t("control.give.transferred_description", lang, mention=selected_member.mention),
                         color=0x00ff00
                     )
-                    embed.set_footer(text="This message will disappear in 20 seconds.")
+                    embed.set_footer(text=t("common.disappear_seconds", lang, seconds=20))
                     await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=20)
 
                     embed = discord.Embed(
-                        title="Channel Ownership",
-                        description=f"You now own this channel! Use the above buttons to manage it as you wish.",
+                        title=t("control.give.new_owner_title", lang),
+                        description=t("control.give.new_owner_description", lang),
                         color=discord.Color.blue()
                     )
-                    embed.set_footer(text="This message will disappear in 60 seconds.")
+                    embed.set_footer(text=t("common.disappear_seconds", lang, seconds=60))
                     await self.channel.send(f"{selected_member.mention}", embed=embed, delete_after=60)
 
         self.add_item(SelectUserMenu(bot, self.channel))
 
     async def send_initial_message(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="🎁 Who would you like to give your channel to?",
-            description=f"You have 60 seconds to select one member.",
-            footer=discord.EmbedFooter("You have 60 seconds to select an option."),
+            title=t("control.give.title", self.lang),
+            description=t("control.give.description", self.lang),
+            footer=discord.EmbedFooter(t("control.give.footer", self.lang)),
             color=0x00ff00
         )
         self.message = await interaction.followup.send(embed=embed, view=self, ephemeral=True, wait=True)  # wait ensures that self.message is set before continuing

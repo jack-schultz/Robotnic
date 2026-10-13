@@ -2,6 +2,7 @@ import logging
 import discord
 from cogs.control_vc.enums import Action
 from cogs.control_vc.owner import claim_or_verify_owner
+from config.i18n import t
 
 logger = logging.getLogger("cogs.control_vc.member_actions.handler")
 
@@ -15,51 +16,17 @@ _MODERATOR_PERMS = [
     "administrator"
 ]
 
+# Locale key prefixes for result messages, each has .title, .one, .many and .none
 _RESPONSES = {
-    Action.BAN: {
-        "title": "Banned!",
-        "one": "Banned {mention} from your channel.",
-        "many": "Banned {count} member(s)/role(s) from your channel.",
-        "none": "No bannable users or roles were selected.",
-    },
-    Action.ALLOW: {
-        "title": "Allowed!",
-        "one": "Allowed {mention} to your channel.",
-        "many": "Allowed {count} member(s)/role(s) in your channel.",
-        "none": "No allowable users or roles were selected.",
-    },
-    Action.MUTE: {
-        "title": "Muted!",
-        "one": "Muted {mention} in your channel.",
-        "many": "Muted {count} member(s) in your channel.",
-        "none": "No mutable members were selected.",
-    },
-    Action.UNMUTE: {
-        "title": "Unmuted!",
-        "one": "Unmuted {mention} in your channel.",
-        "many": "Unmuted {count} member(s) in your channel.",
-        "none": "No unmuteable members were selected.",
-    },
-    Action.DEAFEN: {
-        "title": "Deafened!",
-        "one": "Deafened {mention} in your channel.",
-        "many": "Deafened {count} member(s) in your channel.",
-        "none": "No deafenable members were selected.",
-    },
-    Action.UNDEAFEN: {
-        "title": "Undeafened!",
-        "one": "Undeafened {mention} in your channel.",
-        "many": "Undeafened {count} member(s) in your channel.",
-        "none": "No undeafenable members were selected.",
-    },
+    Action.BAN: "actions.ban",
+    Action.ALLOW: "actions.allow",
+    Action.MUTE: "actions.mute",
+    Action.UNMUTE: "actions.unmute",
+    Action.DEAFEN: "actions.deafen",
+    Action.UNDEAFEN: "actions.undeafen",
 }
 
-_UNMUTE_AND_UNDEAFEN = {
-    "title": "Unmuted and undeafened!",
-    "one": "Unmuted and undeafened {mention}.",
-    "many": "Unmuted and undeafened {count} member(s).",
-    "none": "No members could be unmuted and undeafened.",
-}
+_UNMUTE_AND_UNDEAFEN = "actions.unmute_undeafen"
 
 
 def _unique(items):
@@ -81,13 +48,13 @@ async def _reply_error(interaction, message):
         await interaction.response.send_message(message, ephemeral=True, delete_after=15)
 
 
-async def _resolve_channel(bot, user):
+async def _resolve_channel(bot, user, lang):
     if not isinstance(user, discord.Member) or user.voice is None or user.voice.channel is None:
-        return None, f"You are not connected to a voice channel {user.mention}!"
+        return None, t("control.not_in_voice", lang, mention=user.mention)
 
     channel = user.voice.channel
     if bot.repos.temp_channels.get_info(channel.id) is None:
-        return None, "This is not a controlled voice channel."
+        return None, t("control.not_controlled", lang)
     return channel, None
 
 
@@ -138,15 +105,16 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
     actions = tuple(actions)
 
     user = interaction.user
+    lang = bot.repos.guild_settings.get_language(interaction.guild_id)
 
     if channel is None:
-        channel, error = await _resolve_channel(bot, user)
+        channel, error = await _resolve_channel(bot, user, lang)
         if error:
             await _reply_error(interaction, error)
             return
 
     if bot.repos.temp_channels.get_info(channel.id) is None:
-        await _reply_error(interaction, "This is not a controlled voice channel.")
+        await _reply_error(interaction, t("control.not_controlled", lang))
         return
 
     ok, error = await claim_or_verify_owner(bot, channel, user)
@@ -168,8 +136,7 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
             if applied is None:
                 await _reply_error(
                     interaction,
-                    f"Sorry {user.mention}, I do not have permission to change this channel's access. "
-                    "I need Manage Roles, and my highest role must be above the roles on this channel.",
+                    t("common.no_permission_access", lang, mention=user.mention),
                 )
                 return
         affected.extend(applied)
@@ -178,29 +145,29 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
         await _sync_member_voice(bot, channel, member)
 
     reply = await interaction.followup.send(
-        embed=_result_embed(actions, _unique(affected)),
+        embed=_result_embed(actions, _unique(affected), lang),
         ephemeral=True,
         wait=True,
     )
     await reply.delete(delay=10)
 
 
-def _result_embed(actions, affected):
+def _result_embed(actions, affected, lang):
     if set(actions) == {Action.UNMUTE, Action.UNDEAFEN}:
-        copy = _UNMUTE_AND_UNDEAFEN
+        prefix = _UNMUTE_AND_UNDEAFEN
     else:
-        copy = _RESPONSES[actions[0]]
+        prefix = _RESPONSES[actions[0]]
 
     if len(affected) == 1:
-        title = copy["title"]
-        description = copy["one"].format(mention=affected[0].mention)
+        title = t(f"{prefix}.title", lang)
+        description = t(f"{prefix}.one", lang, mention=affected[0].mention)
     elif len(affected) > 1:
-        title = copy["title"]
-        description = copy["many"].format(count=len(affected))
+        title = t(f"{prefix}.title", lang)
+        description = t(f"{prefix}.many", lang, count=len(affected))
     else:
-        title = copy["none"]
+        title = t(f"{prefix}.none", lang)
         description = ""
 
     embed = discord.Embed(title=title, description=description, color=0x00FF00)
-    embed.set_footer(text="This message will disappear in 10 seconds.")
+    embed.set_footer(text=t("common.disappear_seconds", lang, seconds=10))
     return embed

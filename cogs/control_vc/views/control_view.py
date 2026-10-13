@@ -11,6 +11,7 @@ from cogs.control_vc.views.give_ownership import GiveOwnershipView
 from cogs.control_vc.member_actions.views import BanUserView, DeafenUserView, MuteUserView
 from cogs.manage_vcs.owner_role import remove_owner_role
 from cogs.manage_vcs.owner_prefix import remove_owner_prefix
+from config.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,8 @@ class ConfirmDeleteView(View):
         super().__init__(timeout=60)
         self.bot = bot
         self.source = interaction
-        yes = discord.ui.Button(label="Yes", style=discord.ButtonStyle.danger)
+        self.lang = bot.repos.guild_settings.get_language(interaction.guild.id)
+        yes = discord.ui.Button(label=t("control.delete.yes", self.lang), style=discord.ButtonStyle.danger)
         yes.callback = self.confirm
         self.add_item(yes)
 
@@ -46,7 +48,7 @@ class ConfirmDeleteView(View):
             )
             try:
                 await interaction.followup.send(
-                    f"Sorry {interaction.user.mention}, I do not have permission to delete this channel.",
+                    t("common.no_permission_delete", self.lang, mention=interaction.user.mention),
                     ephemeral=True,
                 )
             except (discord.NotFound, discord.HTTPException):
@@ -76,11 +78,11 @@ class ConfirmDeleteView(View):
         )
         try:
             embed = discord.Embed(
-                title="Channel Deletion Timed Out",
-                description="Channel deletion timed out. No action was taken.",
+                title=t("control.delete.timeout_title", self.lang),
+                description=t("control.delete.timeout_description", self.lang),
                 color=discord.Color.red(),
             )
-            embed.set_footer(text="This message will disappear in 15 seconds.")
+            embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=15))
             reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
             await reply.delete(delay=15)
         except (discord.NotFound, discord.HTTPException):
@@ -88,13 +90,14 @@ class ConfirmDeleteView(View):
 
 
 class ControlView(View):
-    def __init__(self, bot):
+    def __init__(self, bot, lang=None):
         super().__init__(timeout=None)
         self.bot = bot
+        self.lang = lang
 
     @classmethod
     def for_channel(cls, bot, channel):
-        view = cls(bot)
+        view = cls(bot, bot.repos.guild_settings.get_language(channel.guild.id))
         view.create_items(channel)
         return view
 
@@ -111,11 +114,7 @@ class ControlView(View):
 
     async def send_control_message(self, channel, owner_member, channel_name=None):
         embed = discord.Embed(color=discord.Color.green())
-        embed.description = (
-            "This is a [FOSS](<https://wikipedia.org/wiki/Free_and_open-source_software>) project.\n"
-            "You can contribute [here](<https://github.com/jack-schultz/Robotnic>) or support the dev "
-            "[here](<https://ko-fi.com/jackschultzdev>)."
-        )
+        embed.description = t("control.foss_notice", self.lang)
         embeds = [
             embed,
             ChannelInfoEmbed(self.bot, channel, title=channel_name),
@@ -128,7 +127,7 @@ class ControlView(View):
 
         if guild_settings["mention_owner_bool"]:
             await channel.send(
-                f"{owner_member.mention}, this is *your* vc. Use the message above to control it.",
+                t("control.owner_mention", self.lang, mention=owner_member.mention),
                 delete_after=1,
             )
 
@@ -157,7 +156,7 @@ class ControlView(View):
         if not enabled_controls:
             self.add_item(
                 discord.ui.Button(
-                    label="No Available Options",
+                    label=t("control.no_options", self.lang),
                     style=discord.ButtonStyle.secondary,
                     disabled=True,
                     custom_id="no_options",
@@ -292,42 +291,44 @@ class ControlView(View):
             button.callback = self._callback
 
         if "labels" in control_options:
-            lock_button.label = "Lock"
-            hide_button.label = "Hide"
-            public_button.label = "Public"
-            name_button.label = "Rename"
-            limit_button.label = "Limit"
-            clear_button.label = "Clear"
-            delete_button.label = "Delete"
-            give_button.label = "Give"
-            ban_button.label = "Ban"
-            mute_button.label = "Mute"
-            deafen_button.label = "Deafen"
+            lock_button.label = t("control.button.lock", self.lang)
+            hide_button.label = t("control.button.hide", self.lang)
+            public_button.label = t("control.button.public", self.lang)
+            name_button.label = t("control.button.rename", self.lang)
+            limit_button.label = t("control.button.limit", self.lang)
+            clear_button.label = t("control.button.clear", self.lang)
+            delete_button.label = t("control.button.delete", self.lang)
+            give_button.label = t("control.button.give", self.lang)
+            ban_button.label = t("control.button.ban", self.lang)
+            mute_button.label = t("control.button.mute", self.lang)
+            deafen_button.label = t("control.button.deafen", self.lang)
 
     def _add_dropdown_items(self, enabled_controls, channel_state, row=None):
+        lang = self.lang
+
         # Handles non-state controls
         class ActionDropdown(discord.ui.Select):
             def __init__(select_self):
                 options = []
                 if "rename" in enabled_controls:
-                    options.append(discord.SelectOption(value="rename", label="Rename Channel", emoji="🏷️"))
+                    options.append(discord.SelectOption(value="rename", label=t("control.dropdown.rename", lang), emoji="🏷️"))
                 if "limit" in enabled_controls:
-                    options.append(discord.SelectOption(value="limit", label="Edit User Limit", emoji="🚧"))
+                    options.append(discord.SelectOption(value="limit", label=t("control.dropdown.limit", lang), emoji="🚧"))
                 if "ban" in enabled_controls:
-                    options.append(discord.SelectOption(value="ban", label="Ban/Allow Users or Roles", emoji="🔨"))
+                    options.append(discord.SelectOption(value="ban", label=t("control.dropdown.ban", lang), emoji="🔨"))
                 if "mute" in enabled_controls:
-                    options.append(discord.SelectOption(value="mute", label="Mute/Unmute Users", emoji="🔇"))
+                    options.append(discord.SelectOption(value="mute", label=t("control.dropdown.mute", lang), emoji="🔇"))
                 if "deafen" in enabled_controls:
-                    options.append(discord.SelectOption(value="deafen", label="Deafen/Undeafen Users", emoji="🔕"))
+                    options.append(discord.SelectOption(value="deafen", label=t("control.dropdown.deafen", lang), emoji="🔕"))
                 if "give" in enabled_controls:
-                    options.append(discord.SelectOption(value="give", label="Give Ownership", emoji="🎁"))
+                    options.append(discord.SelectOption(value="give", label=t("control.dropdown.give", lang), emoji="🎁"))
                 if "clear" in enabled_controls:
-                    options.append(discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽"))
+                    options.append(discord.SelectOption(value="clear", label=t("control.dropdown.clear", lang), emoji="🧽"))
                 if "delete" in enabled_controls:
-                    options.append(discord.SelectOption(value="delete", label="Delete Channel", emoji="🗑️"))
+                    options.append(discord.SelectOption(value="delete", label=t("control.dropdown.delete", lang), emoji="🗑️"))
 
                 select_kwargs = {
-                    "placeholder": "Settings",
+                    "placeholder": t("control.dropdown.placeholder", lang),
                     "min_values": 1,
                     "max_values": 1,
                     "options": options,
@@ -345,7 +346,7 @@ class ControlView(View):
                     options.append(
                         discord.SelectOption(
                             value="public",
-                            label="Public",
+                            label=t("control.state.public", lang),
                             emoji="🌐",
                             default=channel_state == ChannelState.PUBLIC.value,
                         )
@@ -354,7 +355,7 @@ class ControlView(View):
                     options.append(
                         discord.SelectOption(
                             value="lock",
-                            label="Locked",
+                            label=t("control.state.locked", lang),
                             emoji="🔒",
                             default=channel_state == ChannelState.LOCKED.value,
                         )
@@ -363,14 +364,14 @@ class ControlView(View):
                     options.append(
                         discord.SelectOption(
                             value="hide",
-                            label="Hidden",
+                            label=t("control.state.hidden", lang),
                             emoji="🙈",
                             default=channel_state == ChannelState.HIDDEN.value,
                         )
                     )
 
                 select_kwargs = {
-                    "placeholder": "Control Access",
+                    "placeholder": t("control.state.placeholder", lang),
                     "min_values": 1,
                     "max_values": 1,
                     "options": options,
@@ -449,6 +450,7 @@ class ControlView(View):
         await interaction.response.send_modal(UserLimitModal(self.bot, interaction.channel))
 
     async def clear_callback(self, interaction: discord.Interaction):
+        lang = self.bot.repos.guild_settings.get_language(interaction.guild.id)
         excluded_message_ids = []
         if interaction.message:
             excluded_message_ids.append(interaction.message.id)
@@ -467,26 +469,27 @@ class ControlView(View):
                     f"in guild '{interaction.guild.name}': {e}"
                 )
                 reply = await interaction.followup.send(
-                    f"Failed, {e}", ephemeral=True, wait=True
+                    t("control.clear.failed", lang, error=e), ephemeral=True, wait=True
                 )
                 await reply.delete(delay=15)
 
         embed = discord.Embed(
-            title="Messages Deleted",
-            description=f"Deleted `{len(messages_to_delete)}` messages.",
+            title=t("control.clear.title", lang),
+            description=t("control.clear.description", lang, count=len(messages_to_delete)),
             color=discord.Color.red(),
         )
-        embed.set_footer(text="This message will disappear in 15 seconds.")
+        embed.set_footer(text=t("common.disappear_seconds", lang, seconds=15))
         reply = await interaction.followup.send(embed=embed, ephemeral=True, wait=True)
         await reply.delete(delay=15)
 
     async def delete_callback(self, interaction: discord.Interaction):
+        lang = self.bot.repos.guild_settings.get_language(interaction.guild.id)
         embed = discord.Embed(
-            title="Channel Deletion Confirmation",
-            description="Are you sure you want to delete this channel? Press Yes within 60 seconds to confirm.",
+            title=t("control.delete.confirm_title", lang),
+            description=t("control.delete.confirm_description", lang),
             color=discord.Color.orange(),
         )
-        embed.set_footer(text="Awaiting your response...")
+        embed.set_footer(text=t("control.delete.confirm_footer", lang))
         view = ConfirmDeleteView(self.bot, interaction)
         reply = await interaction.followup.send(embed=embed, view=view, ephemeral=True, wait=True)
         await reply.delete(delay=60)

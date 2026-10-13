@@ -1,21 +1,23 @@
 import discord
 from discord.ui import View, Select, Button, Modal, InputText
+from config.i18n import t
 
 
-def english_list(items):
+def format_list(items, lang):
     items = [f"`{str(i).capitalize()}`" for i in items]
     if not items:
-        return "None"
+        return t("common.list.none", lang)
     if len(items) == 1:
         return items[0]
     if len(items) == 2:
-        return f"{items[0]} and {items[1]}"
-    return ", ".join(items[:-1]) + f", and {items[-1]}"
+        return t("common.list.two", lang, first=items[0], second=items[1])
+    return t("common.list.many", lang, items=t("common.list.separator", lang).join(items[:-1]), last=items[-1])
 
 
 class ControlsModal(discord.ui.DesignerModal):
     def __init__(self, bot, ctx):
-        super().__init__(title="Edit Server Settings")
+        self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
+        super().__init__(title=t("settings.modal.title", self.lang))
         self.bot = bot
         guild_settings = self.bot.repos.guild_settings.get(ctx.guild.id)
 
@@ -25,21 +27,25 @@ class ControlsModal(discord.ui.DesignerModal):
 
     def _add_enabled_controls(self, guild_settings):
         enabled_controls = guild_settings["enabled_controls"]
-        controls_options = [
-            discord.SelectOption(value="rename", label="Rename Channel", emoji="🏷️", default="rename" in enabled_controls),
-            discord.SelectOption(value="limit", label="Edit User Limit", emoji="🚧", default="limit" in enabled_controls),
-            discord.SelectOption(value="clear", label="Clear Messages", emoji="🧽", default="clear" in enabled_controls),
-            discord.SelectOption(value="ban", label="Ban Users or Roles", emoji="🔨", default="ban" in enabled_controls),
-            discord.SelectOption(value="mute", label="Mute Users", emoji="🔇", default="mute" in enabled_controls),
-            discord.SelectOption(value="deafen", label="Deafen Users", emoji="🔕", default="deafen" in enabled_controls),
-            discord.SelectOption(value="give", label="Give Ownership", emoji="🎁", default="give" in enabled_controls),
-            discord.SelectOption(value="delete", label="Delete Channel", emoji="🗑️", default="delete" in enabled_controls),
-            discord.SelectOption(value="lock", label="Lock Channel", emoji="🔒", default="lock" in enabled_controls),
-            discord.SelectOption(value="hide", label="Hide Channel", emoji="🙈", default="hide" in enabled_controls),
+        controls = [
+            ("rename", "🏷️"),
+            ("limit", "🚧"),
+            ("clear", "🧽"),
+            ("ban", "🔨"),
+            ("mute", "🔇"),
+            ("deafen", "🔕"),
+            ("give", "🎁"),
+            ("delete", "🗑️"),
+            ("lock", "🔒"),
+            ("hide", "🙈"),
         ]
-        controls_select = Select(placeholder="Select options to Enable or Disable", options=controls_options, max_values=len(controls_options), min_values=0, required=False)
+        controls_options = [
+            discord.SelectOption(value=control, label=t(f"settings.controls.{control}", self.lang), emoji=emoji, default=control in enabled_controls)
+            for control, emoji in controls
+        ]
+        controls_select = Select(placeholder=t("settings.controls.select_placeholder", self.lang), options=controls_options, max_values=len(controls_options), min_values=0, required=False)
         self.controls_select_label = discord.ui.Label(
-            "Enable channel controls available to users.",
+            t("settings.controls.select_label", self.lang),
             controls_select,
         )
         self.add_item(self.controls_select_label)
@@ -47,17 +53,17 @@ class ControlsModal(discord.ui.DesignerModal):
     def _save_enabled_controls(self, guild_id, embed):
         enabled_controls = self.controls_select_label.item.values
         self.bot.repos.guild_settings.edit(guild_id, enabled_controls=list(enabled_controls))
-        embed.add_field(name=f"Enabled Control Options", value=f"{english_list(enabled_controls)}", inline=False)
+        embed.add_field(name=t("settings.controls.enabled_field", self.lang), value=f"{format_list(enabled_controls, self.lang)}", inline=False)
 
     def _add_mention_owner(self, guild_settings):
         mention_owner = guild_settings["mention_owner_bool"]
         options = [
-            discord.SelectOption(value="true", label="Do Mention", default=mention_owner),
-            discord.SelectOption(value="false", label="Do Not Mention", default=not mention_owner),
+            discord.SelectOption(value="true", label=t("settings.controls.mention_yes", self.lang), default=mention_owner),
+            discord.SelectOption(value="false", label=t("settings.controls.mention_no", self.lang), default=not mention_owner),
         ]
 
         self.mention_owner_label = discord.ui.Label(
-            "Mention owner upon creation?",
+            t("settings.controls.mention_label", self.lang),
             discord.ui.Select(
                 options=options,
                 min_values=1,
@@ -72,25 +78,24 @@ class ControlsModal(discord.ui.DesignerModal):
         if should_mention == "false":
             should_mention = False
         self.bot.repos.guild_settings.edit(guild_id, mention_owner=should_mention)
-        embed.add_field(name=f"Mention Owner", value=f"`{should_mention}`", inline=False)
+        embed.add_field(name=t("settings.controls.mention_field", self.lang), value=f"`{should_mention}`", inline=False)
 
     def _add_control_options(self, guild_settings):
         enabled_options = guild_settings["control_options"]
-        default = "Dropdown Menu"
+        default = "dropdown"
         if "dropdown" in enabled_options:
-            default = "Dropdown Menu"
+            default = "dropdown"
         elif "buttons" in enabled_options and "labels" in enabled_options:
-            default = "Buttons (Icons & Labels)"
+            default = "buttons_labels"
         elif "buttons" in enabled_options:
-            default = "Buttons (Icons Only)"
+            default = "buttons_icons"
         control_options = [
-            discord.SelectOption(label="Dropdown Menu", default=default == "Dropdown Menu"),
-            discord.SelectOption(label="Buttons (Icons & Labels)", default=default == "Buttons (Icons & Labels)"),
-            discord.SelectOption(label="Buttons (Icons Only)", default=default == "Buttons (Icons Only)"),
+            discord.SelectOption(value=control_type, label=t(f"settings.controls.type_{control_type}", self.lang), default=default == control_type)
+            for control_type in ("dropdown", "buttons_labels", "buttons_icons")
         ]
-        options_select = Select(placeholder="Select an option", options=control_options, max_values=1, min_values=1, required=True)
+        options_select = Select(placeholder=t("settings.controls.type_placeholder", self.lang), options=control_options, max_values=1, min_values=1, required=True)
         self.options_select_label = discord.ui.Label(
-            "Select how to control your channels",
+            t("settings.controls.type_label", self.lang),
             options_select,
         )
         self.add_item(self.options_select_label)
@@ -101,22 +106,22 @@ class ControlsModal(discord.ui.DesignerModal):
 
         # Control type
         control_type_map = {
-            "Dropdown Menu": {"dropdown", "labels"},
-            "Buttons (Icons & Labels)": {"buttons", "icons", "labels"},
-            "Buttons (Icons Only)": {"buttons", "icons"},
+            "dropdown": {"dropdown", "labels"},
+            "buttons_labels": {"buttons", "icons", "labels"},
+            "buttons_icons": {"buttons", "icons"},
         }
         selected_control_options.extend(control_type_map.get(control_type, []))
 
         self.bot.repos.guild_settings.edit(guild_id, control_options=selected_control_options)
-        embed.add_field(name=f"Control Type", value=f"`{control_type}`", inline=False)
+        embed.add_field(name=t("settings.controls.type_field", self.lang), value=f"`{t(f'settings.controls.type_{control_type}', self.lang)}`", inline=False)
 
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="Submitted!",
+            title=t("settings.modal.submitted", self.lang),
             description=f"",
             color=discord.Color.green()
         )
-        embed.set_footer(text="This message will disappear in 60 seconds.")
+        embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=60))
 
         self._save_enabled_controls(interaction.guild_id, embed)
         self._save_mention_owner(interaction.guild_id, embed)
@@ -127,7 +132,8 @@ class ControlsModal(discord.ui.DesignerModal):
 
 class LogsModal(discord.ui.DesignerModal):
     def __init__(self, bot, ctx):
-        super().__init__(title="Edit Server Settings")
+        self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
+        super().__init__(title=t("settings.modal.title", self.lang))
         self.bot = bot
         guild_settings = self.bot.repos.guild_settings.get(ctx.guild.id)
 
@@ -141,7 +147,7 @@ class LogsModal(discord.ui.DesignerModal):
             log_channel = None
 
         self.log_channel_select = discord.ui.Label(
-            "Select a Log Channel",
+            t("settings.logs.channel_label", self.lang),
             discord.ui.ChannelSelect(
                 channel_types=[discord.ChannelType.text],
                 min_values=1,
@@ -156,23 +162,27 @@ class LogsModal(discord.ui.DesignerModal):
         if len(self.log_channel_select.item.values) >= 1:
             log_channel = self.log_channel_select.item.values[0]
             self.bot.repos.guild_settings.edit(guild_id, logs_channel_id=log_channel.id)
-            embed.add_field(name=f"Selected Log Channel", value=f"{log_channel.mention}/`#{log_channel.name}` (`{log_channel.id}`)", inline=False)
+            embed.add_field(name=t("settings.logs.channel_field", self.lang), value=f"{log_channel.mention}/`#{log_channel.name}` (`{log_channel.id}`)", inline=False)
         else:
             self.bot.repos.guild_settings.edit(guild_id, logs_channel_id=0)
-            embed.add_field(name=f"Selected Log Channel", value=f"None/Disabled", inline=False)
+            embed.add_field(name=t("settings.logs.channel_field", self.lang), value=t("settings.logs.channel_disabled", self.lang), inline=False)
 
     def _add_log_events(self, guild_settings):
         enabled_events = guild_settings["enabled_log_events"]
-        events_options = [
-            discord.SelectOption(value="channel_create", label="channel_create", emoji="🎁", default="channel_create" in enabled_events),
-            discord.SelectOption(value="channel_rename", label="channel_rename", emoji="🏷️", default="channel_rename" in enabled_events),
-            discord.SelectOption(value="channel_remove", label="channel_remove", emoji="🗑️", default="channel_remove" in enabled_events),
-            discord.SelectOption(value="profanity_block", label="profanity_block", emoji="😶", default="profanity_block" in enabled_events),
+        events = [
+            ("channel_create", "🎁"),
+            ("channel_rename", "🏷️"),
+            ("channel_remove", "🗑️"),
+            ("profanity_block", "😶"),
         ]
-        events_select = Select(placeholder="Select options to Enable or Disable", options=events_options, max_values=len(events_options), min_values=0, required=False)
+        events_options = [
+            discord.SelectOption(value=event, label=t(f"settings.logs.event.{event}", self.lang), emoji=emoji, default=event in enabled_events)
+            for event, emoji in events
+        ]
+        events_select = Select(placeholder=t("settings.logs.events_placeholder", self.lang), options=events_options, max_values=len(events_options), min_values=0, required=False)
 
         self.events_select_label = discord.ui.Label(
-            "Select which Events to Log",
+            t("settings.logs.events_label", self.lang),
             events_select,
         )
         self.add_item(self.events_select_label)
@@ -180,15 +190,15 @@ class LogsModal(discord.ui.DesignerModal):
     def _save_log_events(self, guild_id, embed):
         enabled_log_events = self.events_select_label.item.values
         self.bot.repos.guild_settings.edit(guild_id, enabled_log_events=enabled_log_events)
-        embed.add_field(name=f"Enabled Log Events", value=f"{english_list(enabled_log_events)}", inline=False)
+        embed.add_field(name=t("settings.logs.events_field", self.lang), value=f"{format_list(enabled_log_events, self.lang)}", inline=False)
 
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="Submitted!",
+            title=t("settings.modal.submitted", self.lang),
             description=f"",
             color=discord.Color.green()
         )
-        embed.set_footer(text="This message will disappear in 60 seconds.")
+        embed.set_footer(text=t("common.disappear_seconds", self.lang, seconds=60))
 
         self._save_log_channel(interaction.guild_id, embed)
         self._save_log_events(interaction.guild_id, embed)
