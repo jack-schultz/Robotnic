@@ -375,9 +375,8 @@
     "temp_channel.permissions.discord_error": "Discord error",
     "temp_channel.permissions.require_following": "Sorry {mention}, I require the following permissions.",
     "temp_channel.permissions.category_overwrite": " Make sure they are not overwritten by the category (In this case `{category}`).",
-    "temp_channel.permissions.cannot_create": "Sorry {mention}, I do not have permission to create a channel in the desired category",
-    "temp_channel.permissions.cannot_create_category": " (`{category}`).",
-    "temp_channel.permissions.cannot_create_end": ".",
+    "temp_channel.permissions.cannot_create_in_category": "Sorry {mention}, I do not have permission to create a channel in the desired category (`{category}`).",
+    "temp_channel.permissions.cannot_create": "Sorry {mention}, I do not have permission to create a channel.",
 
     "owner.role_reason": "Owner role assignment",
     "owner.prefix_assign_reason": "Owner prefix assignment",

@@ -127,11 +127,12 @@ async def _notify_missing_permissions(
         if category:
             response_text += t("temp_channel.permissions.category_overwrite", lang, category=category.name)
     else:
-        response_text = t("temp_channel.permissions.cannot_create", lang, mention=member.mention)
         if category:
-            response_text += t("temp_channel.permissions.cannot_create_category", lang, category=category.name)
+            response_text = t(
+                "temp_channel.permissions.cannot_create_in_category", lang, mention=member.mention, category=category.name
+            )
         else:
-            response_text += t("temp_channel.permissions.cannot_create_end", lang)
+            response_text = t("temp_channel.permissions.cannot_create", lang, mention=member.mention)
 
     creator_perms = creator_channel.permissions_for(member.guild.me)
     if creator_perms.send_messages and creator_perms.embed_links:
