@@ -96,7 +96,7 @@ def command_text(*keys: str, language: str | None = None) -> str:
     return "/" + " ".join(t(f"{key}.name", language) for key in keys)
 
 
-def t(key: str, language: str | None = None, **kwargs) -> str:
+def t(key: str, language: str | None = None, /, **kwargs) -> str:
     """
     Returns the string for `key` in `language`, formatted with kwargs.
     Falls back to the default language if the language or key is missing, then to the key itself.
