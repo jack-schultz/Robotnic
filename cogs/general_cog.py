@@ -12,11 +12,11 @@ class GeneralCog(commands.Cog):
     @discord.slash_command(**command_kwargs("commands.ping"))
     @discord.default_permissions(manage_channels=True)
     async def ping(self, ctx):
-        await ctx.respond(t("general.ping", self.bot.repos.guild_settings.get_language(ctx), latency=self.bot.latency))
+        await ctx.respond(t("general.ping", self.bot.repos.guild_settings.get_language(ctx.guild_id), latency=self.bot.latency))
 
     @discord.slash_command(**command_kwargs("commands.help"))
     async def help(self, ctx):
-        lang = self.bot.repos.guild_settings.get_language(ctx)
+        lang = self.bot.repos.guild_settings.get_language(ctx.guild_id)
         embeds = [
             HelpEmbed(lang)
         ]
@@ -24,7 +24,7 @@ class GeneralCog(commands.Cog):
 
     @discord.slash_command(**command_kwargs("commands.donate"))
     async def donate(self, ctx):
-        lang = self.bot.repos.guild_settings.get_language(ctx)
+        lang = self.bot.repos.guild_settings.get_language(ctx.guild_id)
         await ctx.respond(f"", embeds=[DonateEmbed(lang)], view=ButtonsView(lang))
 
     # Alias to /donate
