@@ -3,7 +3,7 @@ import datetime
 import discord
 import requests
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
-from config.i18n import t, command_text
+from config.i18n import t, command_text, fit_limit, MODAL_TITLE_LIMIT, LABEL_LIMIT, PLACEHOLDER_LIMIT
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +30,14 @@ async def check_profanity(session, text: str) -> dict | None:
 class ChangeNameModal(discord.ui.Modal):
     def __init__(self, bot, channel):
         self.lang = bot.repos.guild_settings.get_language(channel.guild.id)
-        super().__init__(title=t("control.rename.modal_title", self.lang))
+        super().__init__(title=fit_limit(t("control.rename.modal_title", self.lang), MODAL_TITLE_LIMIT))
         self.bot = bot
         self.channel = channel
 
         # Define the text inputs
         self.channel_name = discord.ui.InputText(
-            label=t("control.rename.label", self.lang),
-            placeholder=f"{channel.name}",
+            label=fit_limit(t("control.rename.label", self.lang), LABEL_LIMIT),
+            placeholder=fit_limit(f"{channel.name}", PLACEHOLDER_LIMIT),
             required=False,
             max_length=25
         )

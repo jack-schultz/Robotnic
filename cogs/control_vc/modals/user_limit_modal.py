@@ -1,18 +1,18 @@
 import discord
-from config.i18n import t
+from config.i18n import t, fit_limit, MODAL_TITLE_LIMIT, LABEL_LIMIT, PLACEHOLDER_LIMIT
 
 
 class UserLimitModal(discord.ui.Modal):
     def __init__(self, bot, channel):
         self.lang = bot.repos.guild_settings.get_language(channel.guild.id)
-        super().__init__(title=t("control.limit.modal_title", self.lang))
+        super().__init__(title=fit_limit(t("control.limit.modal_title", self.lang), MODAL_TITLE_LIMIT))
         self.bot = bot
         self.channel = channel
 
         # Define the text inputs
         self.user_limit = discord.ui.InputText(
-            label=t("control.limit.label", self.lang),
-            placeholder=f"{channel.user_limit}",
+            label=fit_limit(t("control.limit.label", self.lang), LABEL_LIMIT),
+            placeholder=fit_limit(f"{channel.user_limit}", PLACEHOLDER_LIMIT),
             required=False,
             max_length=2
         )

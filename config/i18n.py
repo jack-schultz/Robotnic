@@ -121,3 +121,19 @@ def t(key: str, language: str | None = None, /, **kwargs) -> str:
         if language != DEFAULT_LANGUAGE:
             return t(key, DEFAULT_LANGUAGE, **kwargs)
         return text
+
+
+# Discord's modal and component limits (as enforced by py-cord), used by fit_limit()
+MODAL_TITLE_LIMIT = 45
+LABEL_LIMIT = 45
+PLACEHOLDER_LIMIT = 100
+SELECT_PLACEHOLDER_LIMIT = 150
+OPTION_LIMIT = 100
+
+
+def fit_limit(text: str, limit: int) -> str:
+    """Returns `text` unchanged if it fits in `limit` characters, else cut to `limit` characters ending in "...". Keeps translations within Discord's limits."""
+    text = str(text)
+    if len(text) <= limit:
+        return text
+    return text[:limit - 3] + "..."

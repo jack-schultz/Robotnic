@@ -1,19 +1,19 @@
 import discord
-from config.i18n import t
+from config.i18n import t, fit_limit, MODAL_TITLE_LIMIT, LABEL_LIMIT, PLACEHOLDER_LIMIT, SELECT_PLACEHOLDER_LIMIT, OPTION_LIMIT
 
 
 class EditModal(discord.ui.DesignerModal):
     def __init__(self, view, creator_id):
         self.lang = view.lang
-        super().__init__(title=t("creator_menu.modal.title", self.lang))
+        super().__init__(title=fit_limit(t("creator_menu.modal.title", self.lang), MODAL_TITLE_LIMIT))
         self.view = view
         self.creator_id = creator_id
         creator_info = self.view.bot.repos.creator_channels.get_info(self.creator_id)
 
         self.child_name_label = discord.ui.Label(
-            t("creator_menu.modal.child_name", self.lang),
+            fit_limit(t("creator_menu.modal.child_name", self.lang), LABEL_LIMIT),
             discord.ui.TextInput(
-                placeholder=f"{creator_info.child_name}",
+                placeholder=fit_limit(f"{creator_info.child_name}", PLACEHOLDER_LIMIT),
                 required=False,
                 max_length=100,
             ),
@@ -21,9 +21,9 @@ class EditModal(discord.ui.DesignerModal):
         self.add_item(self.child_name_label)
 
         self.user_limit_label = discord.ui.Label(
-            t("creator_menu.modal.user_limit", self.lang),
+            fit_limit(t("creator_menu.modal.user_limit", self.lang), LABEL_LIMIT),
             discord.ui.TextInput(
-                placeholder=f"{creator_info.user_limit}",
+                placeholder=fit_limit(f"{creator_info.user_limit}", PLACEHOLDER_LIMIT),
                 required=False,
                 max_length=500,
             ),
@@ -31,12 +31,12 @@ class EditModal(discord.ui.DesignerModal):
         self.add_item(self.user_limit_label)
 
         self.child_overwrites_label = discord.ui.Label(
-            t("creator_menu.modal.permissions", self.lang),
+            fit_limit(t("creator_menu.modal.permissions", self.lang), LABEL_LIMIT),
             discord.ui.Select(
                 options=[
-                    discord.SelectOption(value="1", label=t("creator_menu.modal.copy_creator_channel", self.lang), default=True if creator_info.child_overwrites == 1 else False),
-                    discord.SelectOption(value="2", label=t("creator_menu.modal.copy_child_category", self.lang), default=True if creator_info.child_overwrites == 2 else False),
-                    discord.SelectOption(value="0", label=t("creator_menu.modal.no_permissions", self.lang), default=True if creator_info.child_overwrites == 0 else False),
+                    discord.SelectOption(value="1", label=fit_limit(t("creator_menu.modal.copy_creator_channel", self.lang), OPTION_LIMIT), default=True if creator_info.child_overwrites == 1 else False),
+                    discord.SelectOption(value="2", label=fit_limit(t("creator_menu.modal.copy_child_category", self.lang), OPTION_LIMIT), default=True if creator_info.child_overwrites == 2 else False),
+                    discord.SelectOption(value="0", label=fit_limit(t("creator_menu.modal.no_permissions", self.lang), OPTION_LIMIT), default=True if creator_info.child_overwrites == 0 else False),
                 ],
                 min_values=1,
                 max_values=1,
@@ -47,27 +47,27 @@ class EditModal(discord.ui.DesignerModal):
 
         category = self.view.bot.get_channel(creator_info.child_category_id)
         self.category_label = discord.ui.Label(
-            t("creator_menu.modal.category", self.lang),
+            fit_limit(t("creator_menu.modal.category", self.lang), LABEL_LIMIT),
             discord.ui.ChannelSelect(
                 channel_types=[discord.ChannelType.category],
                 min_values=0,
                 max_values=1,
                 required=False,
                 default_values=[category] if category else None,
-                placeholder=t("creator_menu.modal.category_placeholder", self.lang)
+                placeholder=fit_limit(t("creator_menu.modal.category_placeholder", self.lang), SELECT_PLACEHOLDER_LIMIT)
             ),
         )
         self.add_item(self.category_label)
 
         default_role = self.view.author.guild.get_role(creator_info.default_role_id)
         self.default_role_label = discord.ui.Label(
-            t("creator_menu.modal.default_role", self.lang),
+            fit_limit(t("creator_menu.modal.default_role", self.lang), LABEL_LIMIT),
             discord.ui.RoleSelect(
                 min_values=1,
                 max_values=1,
                 required=False,
                 default_values=[default_role] if default_role else None,
-                placeholder=t("creator_menu.modal.default_role_placeholder", self.lang)
+                placeholder=fit_limit(t("creator_menu.modal.default_role_placeholder", self.lang), SELECT_PLACEHOLDER_LIMIT)
             ),
         )
         self.add_item(self.default_role_label)

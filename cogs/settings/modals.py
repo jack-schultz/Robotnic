@@ -1,6 +1,6 @@
 import discord
 from discord.ui import View, Select, Button, Modal, InputText
-from config.i18n import t
+from config.i18n import t, fit_limit, MODAL_TITLE_LIMIT, LABEL_LIMIT, SELECT_PLACEHOLDER_LIMIT, OPTION_LIMIT
 
 
 def format_list(items, lang):
@@ -17,7 +17,7 @@ def format_list(items, lang):
 class ControlsModal(discord.ui.DesignerModal):
     def __init__(self, bot, ctx):
         self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
-        super().__init__(title=t("settings.modal.title", self.lang))
+        super().__init__(title=fit_limit(t("settings.modal.title", self.lang), MODAL_TITLE_LIMIT))
         self.bot = bot
         guild_settings = self.bot.repos.guild_settings.get(ctx.guild.id)
 
@@ -40,12 +40,12 @@ class ControlsModal(discord.ui.DesignerModal):
             ("hide", "🙈"),
         ]
         controls_options = [
-            discord.SelectOption(value=control, label=t(f"settings.controls.{control}", self.lang), emoji=emoji, default=control in enabled_controls)
+            discord.SelectOption(value=control, label=fit_limit(t(f"settings.controls.{control}", self.lang), OPTION_LIMIT), emoji=emoji, default=control in enabled_controls)
             for control, emoji in controls
         ]
-        controls_select = Select(placeholder=t("settings.controls.select_placeholder", self.lang), options=controls_options, max_values=len(controls_options), min_values=0, required=False)
+        controls_select = Select(placeholder=fit_limit(t("settings.controls.select_placeholder", self.lang), SELECT_PLACEHOLDER_LIMIT), options=controls_options, max_values=len(controls_options), min_values=0, required=False)
         self.controls_select_label = discord.ui.Label(
-            t("settings.controls.select_label", self.lang),
+            fit_limit(t("settings.controls.select_label", self.lang), LABEL_LIMIT),
             controls_select,
         )
         self.add_item(self.controls_select_label)
@@ -58,12 +58,12 @@ class ControlsModal(discord.ui.DesignerModal):
     def _add_mention_owner(self, guild_settings):
         mention_owner = guild_settings["mention_owner_bool"]
         options = [
-            discord.SelectOption(value="true", label=t("settings.controls.mention_yes", self.lang), default=mention_owner),
-            discord.SelectOption(value="false", label=t("settings.controls.mention_no", self.lang), default=not mention_owner),
+            discord.SelectOption(value="true", label=fit_limit(t("settings.controls.mention_yes", self.lang), OPTION_LIMIT), default=mention_owner),
+            discord.SelectOption(value="false", label=fit_limit(t("settings.controls.mention_no", self.lang), OPTION_LIMIT), default=not mention_owner),
         ]
 
         self.mention_owner_label = discord.ui.Label(
-            t("settings.controls.mention_label", self.lang),
+            fit_limit(t("settings.controls.mention_label", self.lang), LABEL_LIMIT),
             discord.ui.Select(
                 options=options,
                 min_values=1,
@@ -90,12 +90,12 @@ class ControlsModal(discord.ui.DesignerModal):
         elif "buttons" in enabled_options:
             default = "buttons_icons"
         control_options = [
-            discord.SelectOption(value=control_type, label=t(f"settings.controls.type_{control_type}", self.lang), default=default == control_type)
+            discord.SelectOption(value=control_type, label=fit_limit(t(f"settings.controls.type_{control_type}", self.lang), OPTION_LIMIT), default=default == control_type)
             for control_type in ("dropdown", "buttons_labels", "buttons_icons")
         ]
-        options_select = Select(placeholder=t("settings.controls.type_placeholder", self.lang), options=control_options, max_values=1, min_values=1, required=True)
+        options_select = Select(placeholder=fit_limit(t("settings.controls.type_placeholder", self.lang), SELECT_PLACEHOLDER_LIMIT), options=control_options, max_values=1, min_values=1, required=True)
         self.options_select_label = discord.ui.Label(
-            t("settings.controls.type_label", self.lang),
+            fit_limit(t("settings.controls.type_label", self.lang), LABEL_LIMIT),
             options_select,
         )
         self.add_item(self.options_select_label)
@@ -133,7 +133,7 @@ class ControlsModal(discord.ui.DesignerModal):
 class LogsModal(discord.ui.DesignerModal):
     def __init__(self, bot, ctx):
         self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
-        super().__init__(title=t("settings.modal.title", self.lang))
+        super().__init__(title=fit_limit(t("settings.modal.title", self.lang), MODAL_TITLE_LIMIT))
         self.bot = bot
         guild_settings = self.bot.repos.guild_settings.get(ctx.guild.id)
 
@@ -147,7 +147,7 @@ class LogsModal(discord.ui.DesignerModal):
             log_channel = None
 
         self.log_channel_select = discord.ui.Label(
-            t("settings.logs.channel_label", self.lang),
+            fit_limit(t("settings.logs.channel_label", self.lang), LABEL_LIMIT),
             discord.ui.ChannelSelect(
                 channel_types=[discord.ChannelType.text],
                 min_values=1,
@@ -176,13 +176,13 @@ class LogsModal(discord.ui.DesignerModal):
             ("profanity_block", "😶"),
         ]
         events_options = [
-            discord.SelectOption(value=event, label=t(f"settings.logs.event.{event}", self.lang), emoji=emoji, default=event in enabled_events)
+            discord.SelectOption(value=event, label=fit_limit(t(f"settings.logs.event.{event}", self.lang), OPTION_LIMIT), emoji=emoji, default=event in enabled_events)
             for event, emoji in events
         ]
-        events_select = Select(placeholder=t("settings.logs.events_placeholder", self.lang), options=events_options, max_values=len(events_options), min_values=0, required=False)
+        events_select = Select(placeholder=fit_limit(t("settings.logs.events_placeholder", self.lang), SELECT_PLACEHOLDER_LIMIT), options=events_options, max_values=len(events_options), min_values=0, required=False)
 
         self.events_select_label = discord.ui.Label(
-            t("settings.logs.events_label", self.lang),
+            fit_limit(t("settings.logs.events_label", self.lang), LABEL_LIMIT),
             events_select,
         )
         self.add_item(self.events_select_label)
