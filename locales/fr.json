@@ -145,7 +145,7 @@
   "control.delete.timeout_title": "Délai de confirmation de suppression expiré",
   "control.delete.timeout_description": "Le délai de confirmation de la suppression du salon a expiré. Aucune action n’a été effectuée.",
   "control.rename.modal_title": "Modifier votre salon",
-  "control.rename.label": "Nom du salon (laisser vide pour le nom par défaut)",
+  "control.rename.label": "Nom du salon (si vide : nom par défaut)",
   "control.rename.profanity_blocked": "Désolé, ce texte a été signalé comme contenant des propos injurieux.",
   "control.rename.saved_description": "Votre salon sera renommé dès que possible. Discord peut parfois limiter la fréquence des modifications ; veuillez patienter.",
   "control.limit.modal_title": "Modifier votre salon",
