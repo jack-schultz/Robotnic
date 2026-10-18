@@ -136,4 +136,4 @@ def fit_limit(text: str, limit: int) -> str:
     text = str(text)
     if len(text) <= limit:
         return text
-    return text[:limit - 3] + "..."
+    return text[:limit - 1] + "…"
