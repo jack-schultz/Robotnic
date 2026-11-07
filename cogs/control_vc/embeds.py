@@ -40,6 +40,11 @@ class ChannelInfoEmbed(discord.Embed):
             else:
                 self.title = temp_channel.name
 
+        # Countdown until a queued rename is applied (Discord client renders the relative time)
+        rename_at = bot.TempChannelRenamer.next_rename_time(temp_channel.id)
+        if rename_at is not None:
+            self.description = t("control.info.rename_countdown", lang, timestamp=f"<t:{rename_at}:R>")
+
         self.footer = discord.EmbedFooter(t("control.info.footer", lang))
 
         owner_id = temp_channel_info.owner_id if temp_channel_info is not None else None

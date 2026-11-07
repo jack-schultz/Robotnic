@@ -135,3 +135,24 @@ class TempChannelRenamer:
         # Cleanup after the worker finishes
         self.pending_name.pop(channel.id, None)
         self.rename_workers.pop(channel.id, None)
+
+        # Refresh the control message so the rename countdown is removed
+        try:
+            await self.bot.EmbedUpdateScheduler.schedule(channel)
+        except Exception:
+            logger.warning(
+                f"[RENAMER] Failed to schedule info embed refresh for channel {channel.id} in guild '{guild_name}'",
+                exc_info=True,
+            )
+
+    def next_rename_time(self, channel_id: int) -> int | None:
+        """
+        Returns the unix time the queued rename for this channel will be applied,
+        or None if no rename is queued or it will be applied almost immediately.
+        """
+        if channel_id not in self.pending_name:
+            return None
+        eta = self.last_rename_time.get(channel_id, 0) + self.minimum_interval
+        if eta > time.time():
+            return int(eta)
+        return None

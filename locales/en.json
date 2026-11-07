@@ -293,6 +293,7 @@
     "control.info.public": "🌐 Public",
     "control.info.locked": "🔒 Locked",
     "control.info.hidden": "🙈 Hidden",
+    "control.info.rename_countdown": "⏳ Channel name will update {timestamp}",
     "control.clear.failed": "Failed, {error}",
     "control.clear.title": "Messages Deleted",
     "control.clear.description": "Deleted `{count}` messages.",

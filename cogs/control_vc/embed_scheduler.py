@@ -73,7 +73,7 @@ class EmbedUpdateScheduler:
 
 def _info_embed_signature(embed: discord.Embed) -> tuple:
     fields = tuple((field.name, field.value) for field in embed.fields)
-    return (embed.title, fields)
+    return (embed.title, embed.description, fields)
 
 
 async def edit_info_embed(bot, channel, title=None, user_limit=None):

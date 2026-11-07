@@ -135,6 +135,7 @@
   "control.info.public": "🌐 Public",
   "control.info.locked": "🔒 Verrouillé",
   "control.info.hidden": "🙈 Masqué",
+  "control.info.rename_countdown": "⏳ Le nom du salon sera mis à jour {timestamp}",
   "control.clear.failed": "Échec : {error}",
   "control.clear.title": "Messages supprimés",
   "control.clear.description": "`{count}` messages supprimés.",
