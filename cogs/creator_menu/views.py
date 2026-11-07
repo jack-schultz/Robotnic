@@ -1,9 +1,9 @@
 import logging
 import discord
 from discord.ui import View, Select, Button, Modal, InputText
-from cogs.creator_menu.embeds import ListCreatorsEmbed, OptionsEmbed
+from cogs.creator_menu.embeds import ListCreatorsEmbed, OptionsEmbed, CREATORS_PER_PAGE, get_creator_channels, page_count
 from cogs.creator_menu.modals import EditModal
-from config.i18n import t
+from config.i18n import t, fit_limit, OPTION_LIMIT
 
 logger = logging.getLogger(__name__)
 
@@ -14,61 +14,80 @@ class CreateView(View):
         self.bot = bot
         self.message = None
         self.author = ctx.author
+        self.guild = ctx.guild
         self.lang = bot.repos.guild_settings.get_language(ctx.guild.id)
+        self.page = 0  # 0-based, clamped to the valid range on every render
 
-        self.create_items(ctx.guild)
+    def render(self):
+        """Rebuilds the components for the current page and returns the matching embeds."""
+        creators = get_creator_channels(self.bot, self.guild)
+        pages = page_count(len(creators))
+        # Clamp in case creators were added/deleted since the last render (or the page was set past the end on purpose)
+        self.page = min(max(self.page, 0), pages - 1)
+        start = self.page * CREATORS_PER_PAGE
+        numbered_creators = list(enumerate(creators, start=1))[start:start + CREATORS_PER_PAGE]
 
-    def create_items(self, guild=None):
-        # We require the guild id to get all creator channels for the guild
-        # Either it's passed in or in self.update which has no inputs, we use the guild of the stored message
-        # This doesn't work on first create as the view is made before the message attribute is updated after
-        if not guild and self.message:
-            guild = self.message.guild
+        self.clear_items()
 
-        if guild is None:
-            logger.error("No guild obj to create items for CreateView")
-            return
-
-        # Dropdown (own row)
-        options = []
-        creator_channel_ids = self.bot.repos.creator_channels.get_ids(guild_id=guild.id)
-        for i, channel_id in enumerate(creator_channel_ids):
-            channel = self.bot.get_channel(channel_id)
-            if channel:
-                options.append(discord.SelectOption(label=t("creator_menu.select.edit_option", self.lang, number=i+1, channel=channel.name), value=f"{channel.id}"))
-
-        # If the dropdown has no options, add a placeholder one and disable it showing only the placeholder text
-        is_disabled = False
-        placeholder = t("creator_menu.select.placeholder", self.lang)
-        if len(options) == 0:
-            is_disabled = True
-            options.append(discord.SelectOption(label="Option 1", value="1"),)
-            placeholder = t("creator_menu.select.empty_placeholder", self.lang)
-
-        select = Select(placeholder=placeholder, options=options, disabled=is_disabled)
-        select.callback = self.select_callback
-        if not is_disabled:  # Removes dropdown entirely instead of disabling
+        # Dropdown (row 0), only listing this page's creators. Left out entirely when there is nothing to edit
+        if numbered_creators:
+            options = [
+                discord.SelectOption(
+                    label=fit_limit(t("creator_menu.select.edit_option", self.lang, number=number, channel=channel.name), OPTION_LIMIT),
+                    value=f"{channel.id}"
+                )
+                for number, channel in numbered_creators
+            ]
+            select = Select(placeholder=t("creator_menu.select.placeholder", self.lang), options=options, row=0)
+            select.callback = self.select_callback
             self.add_item(select)
 
-        # New Creator button
-        creator_button = Button(label=t("creator_menu.button.new_creator", self.lang), style=discord.ButtonStyle.success)  # primary, danger
+        # Page arrows (row 1), only when there is more than one page
+        if pages > 1:
+            prev_button = Button(emoji="◀", style=discord.ButtonStyle.secondary, disabled=self.page == 0, row=1)
+            prev_button.callback = self.prev_page_callback
+            self.add_item(prev_button)
+
+            next_button = Button(emoji="▶", style=discord.ButtonStyle.secondary, disabled=self.page >= pages - 1, row=1)
+            next_button.callback = self.next_page_callback
+            self.add_item(next_button)
+
+        # New Creator button (row 2)
+        creator_button = Button(label=t("creator_menu.button.new_creator", self.lang), style=discord.ButtonStyle.success, row=2)  # primary, danger
         creator_button.callback = self.creator_button_callback
         self.add_item(creator_button)
 
-        options_button = Button(label=t("creator_menu.button.explain_options", self.lang), style=discord.ButtonStyle.primary)  # primary, danger
+        options_button = Button(label=t("creator_menu.button.explain_options", self.lang), style=discord.ButtonStyle.primary, row=2)  # primary, danger
         options_button.callback = self.options_button_callback
         self.add_item(options_button)
 
-    async def update(self):
-        embeds = [
-            ListCreatorsEmbed(self.message.guild, self.bot)
-        ]
-        self.clear_items()
-        self.create_items()
+        return [ListCreatorsEmbed(self.bot, self.guild, numbered_creators, self.page, pages)]
+
+    async def update(self, interaction: discord.Interaction = None):
+        """Re-renders the menu. Pass the interaction when it hasn't been responded to yet so the edit answers it."""
+        embeds = self.render()
         try:
-            await self.message.edit(view=self, embeds=embeds)
+            if interaction is not None:
+                await interaction.response.edit_message(view=self, embeds=embeds)
+            else:
+                await self.message.edit(view=self, embeds=embeds)
         except discord.NotFound:
             logger.debug("CreateView message gone during update")
+
+    # Page arrow callbacks
+    async def prev_page_callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author.id:
+            return await interaction.response.send_message(t("common.not_your_menu", self.lang), ephemeral=True)
+        self.page -= 1
+        await self.update(interaction)
+        return None
+
+    async def next_page_callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author.id:
+            return await interaction.response.send_message(t("common.not_your_menu", self.lang), ephemeral=True)
+        self.page += 1
+        await self.update(interaction)
+        return None
 
     # Dropdown callback
     async def select_callback(self, interaction: discord.Interaction):
@@ -103,6 +122,7 @@ class CreateView(View):
         embeds[1].add_field(name="", value=t("creator_menu.new_creator.tip_edit", self.lang), inline=True)
         embeds[1].footer = discord.EmbedFooter(t("common.disappear_seconds", self.lang, seconds=60))
         await interaction.response.send_message(f"", embeds=embeds, ephemeral=True, delete_after=60)
+        self.page = page_count(len(get_creator_channels(self.bot, self.guild))) - 1  # Jump to the last page so the new creator is visible
         await self.update()
 
         await self.bot.BotLogService.send(event="creator_create", message=t("bot_log.creator_created", guild=interaction.guild.name, user=interaction.user))

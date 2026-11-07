@@ -1,7 +1,6 @@
 import logging
 import discord
 from discord.ext import commands
-from cogs.creator_menu.embeds import ListCreatorsEmbed
 from cogs.creator_menu.views import CreateView
 from config.i18n import t, command_kwargs
 
@@ -26,8 +25,8 @@ class CreatorMenuCog(commands.Cog):
                 logger.warning(f"Removing unfound/deleted creator channel {channel_id} from database in guild '{ctx.guild.name}'")
                 self.bot.repos.creator_channels.remove(channel_id)
 
-        embeds = [ListCreatorsEmbed(guild=ctx.guild, bot=self.bot)]
         view = CreateView(ctx=ctx, bot=self.bot)
+        embeds = view.render()
         message = await ctx.send_response(f"{ctx.author.mention}", embeds=embeds, view=view)  # , ephemeral=True)
         view.message = message
 

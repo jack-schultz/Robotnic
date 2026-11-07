@@ -212,6 +212,7 @@
     "creator_menu.list.same_as_creator": "Same as Creator",
     "creator_menu.list.copy_creator_channel": "Copy Creator Channel",
     "creator_menu.list.copy_creator_category": "Copy Creator Category",
+    "creator_menu.list.page": "Page {page}/{pages}",
     "creator_menu.list.entry": "Naming Scheme:\n> `{child_name}`\nUser Limit:\n> `{user_limit}`\nPermission Inheritance:\n> `{overwrites}`\nCategory:\n> `{category}`",
     "creator_menu.select.edit_option": "Edit #{number}. {channel}",
     "creator_menu.select.placeholder": "Select a Creator to edit",
