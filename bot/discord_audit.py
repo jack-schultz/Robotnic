@@ -35,4 +35,11 @@ class GuildLogService:
         if not event in settings["enabled_log_events"]:
             return
 
+        # Skip if the bot can't see or post in the logs channel
+        permissions = channel.permissions_for(guild.me)
+        if not permissions.view_channel or not permissions.send_messages:
+            return
+        if embed and not permissions.embed_links:
+            return
+
         await channel.send(message, embed=embed)
