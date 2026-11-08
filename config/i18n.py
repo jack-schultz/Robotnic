@@ -70,6 +70,9 @@ def name_localizations(key: str):
     """
     result = localizations(key)
     if result is not MISSING:
+        #     Names are lowercased automatically as required, prevents error if lang files have caps.
+        result = {discord_locale: name.lower() for discord_locale, name in result.items()}
+
         for discord_locale, name in result.items():
             validate_chat_input_name(name, locale=discord_locale)
     return result
@@ -81,7 +84,7 @@ def command_kwargs(key: str) -> dict:
     Usage: @discord.slash_command(**command_kwargs("commands.ping"))
     """
     return {
-        "name": t(f"{key}.name"),
+        "name": t(f"{key}.name").lower(),
         "name_localizations": name_localizations(f"{key}.name"),
         "description": t(f"{key}.description"),
         "description_localizations": localizations(f"{key}.description"),
@@ -93,7 +96,7 @@ def command_text(*keys: str, language: str | None = None) -> str:
     Command as typed, e.g. command_text("commands.settings", "commands.settings.controls") -> "/settings controls".
     For showing command names in messages in the guild's language.
     """
-    return "/" + " ".join(t(f"{key}.name", language) for key in keys)
+    return "/" + " ".join(t(f"{key}.name", language).lower() for key in keys)
 
 
 def t(key: str, language: str | None = None, /, **kwargs) -> str:
