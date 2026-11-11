@@ -95,6 +95,18 @@ def command_kwargs(key: str) -> dict:
     }
 
 
+def context_menu_kwargs(key: str) -> dict:
+    """
+    name and name_localizations for a user/message context menu command, from `key`.name.
+    Unlike slash commands these may have capitals and spaces, so only the 32 character limit is enforced (names are cut to fit).
+    Usage: @discord.user_command(**context_menu_kwargs("commands.ban_user"))
+    """
+    localized = localizations(f"{key}.name")
+    if localized is not MISSING:
+        localized = {discord_locale: name[:NAME_LIMIT] for discord_locale, name in localized.items()}
+    return {"name": t(f"{key}.name")[:NAME_LIMIT], "name_localizations": localized}
+
+
 def command_text(*keys: str, language: str | None = None) -> str:
     """
     Command as typed, e.g. command_text("commands.settings", "commands.settings.controls") -> "/settings controls".
