@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_LANGUAGE = "en"
 
+# Discord's maximum length for slash command, group and option names
+NAME_LIMIT = 32
+
 
 # Loads every locales/<code>.json file, keyed by language code
 def _load_locales() -> dict[str, dict[str, str]]:
@@ -66,12 +69,13 @@ def localizations(key: str, **kwargs):
 def name_localizations(key: str):
     """
     localizations() for slash command, group and option names, validated against Discord's naming rules
-    (lowercase, no spaces, max 32 characters) so a bad translation fails on startup rather than on sync.
+    (lowercase, no spaces, cut to 32 characters) so a bad translation fails on startup rather than on sync.
     """
     result = localizations(key)
     if result is not MISSING:
         #     Names are lowercased automatically as required, prevents error if lang files have caps.
-        result = {discord_locale: name.lower() for discord_locale, name in result.items()}
+        #     Names over Discord's 32 character limit are cut so sync doesn't fail.
+        result = {discord_locale: name.lower()[:NAME_LIMIT] for discord_locale, name in result.items()}
 
         for discord_locale, name in result.items():
             validate_chat_input_name(name, locale=discord_locale)
@@ -84,7 +88,7 @@ def command_kwargs(key: str) -> dict:
     Usage: @discord.slash_command(**command_kwargs("commands.ping"))
     """
     return {
-        "name": t(f"{key}.name").lower(),
+        "name": t(f"{key}.name").lower()[:NAME_LIMIT],
         "name_localizations": name_localizations(f"{key}.name"),
         "description": t(f"{key}.description"),
         "description_localizations": localizations(f"{key}.description"),
