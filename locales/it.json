@@ -23,7 +23,7 @@
     "commands.allow_user.name": "Autorizza utente nel vocale",
     "commands.mute_user.name": "Disattiva microfono utente",
     "commands.deafen_user.name": "Disattiva audio utente",
-    "commands.unmute_and_undeafen_user.name": "Riattiva microfono e audio utente",
+    "commands.unmute_and_undeafen_user.name": "Riattiva microfono e audio",
     "commands.setup.name": "setup",
     "commands.setup.description": "Apre un menu per creare e modificare i canali creatori",
     "commands.ping.name": "ping",
