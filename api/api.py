@@ -13,6 +13,7 @@ def get_stats():
             "users": stats.users,
             "creators": stats.creators,
             "channels": stats.channels,
+            "connected_users": stats.connected_users,
         }
 
 @app.get("/")

@@ -68,6 +68,13 @@ async def update_presence(bot):
             # Get count of temp channels
             temp_channel_count = len(bot.repos.temp_channels.get_ids())
 
+            # Count users currently connected to temp channels
+            connected_users = 0
+            for channel_id in bot.repos.temp_channels.get_ids():
+                channel = bot.get_channel(channel_id)
+                if channel is not None:
+                    connected_users += len(channel.members)
+
             # Format from settings
             status = status_text.format(**locals())
             await bot.change_presence(activity=discord.Game(status))
@@ -84,6 +91,7 @@ async def update_presence(bot):
                 stats.users = member_count
                 stats.creators = creator_count
                 stats.channels = temp_channel_count
+                stats.connected_users = connected_users
 
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")

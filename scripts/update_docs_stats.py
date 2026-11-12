@@ -39,7 +39,7 @@ def fetch_stats(stats_url: str) -> dict:
         return json.loads(response.read())
 
 
-def update_index(html: str, guilds: int, users: int, creators: int, channels: int) -> str:
+def update_index(html: str, guilds: int, users: int, creators: int, channels: int, connected: int) -> str:
     html = re.sub(
         r'(<span class="stat-card__value" id="stat-servers">)[^<]*',
         rf"\g<1>{guilds:,}",
@@ -61,6 +61,13 @@ def update_index(html: str, guilds: int, users: int, creators: int, channels: in
     html = re.sub(
         r'(<span class="stat-card__value" id="stat-channels">)[^<]*',
         rf"\g<1>{channels:,}",
+        html,
+        count=1,
+    )
+
+    html = re.sub(
+        r'(<span class="stat-card__value" id="stat-connected">)[^<]*',
+        rf"\g<1>{connected:,}",
         html,
         count=1,
     )
@@ -90,18 +97,20 @@ def main() -> None:
         users = int(stats["users"])
         creators = int(stats["creators"])
         channels = int(stats["channels"])
+        connected = int(stats["connected_users"])
     except (KeyError, TypeError, ValueError) as exc:
         print(f"Unexpected stats response: {stats!r} ({exc})", file=sys.stderr)
         sys.exit(1)
 
     html = INDEX_PATH.read_text(encoding="utf-8")
     INDEX_PATH.write_text(
-        update_index(html, guilds, users, creators, channels),
+        update_index(html, guilds, users, creators, channels, connected),
         encoding="utf-8",
     )
     print(
         f"Updated docs: {guilds:,} servers, {users:,} users, "
-        f"{creators:,} creator channels, {channels:,} temp channels"
+        f"{creators:,} creator channels, {channels:,} temp channels, "
+        f"{connected:,} connected users"
     )
 
 
