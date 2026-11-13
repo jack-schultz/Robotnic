@@ -75,6 +75,17 @@
         var i = data.fields.indexOf(b.dataset.metric);
         b.querySelector("[data-value]").textContent = Number(last[i + 1]).toLocaleString();
       });
+      var sum = data.summary || {};
+      document.querySelectorAll(".stat-pill").forEach(function (b) {
+        var avg = sum.avg_24h && sum.avg_24h[b.dataset.metric];
+        b.querySelector("[data-avg]").textContent = avg == null ? "--" : Math.round(avg).toLocaleString();
+      });
+      document.querySelectorAll("[data-peak]").forEach(function (el) {
+        var pk = sum.peak && sum.peak[el.dataset.peak];
+        if (!pk) return;
+        el.querySelector("[data-peak-value]").textContent = Number(pk.value).toLocaleString();
+        el.querySelector("[data-peak-date]").textContent = new Date(pk.at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+      });
       if (data.fields.indexOf(metric) < 0) metric = "users";
       if (updatedEl && data.generatedAt) {
         updatedEl.textContent = "Last updated: " + data.generatedAt.replace("T", " ").slice(0, 16) + " UTC";

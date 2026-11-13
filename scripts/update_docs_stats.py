@@ -65,6 +65,7 @@ def main() -> None:
         "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "fields": fields,
         "rows": rows,
+        "summary": history.get("summary", {}),
     }
     HISTORY_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
     print(f"Wrote {len(rows):,} history rows to {HISTORY_PATH}")
