@@ -824,3 +824,10 @@ body:has(.legal) :focus-visible {
 }
 
 /*# sourceMappingURL=main.css.map */
+
+.stat-pill[aria-pressed="true"],
+.range-btn[aria-pressed="true"] {
+  border-color: #5865f2;
+  background: rgba(88, 101, 242, 0.18);
+  color: #fff;
+}

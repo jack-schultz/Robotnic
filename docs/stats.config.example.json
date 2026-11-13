@@ -1,3 +1,4 @@
 {
-    "statsUrl": "http://localhost:8000/stats"
+    "statsUrl": "http://localhost:8000/stats",
+    "historyUrl": "http://localhost:8000/stats/history"
 }

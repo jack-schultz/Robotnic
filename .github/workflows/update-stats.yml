@@ -30,6 +30,7 @@ jobs:
         env:
           # Optional repo variable override: Settings → Secrets and variables → Actions → Variables
           STATS_API_URL: ${{ vars.STATS_API_URL }}
+          STATS_HISTORY_API_URL: ${{ vars.STATS_HISTORY_API_URL }}
         run: python scripts/update_docs_stats.py
 
       - name: Upload Pages artifact

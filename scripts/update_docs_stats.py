@@ -1,8 +1,7 @@
-"""Fetch bot stats from the API and write them into docs/index.html."""
+"""Fetch bot stats history from the API and write it to docs/stats-history.json."""
 
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,7 +10,7 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "docs" / "stats.config.json"
-INDEX_PATH = ROOT / "docs" / "index.html"
+HISTORY_PATH = ROOT / "docs" / "stats-history.json"
 
 
 def load_stats_url() -> str:
@@ -34,84 +33,41 @@ def load_stats_url() -> str:
     return stats_url
 
 
+def load_history_url(stats_url: str) -> str:
+    env_url = os.environ.get("STATS_HISTORY_API_URL", "").strip()
+    if env_url:
+        return env_url
+    if CONFIG_PATH.exists():
+        with CONFIG_PATH.open(encoding="utf-8") as f:
+            configured = json.load(f).get("historyUrl", "").strip()
+        if configured:
+            return configured
+    return stats_url.rstrip("/") + "/history"
+
+
 def fetch_stats(stats_url: str) -> dict:
     with urlopen(stats_url, timeout=30) as response:
         return json.loads(response.read())
 
 
-def update_index(html: str, guilds: int, users: int, creators: int, channels: int, connected: int) -> str:
-    html = re.sub(
-        r'(<span class="stat-card__value" id="stat-servers">)[^<]*',
-        rf"\g<1>{guilds:,}",
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(<span class="stat-card__value" id="stat-users">)[^<]*',
-        rf"\g<1>{users:,}",
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(<span class="stat-card__value" id="stat-creators">)[^<]*',
-        rf"\g<1>{creators:,}",
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(<span class="stat-card__value" id="stat-channels">)[^<]*',
-        rf"\g<1>{channels:,}",
-        html,
-        count=1,
-    )
-
-    html = re.sub(
-        r'(<span class="stat-card__value" id="stat-connected">)[^<]*',
-        rf"\g<1>{connected:,}",
-        html,
-        count=1,
-    )
-
-    updated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    html = re.sub(
-        r'(<p class="stats__note" id="stats-updated">)[^<]*',
-        rf"\g<1>Last updated: {updated}",
-        html,
-        count=1,
-    )
-    return html
-
-
 def main() -> None:
-    stats_url = load_stats_url()
-    print(f"Fetching stats from {stats_url}")
+    history_url = load_history_url(load_stats_url()) + "?interval=3600"
+    print(f"Fetching stats history from {history_url}")
 
     try:
-        stats = fetch_stats(stats_url)
-    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
-        print(f"Failed to fetch stats: {exc}", file=sys.stderr)
+        history = fetch_stats(history_url)
+        fields, rows = history["fields"], history["rows"]
+    except (URLError, TimeoutError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        print(f"Failed to fetch stats history: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    try:
-        guilds = int(stats["guilds"])
-        users = int(stats["users"])
-        creators = int(stats["creators"])
-        channels = int(stats["channels"])
-        connected = int(stats["connected_users"])
-    except (KeyError, TypeError, ValueError) as exc:
-        print(f"Unexpected stats response: {stats!r} ({exc})", file=sys.stderr)
-        sys.exit(1)
-
-    html = INDEX_PATH.read_text(encoding="utf-8")
-    INDEX_PATH.write_text(
-        update_index(html, guilds, users, creators, channels, connected),
-        encoding="utf-8",
-    )
-    print(
-        f"Updated docs: {guilds:,} servers, {users:,} users, "
-        f"{creators:,} creator channels, {channels:,} temp channels, "
-        f"{connected:,} connected users"
-    )
+    payload = {
+        "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "fields": fields,
+        "rows": rows,
+    }
+    HISTORY_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    print(f"Wrote {len(rows):,} history rows to {HISTORY_PATH}")
 
 
 if __name__ == "__main__":
