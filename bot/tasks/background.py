@@ -1,5 +1,8 @@
+import csv
 import logging
 import random
+import time
+from datetime import datetime, timezone
 import discord
 import asyncio
 from cogs.control_vc.member_actions.handler.mute_deafen import clear_orphaned_sanctions
@@ -7,8 +10,30 @@ from cogs.manage_vcs.owner_role import remove_owner_role
 from cogs.manage_vcs.owner_prefix import remove_owner_prefix
 from cogs.manage_vcs.update_name import update_channel_name_and_control_msg
 from api.stats import stats
+from config.paths import STATS_LOG_PATH
 
 logger = logging.getLogger(__name__)
+
+STATS_INTERVAL = 300  # 5 minutes
+TOPGG_INTERVAL = 3600  # posted hourly
+STATS_LOG_HEADER = ["timestamp", "guilds", "users", "creators", "channels", "connected_users"]
+
+
+def append_stats_log(guilds, users, creators, channels, connected_users):
+    """Append one row of current stats to the CSV history log (for charting change over time)."""
+    try:
+        STATS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not STATS_LOG_PATH.exists() or STATS_LOG_PATH.stat().st_size == 0
+        with STATS_LOG_PATH.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if write_header:
+                writer.writerow(STATS_LOG_HEADER)
+            writer.writerow([
+                datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                guilds, users, creators, channels, connected_users,
+            ])
+    except Exception as e:
+        logger.error(f"Failed to write stats log: {e}")
 
 
 async def create_tasks(bot):
@@ -50,6 +75,7 @@ async def update_temp_channel_names(bot):
 
 async def update_presence(bot):
     await bot.wait_until_ready()  # Ensure the bot is fully connected
+    last_topgg_post = None
     while not bot.is_closed():  # Run on a schedule
         try:
             status_text = bot.settings["status"].get("text", "")
@@ -81,8 +107,11 @@ async def update_presence(bot):
             logger.debug(f"Updated presence to \'{status}\'")
 
             # Post guild count to TopGG
-            if bot.topgg_client:
+            if bot.topgg_client and (
+                last_topgg_post is None or time.monotonic() - last_topgg_post >= TOPGG_INTERVAL
+            ):
                 await bot.topgg_client.post_guild_count()
+                last_topgg_post = time.monotonic()
                 logger.debug(f"Posted Guild Count to TOPGG; {server_count}")
 
             # Update Stats object for API
@@ -93,10 +122,12 @@ async def update_presence(bot):
                 stats.channels = temp_channel_count
                 stats.connected_users = connected_users
 
+            append_stats_log(server_count, member_count, creator_count, temp_channel_count, connected_users)
+
         except Exception as e:
             logger.error(f"Error in {__name__} task: {e}")
 
-        await asyncio.sleep(3600)  # 1 hour (3600 seconds)
+        await asyncio.sleep(STATS_INTERVAL)  # 5 minutes
 
 
 # Known bug that if this triggers while a user is creating a temp channel and is yet to be moved, this may delete the channel and cause an error
