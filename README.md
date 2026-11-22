@@ -115,7 +115,7 @@ See `requirements.txt` and `requirements-topgg.txt`. Main dependencies:
 
 Self-hosted instances also get:
 - A **stats API** on port 8000 (`GET /stats` guild, user, creator, and temp channel counts) for dashboards or the included docs site
-- Configurable **bot presence** text with `{server_count}`, `{member_count}`, `{creator_count}`, and `{temp_channel_count}`
+- Configurable **bot presence** text with `{server_count}`, `{member_count}`, `{creator_count}`, `{temp_channel_count}`, and `{connected_users}`
 - Optional **Top.gg** guild count posting (set `TOPGG_TOKEN` in `.env`)
 - **Owner notifications** for bot start/stop, reconnects, and guild joins (via `settings.json`)
 
@@ -191,7 +191,7 @@ Below is the default `settings.json` with a table to explain.
 | `notifications.channel_id` | Discord channel ID where the bot owner receives lifecycle alerts. |
 | `notifications.*` | Toggle which owner alerts fire: start, reconnect, stop, guild join, channel create/remove. |
 | `api.port` | Port for the FastAPI stats server (`GET /stats`, `GET /`). |
-| `status.text` | Playing status; supports `{server_count}`, `{member_count}`, `{creator_count}`, `{temp_channel_count}`. |
+| `status.text` | Playing status; supports `{server_count}`, `{member_count}`, `{creator_count}`, `{temp_channel_count}`, `{connected_users}`. |
 
 Please make sure you have **member** and **presence (activity)** intents enabled in the Discord Developer Portal for your bot.
 
