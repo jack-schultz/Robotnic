@@ -17,8 +17,10 @@ class GeneralCog(commands.Cog):
     @discord.slash_command(**command_kwargs("commands.help"))
     async def help(self, ctx):
         lang = self.bot.repos.guild_settings.get_language(ctx.guild_id)
+        user_lang = ctx.locale
+        print(lang, user_lang)
         embeds = [
-            HelpEmbed(lang)
+            HelpEmbed(lang, user_lang)
         ]
         await ctx.respond(f"", embeds=embeds, view=ButtonsView(lang))
 
