@@ -242,7 +242,7 @@
     "creator_menu.modal.error_user_limit_range": "La limite d’utilisateurs doit être un nombre entier compris entre `0` et `99` inclus.",
     "creator_menu.modal.error_user_limit_integer": "La limite d’utilisateurs doit être un nombre entier.",
     "creator_menu.modal.invalid_input": "Saisie invalide :",
-    "creator_menu.modal.updated": "Mis à jour !"
+    "creator_menu.modal.updated": "Mis à jour !",
 
     "control.foss_notice": "Ce projet est un logiciel [libre et open source](<https://fr.wikipedia.org/wiki/Free/Libre_Open_Source_Software>).\nVous pouvez contribuer [ici](<https://github.com/jack-schultz/Robotnic>) ou soutenir le développeur [ici](<https://ko-fi.com/jackschultzdev>).",
     "control.owner_mention": "{mention}, ce salon vocal est à *vous*. Utilisez le message ci-dessus pour le contrôler.",
