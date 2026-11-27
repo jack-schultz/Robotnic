@@ -4,7 +4,6 @@
 
     "common.disappear_seconds": "Questo messaggio scomparirà tra {seconds} secondi.",
     "common.submit_reminder": "Ricordati di fare clic su \"INVIA\" dopo aver apportato le modifiche nella finestra a comparsa.",
-    
     "common.submit_reminder": "Assicurati di fare clic su \"INVIA\" dopo aver modificato il menu a comparsa.",
     "common.none": "Nessuno",
     "common.none_code": "`Nessuno`",
