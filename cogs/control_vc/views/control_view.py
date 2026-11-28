@@ -175,6 +175,7 @@ class ControlView(View):
             label="",
             emoji="🔒",
             style=discord.ButtonStyle.success if channel_state == ChannelState.LOCKED.value else discord.ButtonStyle.primary,
+            disabled=channel_state == ChannelState.LOCKED.value,
             row=3,
             custom_id="lock",
         )
@@ -182,6 +183,7 @@ class ControlView(View):
             label="",
             emoji="🙈",
             style=discord.ButtonStyle.success if channel_state == ChannelState.HIDDEN.value else discord.ButtonStyle.primary,
+            disabled=channel_state == ChannelState.HIDDEN.value,
             row=3,
             custom_id="hide",
         )
@@ -189,6 +191,7 @@ class ControlView(View):
             label="",
             emoji="🌐",
             style=discord.ButtonStyle.success if channel_state == ChannelState.PUBLIC.value else discord.ButtonStyle.primary,
+            disabled=channel_state == ChannelState.PUBLIC.value,
             row=3,
             custom_id="public",
         )
