@@ -53,7 +53,7 @@ pip install -r requirements-topgg.txt --no-deps
 ### Configure and run
 
 ```bash
-python main.py   # First run creates .env, settings.json, and database.db
+python main.py   # First run creates .env and settings.json
 ```
 
 Edit `.env` and set your bot token:
@@ -96,7 +96,7 @@ Robotnic/
 ├── config/              # Environment, settings, logging
 ├── database/            # SQLite and repositories
 ├── api/                 # FastAPI /stats endpoint
-└── docs/                # Static website. This isn't actually documentation, just a public site to share the bot
+└── docs/                # Static website and documentation
 ```
 
 ### Adding a cog
@@ -157,6 +157,6 @@ Open a [GitHub Issue](https://github.com/jack-schultz/Robotnic/issues) with:
 
 For security-sensitive issues, contact the maintainer via the [Support Server](https://discord.gg/rcAREJyMV5) rather than opening a public issue.
 
-## Docs 
+## Docs
 
-This file and the [README](https://github.com/jack-schultz/Robotnic/blob/main/README.md) are all the documentation at this time. Contributors are welcome to expand the documentation.
+See the [documentation index](docs/README.md) for the Discord command reference and self-hosting guide.
