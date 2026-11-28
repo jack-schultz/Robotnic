@@ -14,3 +14,5 @@ class Action(Enum):
     UNMUTE = "unmute"
     DEAFEN = "deafen"
     UNDEAFEN = "undeafen"
+    ENABLE_VOICE_ACTIVITY = "enable_voice_activity"
+    DISABLE_VOICE_ACTIVITY = "disable_voice_activity"

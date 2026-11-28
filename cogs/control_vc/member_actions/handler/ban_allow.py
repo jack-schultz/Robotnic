@@ -11,6 +11,12 @@ ALLOW_PERMS = {
     "connect": True,
     "view_channel": True,
 }
+ACCESS_PERMS = {
+    Action.BAN: BAN_PERMS,
+    Action.ALLOW: ALLOW_PERMS,
+    Action.ENABLE_VOICE_ACTIVITY: {"use_voice_activation": True},
+    Action.DISABLE_VOICE_ACTIVITY: {"use_voice_activation": False},
+}
 
 
 async def _apply_overwrites(channel, targets, perms):
@@ -20,13 +26,16 @@ async def _apply_overwrites(channel, targets, perms):
     try:
         if len(targets) > 10:
             overwrites = channel.overwrites
-            overwrite = discord.PermissionOverwrite(**perms)
             for target in targets:
+                overwrite = channel.overwrites_for(target)
+                overwrite.update(**perms)
                 overwrites[target] = overwrite
             await channel.edit(overwrites=overwrites)
         else:
             for target in targets:
-                await channel.set_permissions(target, **perms)
+                overwrite = channel.overwrites_for(target)
+                overwrite.update(**perms)
+                await channel.set_permissions(target, overwrite=overwrite)
     except discord.Forbidden as e:
         logger.warning(
             f"Missing permission to edit overwrites for temp channel {channel.id} in guild '{channel.guild.name}': {e}"
@@ -38,8 +47,7 @@ async def _apply_overwrites(channel, targets, perms):
 
 async def _apply_access(bot, channel, action, targets):
     valid = _valid_targets(bot, channel, action, targets)
-    perms = BAN_PERMS if action == Action.BAN else ALLOW_PERMS
-    affected = await _apply_overwrites(channel, valid, perms)
+    affected = await _apply_overwrites(channel, valid, ACCESS_PERMS[action])
     if affected is None:
         return None
 

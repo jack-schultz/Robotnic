@@ -45,7 +45,6 @@ class GiveOwnershipView(discord.ui.View):
                 super().__init__(placeholder=t("control.give.placeholder", lang), options=options, min_values=1, max_values=1)
 
             async def callback(self, interaction: discord.Interaction):
-                owner_perms = {'connect': True, 'view_channel': True}
                 if self.values[0] == "None":
                     selected_member = None
 
@@ -67,10 +66,11 @@ class GiveOwnershipView(discord.ui.View):
                     selected_member = interaction.guild.get_member(int(self.values[0]))
 
                 if selected_member:
-                    await self.channel.set_permissions(
-                        selected_member,
-                        **owner_perms
-                    )
+                    overwrite = self.channel.overwrites_for(selected_member)
+                    overwrite.update(connect=True, view_channel=True)
+                    if self.channel.guild.me.guild_permissions.use_voice_activation:
+                        overwrite.use_voice_activation = True
+                    await self.channel.set_permissions(selected_member, overwrite=overwrite)
 
                     self.bot.repos.temp_channels.set_owner_id(self.channel.id, selected_member.id)
                     await give_owner_role(self.bot, selected_member)

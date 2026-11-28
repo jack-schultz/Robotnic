@@ -8,8 +8,9 @@ logger = logging.getLogger("cogs.control_vc.member_actions.handler")
 
 
 # Cant apply to self, bot or moderators
-_PUNITIVE = {Action.BAN, Action.MUTE, Action.DEAFEN}
+_PUNITIVE = {Action.BAN, Action.MUTE, Action.DEAFEN, Action.DISABLE_VOICE_ACTIVITY}
 _VOICE = {Action.MUTE, Action.UNMUTE, Action.DEAFEN, Action.UNDEAFEN}
+_VOICE_ACTIVITY = {Action.ENABLE_VOICE_ACTIVITY, Action.DISABLE_VOICE_ACTIVITY}
 _MODERATOR_PERMS = [
     "manage_messages",
     "manage_channels",
@@ -24,6 +25,8 @@ _RESPONSES = {
     Action.UNMUTE: "actions.unmute",
     Action.DEAFEN: "actions.deafen",
     Action.UNDEAFEN: "actions.undeafen",
+    Action.ENABLE_VOICE_ACTIVITY: "actions.enable_voice_activity",
+    Action.DISABLE_VOICE_ACTIVITY: "actions.disable_voice_activity",
 }
 
 _UNMUTE_AND_UNDEAFEN = "actions.unmute_undeafen"
@@ -67,8 +70,8 @@ def _valid_targets(bot, channel, action, targets):
         # not None
         if not target:
             continue
-        # Not a role if voice action
-        if action in _VOICE:
+        # Voice actions target members, not roles.
+        if action in _VOICE or action in _VOICE_ACTIVITY:
             if not isinstance(target, discord.Member) or target.id == bot.user.id:
                 continue
         # Prevent punitive action to self or bot or member moderators
@@ -134,10 +137,8 @@ async def handle_action(bot, interaction, actions, targets, channel=None):
         else:
             applied = await _apply_access(bot, channel, action, targets)
             if applied is None:
-                await _reply_error(
-                    interaction,
-                    t("common.no_permission_access", lang, mention=user.mention),
-                )
+                key = "actions.voice_activity.missing_permissions" if action in _VOICE_ACTIVITY else "common.no_permission_access"
+                await _reply_error(interaction, t(key, lang, mention=user.mention))
                 return
         affected.extend(applied)
 

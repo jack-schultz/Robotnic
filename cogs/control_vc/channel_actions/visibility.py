@@ -42,7 +42,9 @@ async def _update_overwrites(bot, channel, new_overwrite):
         default_role = channel.guild.get_role(default_role_id)
 
     overwrites = channel.overwrites
-    overwrites[default_role] = new_overwrite
+    overwrite = channel.overwrites_for(default_role)
+    overwrite.update(connect=new_overwrite.connect, view_channel=new_overwrite.view_channel)
+    overwrites[default_role] = overwrite
     await channel.edit(overwrites=overwrites)
     return True
 

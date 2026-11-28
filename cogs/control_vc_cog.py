@@ -1,12 +1,27 @@
 import discord
 from discord.ext import commands
 from cogs.control_vc.member_actions import context_menus
-from config.i18n import t, context_menu_kwargs
+from cogs.control_vc.enums import Action
+from cogs.control_vc.member_actions.handler.actions import handle_action
+from config.i18n import command_kwargs, context_menu_kwargs
 
 
 class Control_Vc_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @discord.slash_command(
+        **command_kwargs("commands.voice_activity"),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def voice_activity(
+        self,
+        ctx: discord.ApplicationContext,
+        member: discord.Option(discord.Member, **command_kwargs("commands.voice_activity.member")),
+        enabled: discord.Option(bool, **command_kwargs("commands.voice_activity.enabled")),
+    ):
+        action = Action.ENABLE_VOICE_ACTIVITY if enabled else Action.DISABLE_VOICE_ACTIVITY
+        await handle_action(self.bot, ctx, action, [member])
 
     # RIGHT CLICK USER -> APPS -> BAN USER
     @discord.user_command(**context_menu_kwargs("commands.ban_user"))
