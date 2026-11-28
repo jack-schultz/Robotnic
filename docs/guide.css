@@ -1,0 +1,268 @@
+.docs-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color-scheme: dark;
+}
+
+.docs-page .site-nav__inner {
+  max-width: 70rem;
+  min-height: 64px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+}
+
+.docs-page .site-nav__links {
+  justify-content: flex-end;
+  gap: 6px 14px;
+}
+
+.docs-page .site-nav__brand,
+.docs-page .site-nav__links a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.docs-skip {
+  position: absolute;
+  z-index: 3;
+  top: 8px;
+  left: 12px;
+  padding: 8px 12px;
+  background: #111214;
+  color: #fff;
+  transform: translateY(-150%);
+}
+
+.docs-skip:focus {
+  transform: none;
+}
+
+.docs-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 72.5rem;
+  flex: 1;
+  margin: 0 auto;
+  padding: 24px 20px 56px;
+}
+
+.docs-nav {
+  align-self: start;
+  padding: 10px;
+  background: #2b2d31;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+}
+
+.docs-nav__groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.docs-nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.docs-nav li + li {
+  margin-top: 4px;
+}
+
+.docs-nav p {
+  margin: 0 0 4px;
+  padding: 4px 9px;
+  color: #b5bac1;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.docs-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: #dbdee1;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.docs-nav a:hover {
+  background: #383a40;
+  color: #fff;
+}
+
+.docs-nav a[aria-current="page"] {
+  background: #3b4072;
+  color: #fff;
+  font-weight: 600;
+}
+
+.docs-nav .docs-nav__sections {
+  display: none;
+  margin: 3px 0 6px 9px;
+  padding-left: 6px;
+  border-left: 1px solid rgb(255 255 255 / 18%);
+}
+
+.docs-article {
+  min-width: 0;
+  max-width: 49rem;
+  color: #dbdee1;
+  line-height: 1.65;
+}
+
+.docs-article h1,
+.docs-article h2 {
+  color: #f2f3f5;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.docs-article h1 {
+  margin: 0 0 12px;
+  font-size: clamp(1.875rem, 4vw, 2.375rem);
+}
+
+.docs-article h2 {
+  margin: 32px 0 10px;
+  padding-top: 18px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  font-size: 1.25rem;
+}
+
+.docs-article p,
+.docs-article ol,
+.docs-article ul {
+  margin: 0 0 14px;
+}
+
+.docs-article ol,
+.docs-article ul {
+  padding-left: 1.45rem;
+}
+
+.docs-article li + li {
+  margin-top: 5px;
+}
+
+.docs-article a {
+  color: #a7afff;
+  text-underline-offset: 3px;
+}
+
+.docs-article a:hover {
+  color: #d0d4ff;
+}
+
+.docs-article code {
+  padding: 1px 4px;
+  background: #111214;
+  border-radius: 4px;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.docs-article pre {
+  overflow: auto;
+  padding: 12px 14px;
+  background: #111214;
+  border-radius: 8px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.docs-article pre code {
+  padding: 0;
+}
+
+.docs-article td:first-child code {
+  overflow-wrap: normal;
+}
+
+.docs-article blockquote {
+  margin: 16px 0;
+  padding: 5px 12px;
+  border-left: 3px solid #7983f5;
+}
+
+.docs-article blockquote p {
+  margin: 0;
+}
+
+.docs-article table {
+  width: 100%;
+  margin: 0 0 14px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.docs-article th,
+.docs-article td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.docs-page :focus-visible {
+  outline: 2px solid #a7afff;
+  outline-offset: 2px;
+}
+
+@media (min-width: 48rem) {
+  .docs-page .site-nav,
+  .docs-nav {
+    position: sticky;
+  }
+
+  .docs-page .site-nav {
+    z-index: 2;
+    top: 0;
+  }
+
+  .docs-layout {
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: 40px;
+    padding-top: 32px;
+  }
+
+  .docs-nav {
+    top: 84px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+
+  .docs-nav__groups {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-nav a {
+    min-height: 34px;
+  }
+
+  .docs-nav .docs-nav__sections {
+    display: block;
+  }
+
+  .docs-nav__sections a {
+    min-height: 27px;
+    color: #b5bac1;
+    font-size: 0.8125rem;
+  }
+
+  .docs-article,
+  .docs-article [id] {
+    scroll-margin-top: 84px;
+  }
+}

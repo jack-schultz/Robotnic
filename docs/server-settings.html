@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server settings | Robotnic Docs</title>
+    <meta name="description" content="Configure the room panel, staff logs, name moderation, and owner options in Discord.">
+    <link rel="canonical" href="https://jackschultz.dev/Robotnic/server-settings.html">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-rounded.png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Server settings | Robotnic Docs">
+    <meta property="og:description" content="Configure the room panel, staff logs, name moderation, and owner options in Discord.">
+    <meta property="og:url" content="https://jackschultz.dev/Robotnic/server-settings.html">
+    <meta name="theme-color" content="#1e1f22">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="scss/main.css">
+    <link rel="stylesheet" href="guide.css">
+</head>
+<body class="docs-page">
+<a class="docs-skip" href="#content">Skip to content</a>
+<header class="site-nav">
+    <nav class="site-nav__inner" aria-label="Primary">
+        <a class="site-nav__brand" href="index.html">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a class="active" href="getting-started.html" target="_blank" rel="noopener noreferrer">Docs</a></li>
+            <li><a href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer">Discord</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="docs-layout">
+    <nav class="docs-nav" aria-label="Documentation">
+        <div class="docs-nav__groups">
+            <div>
+                <p>Using Robotnic</p>
+                <ul>
+                    <li><a href="getting-started.html">Getting started</a></li>
+                    <li><a href="channel-controls.html">Channel controls</a></li>
+                    <li>
+                        <a href="server-settings.html" aria-current="page">Server settings</a>
+                        <ul class="docs-nav__sections">
+                            <li><a href="#control-panel">Control panel</a></li>
+                            <li><a href="#staff-logs">Staff logs</a></li>
+                            <li><a href="#profanity-filter">Profanity filter</a></li>
+                            <li><a href="#owner-settings">Owner settings</a></li>
+                            <li><a href="#custom-placeholders">Custom placeholders</a></li>
+                            <li><a href="#language">Language</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="commands.html">Commands</a></li>
+                </ul>
+            </div>
+            <div>
+                <p>Self-hosting</p>
+                <ul>
+                    <li><a href="self-hosting.html">Installation</a></li>
+                    <li><a href="host-configuration.html">Host configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main id="content" tabindex="-1">
+        <article class="docs-article">
+            <h1 id="server-settings">Server settings</h1>
+            <p>You’ll need <strong>Manage Channels</strong> to use <code>/settings</code>. These settings apply to the whole server. To change one creator channel, use <a href="getting-started.html#creator-settings"><code>/setup</code></a>.</p>
+            <h2 id="control-panel">Control panel</h2>
+            <p>Open <code>/settings controls</code> and pick a dropdown, labeled buttons or icons without labels. In the same form, choose which buttons or menu items to show and whether to ping the owner when Robotnic opens their room. Submit to save.</p>
+            <h2 id="staff-logs">Staff logs</h2>
+            <p>Run <code>/settings logging</code> and choose a channel for staff logs. Select the events you want, then submit the form.</p>
+            <ul>
+            <li><code>channel_create</code> for room creation</li>
+            <li><code>channel_rename</code> for room renames</li>
+            <li><code>channel_remove</code> for room deletion</li>
+            <li><code>profanity_block</code> for profanity alerts</li>
+            </ul>
+            <h2 id="profanity-filter">Profanity filter</h2>
+            <p>Robotnic checks custom room names with <a href="https://www.profanity.dev/">profanity.dev</a>. Run <code>/settings profanity_filter</code> to pick a mode.</p>
+            <ul>
+            <li><code>off</code> skips the check.</li>
+            <li><code>alert</code> allows the rename and logs the flagged name.</li>
+            <li><code>alert &amp; block</code> rejects the rename and logs the flagged name.</li>
+            </ul>
+            <p>Turn on <code>profanity_block</code> in <a href="#staff-logs">Staff logs</a> to get alerts.</p>
+            <h2 id="owner-settings">Owner settings</h2>
+            <ul>
+            <li><code>/settings owner dm-on-create</code> turns DMs to new room owners on or off. Set <code>enabled</code> to <code>true</code> or <code>false</code>.</li>
+            <li><code>/settings owner role-set</code> gives room owners a role. Give Robotnic <strong>Manage Roles</strong> and place its role above the role it gives out. Run <code>role-get</code> to check the setting or <code>role-clear</code> to stop assigning the role.</li>
+            <li><code>/settings owner prefix-set</code> adds a prefix to a member’s nickname while they own a room. Robotnic needs <strong>Manage Nicknames</strong> and its role must be above the member’s highest role. Discord protects the server owner’s nickname. Run <code>prefix-get</code> to check the prefix or <code>prefix-clear</code> to stop applying it.</li>
+            </ul>
+            <h2 id="custom-placeholders">Custom placeholders</h2>
+            <p>Run <code>/settings placeholder add</code> to set up a placeholder. For example, enter <code>{region}</code>, set its text to <code>EU</code> and pick a role. Add <code>{region}</code> to the <a href="getting-started.html#name-templates">name template</a>. Robotnic puts <code>EU</code> in the room name when the owner has that role.</p>
+            <p>Run <code>/settings placeholder list</code> to see your placeholders. To delete one, run <code>/settings placeholder remove</code> and pick it from the suggestions for <code>entry</code>.</p>
+            <h2 id="language">Language</h2>
+            <p>Run <code>/settings language</code> to change the language Robotnic uses on your server.</p>
+        </article>
+    </main>
+</div>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__links">
+            <a href="index.html">Robotnic</a>
+            <a href="https://ko-fi.com/jackschultzdev/">Donate</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+        </div>
+        <p class="site-footer__note">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>.</p>
+    </div>
+</footer>
+</body>
+</html>

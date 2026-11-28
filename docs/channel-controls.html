@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel controls | Robotnic Docs</title>
+    <meta name="description" content="Use the control panel and Discord member menu to manage a temporary voice channel.">
+    <link rel="canonical" href="https://jackschultz.dev/Robotnic/channel-controls.html">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-rounded.png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Channel controls | Robotnic Docs">
+    <meta property="og:description" content="Use the control panel and Discord member menu to manage a temporary voice channel.">
+    <meta property="og:url" content="https://jackschultz.dev/Robotnic/channel-controls.html">
+    <meta name="theme-color" content="#1e1f22">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="scss/main.css">
+    <link rel="stylesheet" href="guide.css">
+</head>
+<body class="docs-page">
+<a class="docs-skip" href="#content">Skip to content</a>
+<header class="site-nav">
+    <nav class="site-nav__inner" aria-label="Primary">
+        <a class="site-nav__brand" href="index.html">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a class="active" href="getting-started.html" target="_blank" rel="noopener noreferrer">Docs</a></li>
+            <li><a href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer">Discord</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="docs-layout">
+    <nav class="docs-nav" aria-label="Documentation">
+        <div class="docs-nav__groups">
+            <div>
+                <p>Using Robotnic</p>
+                <ul>
+                    <li><a href="getting-started.html">Getting started</a></li>
+                    <li>
+                        <a href="channel-controls.html" aria-current="page">Channel controls</a>
+                        <ul class="docs-nav__sections">
+                            <li><a href="#room-controls">Room controls</a></li>
+                            <li><a href="#ownership">Ownership</a></li>
+                            <li><a href="#right-click-actions">Right-click actions</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="server-settings.html">Server settings</a></li>
+                    <li><a href="commands.html">Commands</a></li>
+                </ul>
+            </div>
+            <div>
+                <p>Self-hosting</p>
+                <ul>
+                    <li><a href="self-hosting.html">Installation</a></li>
+                    <li><a href="host-configuration.html">Host configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main id="content" tabindex="-1">
+        <article class="docs-article">
+            <h1 id="channel-controls">Channel controls</h1>
+            <p>Open your room’s chat and look for the buttons or dropdown. Server admins can <a href="server-settings.html#control-panel">turn individual controls on and off</a>.</p>
+            <h2 id="room-controls">Room controls</h2>
+            <table>
+            <thead>
+            <tr>
+            <th scope="col">Action</th>
+            <th scope="col">What it does</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td>Public, Lock, Hide</td>
+            <td>Public lets the <a href="getting-started.html#creator-settings">selected role</a> see and join the room. Lock stops them joining. Hide stops them seeing it too.</td>
+            </tr>
+            <tr>
+            <td>Rename</td>
+            <td>Type a new name or leave it blank to go back to the template. The server’s <a href="server-settings.html#profanity-filter">profanity filter</a> checks custom names.</td>
+            </tr>
+            <tr>
+            <td>User limit</td>
+            <td>Change how many people can join.</td>
+            </tr>
+            <tr>
+            <td>Ban, Allow</td>
+            <td>Block or let in a member or role. Banning someone also disconnects them from the room.</td>
+            </tr>
+            <tr>
+            <td>Mute, Deafen</td>
+            <td>Mute, deafen, unmute or undeafen someone in the room.</td>
+            </tr>
+            <tr>
+            <td>Clear messages</td>
+            <td>Delete chat messages and keep the panel.</td>
+            </tr>
+            <tr>
+            <td>Delete channel</td>
+            <td>Confirm to delete the room.</td>
+            </tr>
+            </tbody>
+            </table>
+            <h2 id="ownership">Ownership</h2>
+            <p>Use <strong>Give ownership</strong> to hand the room to someone who’s in it or give it up. Once the owner leaves or gives it up, the next person in the room to use the panel can claim it.</p>
+            <h2 id="right-click-actions">Right-click actions</h2>
+            <p>Right-click a member in Discord and choose <strong>Apps</strong>. If you own the room or can claim it, you can ban, allow, mute or deafen them from that menu. <strong>Unmute &amp; Undeafen User</strong> clears both at once.</p>
+        </article>
+    </main>
+</div>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__links">
+            <a href="index.html">Robotnic</a>
+            <a href="https://ko-fi.com/jackschultzdev/">Donate</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+        </div>
+        <p class="site-footer__note">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>.</p>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation | Robotnic Docs</title>
+    <meta name="description" content="Install Robotnic, configure a Discord bot token, and run your own instance.">
+    <link rel="canonical" href="https://jackschultz.dev/Robotnic/self-hosting.html">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-rounded.png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Installation | Robotnic Docs">
+    <meta property="og:description" content="Install Robotnic, configure a Discord bot token, and run your own instance.">
+    <meta property="og:url" content="https://jackschultz.dev/Robotnic/self-hosting.html">
+    <meta name="theme-color" content="#1e1f22">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="scss/main.css">
+    <link rel="stylesheet" href="guide.css">
+</head>
+<body class="docs-page">
+<a class="docs-skip" href="#content">Skip to content</a>
+<header class="site-nav">
+    <nav class="site-nav__inner" aria-label="Primary">
+        <a class="site-nav__brand" href="index.html">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a class="active" href="getting-started.html" target="_blank" rel="noopener noreferrer">Docs</a></li>
+            <li><a href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer">Discord</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="docs-layout">
+    <nav class="docs-nav" aria-label="Documentation">
+        <div class="docs-nav__groups">
+            <div>
+                <p>Using Robotnic</p>
+                <ul>
+                    <li><a href="getting-started.html">Getting started</a></li>
+                    <li><a href="channel-controls.html">Channel controls</a></li>
+                    <li><a href="server-settings.html">Server settings</a></li>
+                    <li><a href="commands.html">Commands</a></li>
+                </ul>
+            </div>
+            <div>
+                <p>Self-hosting</p>
+                <ul>
+                    <li>
+                        <a href="self-hosting.html" aria-current="page">Installation</a>
+                        <ul class="docs-nav__sections">
+                            <li><a href="#discord-app">Discord app</a></li>
+                            <li><a href="#install-dependencies">Install dependencies</a></li>
+                            <li><a href="#run-the-bot">Run the bot</a></li>
+                            <li><a href="#bot-permissions">Bot permissions</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="host-configuration.html">Host configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main id="content" tabindex="-1">
+        <article class="docs-article">
+            <h1 id="self-host-robotnic">Self-host Robotnic</h1>
+            <p>You’ll need Python <strong>3.13.9</strong> for the steps below. For Docker, use the included <a href="https://github.com/ohne-b/Robotnic/blob/main/Dockerfile">Dockerfile</a>.</p>
+            <blockquote>
+            <p><strong>Note</strong><br>
+            Robotnic uses the <a href="https://github.com/ohne-b/Robotnic/blob/main/LICENSE">GNU Affero General Public License v3.0</a>. If people use a modified version over a network, offer them access to the corresponding source code.</p>
+            </blockquote>
+            <h2 id="discord-app">Discord app</h2>
+            <p>Create an app in the <a href="https://discord.com/developers/applications">Discord Developer Portal</a>. On the app’s <strong>Bot</strong> page, turn on <strong>Server Members Intent</strong> and <strong>Presence Intent</strong>.</p>
+            <h2 id="install-dependencies">Install dependencies</h2>
+            <pre tabindex="0"><code class="language-sh">git clone https://github.com/ohne-b/Robotnic.git
+cd Robotnic
+</code></pre>
+            <p>On Linux, macOS or Git Bash, run <code>bash scripts/install.sh</code>. On Windows, run <code>.\scripts\install.ps1</code> in PowerShell.</p>
+            <p>For a manual install, run both commands from the repo folder.</p>
+            <pre tabindex="0"><code class="language-sh">python -m pip install -r requirements.txt
+python -m pip install -r requirements-topgg.txt --no-deps
+</code></pre>
+            <p><a href="https://github.com/ohne-b/Robotnic/blob/main/requirements.txt">requirements.txt</a> lists Pycord 2.7+, PyNaCl 1.5.0, python-dotenv 1.0+, requests 2.31+, FastAPI and Uvicorn. SQLite comes with Python. The Top.gg client is in <a href="https://github.com/ohne-b/Robotnic/blob/main/requirements-topgg.txt">requirements-topgg.txt</a>.</p>
+            <blockquote>
+            <p><strong>Important</strong><br>
+            Use <code>--no-deps</code> for <code>requirements-topgg.txt</code>. The bot imports <code>topggpy</code> at startup. Its <code>discord.py</code> dependency conflicts with Pycord.</p>
+            </blockquote>
+            <h2 id="run-the-bot">Run the bot</h2>
+            <ol>
+            <li>Run <code>python main.py</code> from the repo folder. The first run creates <code>settings.json</code> and <code>.env</code>, then stops so you can add a token.</li>
+            <li>Open <code>.env</code> and replace <code>TOKEN_HERE</code> with the token from your app’s <strong>Bot</strong> page.</li>
+            <li>Run <code>python main.py</code> again. Robotnic opens <code>database.db</code> and starts the stats API.</li>
+            <li>Install the app on your Discord server with the <code>bot</code> and <code>applications.commands</code> scopes. Give it the permissions below, then <a href="getting-started.html#add-robotnic">run <code>/setup</code></a>.</li>
+            </ol>
+            <h2 id="bot-permissions">Bot permissions</h2>
+            <p>Give Robotnic these permissions in the categories where it creates rooms.</p>
+            <ul>
+            <li><strong>View Channel</strong>, <strong>Manage Channels</strong> and <strong>Manage Roles</strong></li>
+            <li><strong>Send Messages</strong>, <strong>Embed Links</strong>, <strong>Manage Messages</strong> and <strong>Read Message History</strong></li>
+            <li><strong>Connect</strong> and <strong>Move Members</strong></li>
+            </ul>
+            <p>If you turn on the mute or deafen controls, add <strong>Mute Members</strong> and <strong>Deafen Members</strong>.</p>
+            <p><a href="host-configuration.html">Configure your bot and its stats page</a>.</p>
+        </article>
+    </main>
+</div>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__links">
+            <a href="index.html">Robotnic</a>
+            <a href="https://ko-fi.com/jackschultzdev/">Donate</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+        </div>
+        <p class="site-footer__note">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>.</p>
+    </div>
+</footer>
+</body>
+</html>

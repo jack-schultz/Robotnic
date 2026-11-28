@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting started | Robotnic Docs</title>
+    <meta name="description" content="Add Robotnic and set up creator channels for your Discord server.">
+    <link rel="canonical" href="https://jackschultz.dev/Robotnic/getting-started.html">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-rounded.png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Getting started | Robotnic Docs">
+    <meta property="og:description" content="Add Robotnic and set up creator channels for your Discord server.">
+    <meta property="og:url" content="https://jackschultz.dev/Robotnic/getting-started.html">
+    <meta name="theme-color" content="#1e1f22">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="scss/main.css">
+    <link rel="stylesheet" href="guide.css">
+</head>
+<body class="docs-page">
+<a class="docs-skip" href="#content">Skip to content</a>
+<header class="site-nav">
+    <nav class="site-nav__inner" aria-label="Primary">
+        <a class="site-nav__brand" href="index.html">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a class="active" href="getting-started.html" target="_blank" rel="noopener noreferrer">Docs</a></li>
+            <li><a href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer">Discord</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="docs-layout">
+    <nav class="docs-nav" aria-label="Documentation">
+        <div class="docs-nav__groups">
+            <div>
+                <p>Using Robotnic</p>
+                <ul>
+                    <li>
+                        <a href="getting-started.html" aria-current="page">Getting started</a>
+                        <ul class="docs-nav__sections">
+                            <li><a href="#add-robotnic">Add Robotnic</a></li>
+                            <li><a href="#creator-settings">Creator settings</a></li>
+                            <li><a href="#name-templates">Name templates</a></li>
+                            <li><a href="#cleanup-and-restarts">Cleanup and restarts</a></li>
+                            <li><a href="#help">Help</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="channel-controls.html">Channel controls</a></li>
+                    <li><a href="server-settings.html">Server settings</a></li>
+                    <li><a href="commands.html">Commands</a></li>
+                </ul>
+            </div>
+            <div>
+                <p>Self-hosting</p>
+                <ul>
+                    <li><a href="self-hosting.html">Installation</a></li>
+                    <li><a href="host-configuration.html">Host configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main id="content" tabindex="-1">
+        <article class="docs-article">
+            <h1 id="getting-started">Getting started</h1>
+            <p>Robotnic makes a temporary voice room when someone joins a creator channel. The public bot is free and there’s no limit on how many creator channels you can set up.</p>
+            <h2 id="add-robotnic">Add Robotnic</h2>
+            <ol>
+            <li><a href="https://discord.com/oauth2/authorize?client_id=853490879753617458">Add Robotnic</a> to your server.</li>
+            <li>Run <code>/setup</code> and click <strong>Make new Creator</strong>. You’ll need <strong>Manage Channels</strong>.</li>
+            <li>Join the creator channel. Robotnic moves you into the new room and posts the <a href="channel-controls.html">controls</a> in its chat.</li>
+            </ol>
+            <p>After you add the bot, it posts setup and support links in the first text channel it can use.</p>
+            <p><a href="index.html#demo">Try the controls in your browser</a>.</p>
+            <h2 id="creator-settings">Creator settings</h2>
+            <p>Run <code>/setup</code> again and pick a creator from the dropdown. You can give Gaming and Study different room names, limits and permissions.</p>
+            <table>
+            <thead>
+            <tr>
+            <th scope="col">Setting</th>
+            <th scope="col">What it does</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td>Name template</td>
+            <td>Choose what new rooms are called. You can use <a href="#name-templates">placeholders</a> in the name.</td>
+            </tr>
+            <tr>
+            <td>User limit</td>
+            <td>Allow 1 to 99 people. Use <code>0</code> for no limit.</td>
+            </tr>
+            <tr>
+            <td>Category</td>
+            <td>Keep new rooms in the creator’s category or choose another one.</td>
+            </tr>
+            <tr>
+            <td>Permission inheritance</td>
+            <td>Copy permission overrides from the creator channel or the room’s category. You can leave this off.</td>
+            </tr>
+            <tr>
+            <td>Lock and hide role</td>
+            <td>Pick the role affected by Lock and Hide. It starts out as <code>@everyone</code>.</td>
+            </tr>
+            </tbody>
+            </table>
+            <h2 id="name-templates">Name templates</h2>
+            <table>
+            <thead>
+            <tr>
+            <th scope="col">Placeholder</th>
+            <th scope="col">What it inserts</th>
+            <th scope="col">Example</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td><code>{user}</code></td>
+            <td>The room owner’s display name</td>
+            <td><code>{user}'s Room</code></td>
+            </tr>
+            <tr>
+            <td><code>{activity}</code></td>
+            <td>The games people in the room are playing</td>
+            <td><code>{activity} Lobby</code></td>
+            </tr>
+            <tr>
+            <td><code>{count}</code></td>
+            <td>The room’s number for this creator</td>
+            <td><code>Channel #{count}</code></td>
+            </tr>
+            </tbody>
+            </table>
+            <p>Room names that use <code>{activity}</code> update when people change games, join or leave. Robotnic queues renames to stay within Discord’s limits. Use <a href="server-settings.html#custom-placeholders">custom placeholders</a> to put different text in the name depending on the owner’s role.</p>
+            <h2 id="cleanup-and-restarts">Cleanup and restarts</h2>
+            <p>Robotnic deletes a room when the last person leaves. It also checks for empty rooms it missed and drops records for channels that no longer exist. If you delete a creator channel, run <code>/setup</code> to clear its entry from the menu.</p>
+            <p>Robotnic keeps channel records and server settings in SQLite. After a restart it refreshes the control panels for rooms that are still open.</p>
+            <h2 id="help">Help</h2>
+            <p>Ask questions or follow bot updates in the <a href="https://discord.gg/rcAREJyMV5">support server</a>.</p>
+            <p><a href="index.html#stats">Live stats</a> · <a href="https://jackschultz.dev/projects/discordBot.html">Project write-up</a> · <a href="https://github.com/ohne-b/Robotnic/blob/main/CONTRIBUTING.md">Contributing</a></p>
+        </article>
+    </main>
+</div>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__links">
+            <a href="index.html">Robotnic</a>
+            <a href="https://ko-fi.com/jackschultzdev/">Donate</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+        </div>
+        <p class="site-footer__note">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>.</p>
+    </div>
+</footer>
+</body>
+</html>
