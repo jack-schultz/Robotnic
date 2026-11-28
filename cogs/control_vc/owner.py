@@ -1,4 +1,5 @@
 import logging
+import discord
 from config.i18n import t
 from cogs.manage_vcs.owner_role import remove_owner_role, give_owner_role
 from cogs.manage_vcs.owner_prefix import remove_owner_prefix, give_owner_prefix
@@ -27,6 +28,14 @@ async def claim_or_verify_owner(bot, channel, member):
             prev_owner = channel.guild.get_member(owner_id)
             await remove_owner_role(bot, prev_owner)
             await remove_owner_prefix(bot, prev_owner)
+
+        if not channel.permissions_for(member).use_voice_activation:
+            overwrite = channel.overwrites_for(member)
+            overwrite.use_voice_activation = True
+            try:
+                await channel.set_permissions(member, overwrite=overwrite)
+            except discord.HTTPException:
+                logger.warning("Could not enable voice activity for the new owner of channel %s", channel.id)
 
         await give_owner_role(bot, member)
         await give_owner_prefix(bot, member)

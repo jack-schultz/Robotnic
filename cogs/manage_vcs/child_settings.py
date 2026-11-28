@@ -70,3 +70,5 @@ def collate_temp_channel_overwrites(overwrites, bot_user, member):
         read_message_history=True,
         connect=True,
     )
+    if member.guild.me.guild_permissions.use_voice_activation:
+        overwrites[member].use_voice_activation = True
