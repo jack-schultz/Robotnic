@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host configuration | Robotnic Docs</title>
+    <meta name="description" content="Configure a self-hosted Robotnic instance and publish its stats website.">
+    <link rel="canonical" href="https://jackschultz.dev/Robotnic/host-configuration.html">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-rounded.png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Host configuration | Robotnic Docs">
+    <meta property="og:description" content="Configure a self-hosted Robotnic instance and publish its stats website.">
+    <meta property="og:url" content="https://jackschultz.dev/Robotnic/host-configuration.html">
+    <meta name="theme-color" content="#1e1f22">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="scss/main.css">
+    <link rel="stylesheet" href="guide.css">
+</head>
+<body class="docs-page">
+<a class="docs-skip" href="#content">Skip to content</a>
+<header class="site-nav">
+    <nav class="site-nav__inner" aria-label="Primary">
+        <a class="site-nav__brand" href="index.html">Robotnic</a>
+        <ul class="site-nav__links">
+            <li><a class="active" href="getting-started.html" target="_blank" rel="noopener noreferrer">Docs</a></li>
+            <li><a href="https://discord.gg/rcAREJyMV5" target="_blank" rel="noopener noreferrer">Discord</a></li>
+            <li><a href="https://github.com/jack-schultz/Robotnic" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="docs-layout">
+    <nav class="docs-nav" aria-label="Documentation">
+        <div class="docs-nav__groups">
+            <div>
+                <p>Using Robotnic</p>
+                <ul>
+                    <li><a href="getting-started.html">Getting started</a></li>
+                    <li><a href="channel-controls.html">Channel controls</a></li>
+                    <li><a href="server-settings.html">Server settings</a></li>
+                    <li><a href="commands.html">Commands</a></li>
+                </ul>
+            </div>
+            <div>
+                <p>Self-hosting</p>
+                <ul>
+                    <li><a href="self-hosting.html">Installation</a></li>
+                    <li>
+                        <a href="host-configuration.html" aria-current="page">Host configuration</a>
+                        <ul class="docs-nav__sections">
+                            <li><a href="#settings-file">Settings file</a></li>
+                            <li><a href="#topgg">Top.gg</a></li>
+                            <li><a href="#stats-and-data">Stats and data</a></li>
+                            <li><a href="#publish-the-website">Publish the website</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main id="content" tabindex="-1">
+        <article class="docs-article">
+            <h1 id="host-configuration">Host configuration</h1>
+            <p>Edit <code>settings.json</code> or <code>.env</code> in the repo folder, then restart Robotnic. If you’re missing those files, <a href="self-hosting.html#run-the-bot">run the bot once</a> to create them.</p>
+            <h2 id="settings-file">Settings file</h2>
+            <ul>
+            <li><code>debug.discord</code> logs more from Pycord. <code>debug.bot</code> logs more from Robotnic.</li>
+            <li><code>notifications.channel_id</code> is where Robotnic sends alerts for the bot owner.</li>
+            <li><code>notifications.*</code> lets you pick which alerts to get. It covers starts, stops, reconnects, server joins and leaves, and changes to creator channels and rooms.</li>
+            <li><code>api.port</code> is the port for the stats API. The default is <code>8000</code>.</li>
+            <li><code>status.text</code> sets what Discord shows as the bot’s activity. You can put <code>{server_count}</code>, <code>{member_count}</code>, <code>{creator_count}</code>, <code>{temp_channel_count}</code> or <code>{connected_users}</code> in the text.</li>
+            </ul>
+            <p>A new <code>settings.json</code> starts with these values from <a href="https://github.com/ohne-b/Robotnic/blob/main/default_settings.json">default_settings.json</a>.</p>
+            <pre tabindex="0"><code class="language-json">{
+    &quot;debug&quot;: {
+        &quot;discord&quot;: false,
+        &quot;bot&quot;: false
+    },
+    &quot;notifications&quot;: {
+        &quot;channel_id&quot;: null,
+        &quot;start&quot;: true,
+        &quot;reconnect&quot;: true,
+        &quot;stop&quot;: true,
+        &quot;guild_join&quot;: true,
+        &quot;guild_leave&quot;: true,
+        &quot;channel_create&quot;: false,
+        &quot;channel_remove&quot;: false,
+        &quot;creator_create&quot;: false
+    },
+    &quot;api&quot;: {
+        &quot;port&quot;: 8000
+    },
+    &quot;status&quot;: {
+        &quot;text&quot;: &quot;Online in {server_count} servers | {member_count} users.&quot;
+    }
+}
+</code></pre>
+            <h2 id="topgg">Top.gg</h2>
+            <p>Set <code>TOPGG_TOKEN</code> in <code>.env</code> if you want Robotnic to send your bot’s server count to Top.gg.</p>
+            <h2 id="stats-and-data">Stats and data</h2>
+            <table>
+            <thead>
+            <tr>
+            <th scope="col">Endpoint</th>
+            <th scope="col">What it returns</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td><code>GET /</code></td>
+            <td>Returns <code>{"ok": true}</code> if the API is running.</td>
+            </tr>
+            <tr>
+            <td><code>GET /stats</code></td>
+            <td>Counts for servers, users, creator channels, temporary rooms and connected users.</td>
+            </tr>
+            <tr>
+            <td><code>GET /stats/history</code></td>
+            <td>The data behind the website’s charts.</td>
+            </tr>
+            </tbody>
+            </table>
+            <p>If you move the bot to another host, take <code>database.db</code> with you. It holds your creator channels, temporary rooms and server settings. Copy <code>logs/stats.csv</code> too if you want to keep the charts’ history.</p>
+            <h2 id="publish-the-website">Publish the website</h2>
+            <ol>
+            <li>Enable Actions on your fork. In <strong>Settings → Pages</strong>, set the build source to <strong>GitHub Actions</strong>.</li>
+            <li>Copy <a href="stats.config.example.json">stats.config.example.json</a> to <code>docs/stats.config.json</code>. Put the full <code>/stats</code> and <code>/stats/history</code> URLs in <code>statsUrl</code> and <code>historyUrl</code>. You can also set those URLs in the <code>STATS_API_URL</code> and <code>STATS_HISTORY_API_URL</code> Actions repository variables. GitHub’s runners need to reach both URLs.</li>
+            <li>Run the <a href="https://github.com/ohne-b/Robotnic/blob/main/.github/workflows/update-stats.yml">Update bot stats workflow</a>. It publishes the site and stats snapshot to Pages. It also runs every hour and after a push to <code>main</code> changes files in <code>docs/</code>.</li>
+            </ol>
+        </article>
+    </main>
+</div>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__links">
+            <a href="index.html">Robotnic</a>
+            <a href="https://ko-fi.com/jackschultzdev/">Donate</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="tos.html">Terms of Service</a>
+        </div>
+        <p class="site-footer__note">Developed by <a class="quiet-link" href="https://jackschultz.dev/">Jack Schultz</a>.</p>
+    </div>
+</footer>
+</body>
+</html>
